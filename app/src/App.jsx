@@ -1211,12 +1211,13 @@ function Landing({ onOpen }) {
           <motion.h1 variants={rise} style={{ fontSize: 'clamp(36px,6vw,68px)', lineHeight: 1.03, letterSpacing: '-.035em', margin: '16px auto 0', textWrap: 'balance', color: T.text, maxWidth: '16ch' }}>
             1 lecture, 8 ways to learn it. Understand <span style={{ color: T.acc }}>8× faster</span>.
           </motion.h1>
-          <motion.p variants={rise} style={{ fontSize: 'clamp(16px,2.2vw,20px)', color: T.sub, margin: '18px auto 0', maxWidth: '54ch', lineHeight: 1.5 }}>
-            8kEdu turns any YouTube lecture into notebooks, flashcards, mind maps, charts and a dashboard you can touch — an autonomous agent watches the video and builds them all. Watch in 720p, learn in 8K.
+          <motion.p variants={rise} style={{ fontSize: 'clamp(15px,2.2vw,20px)', color: T.sub, margin: '16px auto 0', fontWeight: 600 }}>
+            An autonomous agent watches any lecture — and makes it touchable.
           </motion.p>
-          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 560, margin: '28px auto 0' }}>
+          <motion.div variants={rise}><HeroDrop T={T} onOpen={onOpen} /></motion.div>
+          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '26px auto 0' }}>
             <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
-              onKeyDown={e => e.key === 'Enter' && go()} placeholder="drop a YouTube lecture link…"
+              onKeyDown={e => e.key === 'Enter' && go()} placeholder="or drop your own lecture…"
               style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
             <motion.button className="edu-open" onClick={go} whileTap={{ scale: 0.96 }}
               style={{ background: T.acc, color: T.accText, border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -1224,7 +1225,6 @@ function Landing({ onOpen }) {
             </motion.button>
           </motion.div>
           {err && <div style={{ color: '#e5484d', fontSize: 13, marginTop: 10 }}>{err}</div>}
-          <motion.div variants={rise}><OutputShowcase T={T} onOpen={onOpen} /></motion.div>
         </motion.div>
       </div>
 
