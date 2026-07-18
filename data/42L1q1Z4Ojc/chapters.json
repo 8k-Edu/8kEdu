@@ -1,0 +1,27 @@
+[
+ {
+  "start": 0,
+  "end": 60,
+  "title": "Intro \u2014 Transformer architecture overview"
+ },
+ {
+  "start": 60,
+  "end": 164,
+  "title": "Why single Self-Attention fails (ambiguity problem)"
+ },
+ {
+  "start": 164,
+  "end": 340,
+  "title": "What is Multi-Head Attention? (concept)"
+ },
+ {
+  "start": 340,
+  "end": 515,
+  "title": "How MHA works \u2014 step-by-step walkthrough"
+ },
+ {
+  "start": 515,
+  "end": 644,
+  "title": "Final Insight \u2014 Multiple Perspectives & Same Cost"
+ }
+]
