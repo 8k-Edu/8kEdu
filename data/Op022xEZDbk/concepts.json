@@ -1,0 +1,78 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Dividend Investing Calculator",
+  "explanation": "Shows how much you need to invest now and how contributions grow to generate passive income covering expenses before age 60.",
+  "params": {
+   "cells": [
+    "# Compute required portfolio to cover living expenses\nimport numpy as np\nannual_contribution = income_slider * (investment_rate_percent_slider / 100)\nrequired_income = expense_slider * coverage_ratio_slider\nwithdrawal_rate = 0.04\nrequired_portfolio = required_income / withdrawal_rate\nprint(f\"Required portfolio: ${required_portfolio:,.0f}\")",
+    "# Simulate growth with annual contributions\nyears = years_until_retirement_slider\nr = return_rate_percent_slider / 100\nportfolio = 0.0\nbalances = []\nfor yr in range(years+1):\n    portfolio *= (1+r)\n    portfolio += annual_contribution\n    balances.append(portfolio)\nimport matplotlib.pyplot as plt\nplt.plot(range(years+1), balances)\nplt.title('Portfolio Growth')\nplt.xlabel('Years')\nplt.ylabel('Balance ($)')\nplt.show()"
+   ],
+   "sliders": {
+    "income_slider": 80000,
+    "expense_slider": 60000,
+    "coverage_ratio_slider": 1.0,
+    "years_until_retirement_slider": 32,
+    "return_rate_percent_slider": 7,
+    "investment_rate_percent_slider": 15
+   }
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Dividend Investment Growth Calculator",
+  "explanation": "It visualizes how reinvested dividends compound to grow an investment over time.",
+  "params": {
+   "expr": "principal * Math.pow(1 + yield/100, years)",
+   "sliders": [
+    {
+     "name": "principal",
+     "default": 10000,
+     "min": 0,
+     "max": 500000,
+     "step": 100
+    },
+    {
+     "name": "yield",
+     "default": 3,
+     "min": 0,
+     "max": 10,
+     "step": 0.1
+    },
+    {
+     "name": "years",
+     "default": 20,
+     "min": 0,
+     "max": 50,
+     "step": 1
+    }
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Dividend Investment Growth Calculator",
+  "explanation": "Shows how reinvested dividends compound over time to illustrate the long\u2011term benefit of dividend\u2011paying stocks.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt",
+    "# sliders defined globally: initial_investment, annual_yield_pct, years_until_retirement\ndef compute():\n    fv = initial_investment * (1 + annual_yield_pct/100) ** years_until_retirement\n    print(f\"Future value after {years_until_retirement} years: ${fv:,.2f}\")\n    times = np.arange(years_until_retirement+1)\n    values = initial_investment * (1 + annual_yield_pct/100) ** times\n    plt.plot(times, values)\n    plt.title('Dividend Reinvestment Growth')\n    plt.xlabel('Years')\n    plt.ylabel('Portfolio Value')\n    plt.show()",
+    "compute()"
+   ],
+   "sliders": [
+    "initial_investment",
+    "annual_yield_pct",
+    "years_until_retirement"
+   ]
+  },
+  "time": 100,
+  "frame": "f_000100.jpg"
+ }
+]
