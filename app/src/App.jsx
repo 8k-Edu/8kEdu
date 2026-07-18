@@ -40,8 +40,8 @@ const CATEGORIES = [
     name: 'How-To', icon: '🍳',
     videos: [
       { id: '9-ODDKHRVkA', title: 'The Best Scrambled Eggs You\'ll Ever Make (Restaurant Technique)',
-        inside: { count: '1 live cook-controller · by Nemotron Omni', mix: [['#56d364', 1]],
-          peek: [['0:10', 'Butter & timing controls — drag it', '#56d364'], ['scale', 'recipe scaler for your servings', '#79c0ff'], ['lens', 'how_to genre lens', '#ffab70']] } },
+        inside: { count: '2 live cook-controllers · by Nemotron Omni', mix: [['#b48eff', 1], ['#56d364', 1]],
+          peek: [['0:50', 'Timing calculator — runnable', '#b48eff'], ['2:40', 'Doneness curve you can drag', '#56d364'], ['lens', 'how_to genre lens', '#ffab70']] } },
     ],
   },
   {
