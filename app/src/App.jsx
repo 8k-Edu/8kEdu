@@ -1868,7 +1868,7 @@ function AgentDashboard({ onExit }) {
               {curriculum.map((c, i) => {
                 const ready = c.state === 'ready'
                 return (
-                  <motion.div key={c.seq} layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
+                  <motion.div key={c.video_id || c.seq} layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
                     style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '9px 0', borderTop: i ? `1px solid ${T.line}` : 'none' }}>
                     <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 700, color: T.faint, marginTop: 2 }}>{String(c.seq).padStart(2, '0')}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
