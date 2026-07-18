@@ -994,6 +994,103 @@ const ARTIFACTS = [
   { key: 'slides', C: SlidesCard }, { key: 'concept', C: ConceptCard },
 ]
 
+// creator studio — artifacts get remixed into decks, posts, threads
+const RemixCard = () => (
+  <div style={{ ...cardBase, background: '#101509', border: '1px solid #2c4318', padding: '26px 12px 10px' }}>
+    <Badge>creator studio</Badge>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {[['▤', 'chart'], ['❝', 'quote'], ['⌗', 'code']].map(([g, t]) => (
+          <div key={t} style={{ display: 'flex', gap: 5, alignItems: 'center', background: '#1a2213', border: '1px solid #2c3a24', borderRadius: 7, padding: '5px 8px' }}>
+            <span style={{ color: '#8ee23e', fontSize: 11 }}>{g}</span>
+            <span style={{ fontFamily: mono, fontSize: 8.5, color: '#b9c7ab' }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ color: '#7bd33f', fontSize: 16 }}>→</div>
+      <div style={{ flex: 1, alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 5, paddingBottom: 4 }}>
+        <div style={{ flex: 1.5, background: '#fbfdf8', borderRadius: 7, padding: '7px 9px' }}>
+          <div style={{ fontSize: 8.5, fontWeight: 800, color: '#1d2416' }}>Your next talk</div>
+          <div style={{ width: 26, height: 2.5, background: '#7bd33f', borderRadius: 2, margin: '3px 0 5px' }} />
+          <div style={{ display: 'flex', gap: 4 }}>
+            <span style={{ flex: 1, height: 22, background: '#e4ebda', borderRadius: 4 }} />
+            <span style={{ flex: 1, height: 22, background: '#cfe6b4', borderRadius: 4 }} />
+          </div>
+        </div>
+        <div style={{ flex: 1, background: '#151b0e', border: '1px solid #2c3a24', borderRadius: 7, padding: '5px 9px' }}>
+          <div style={{ fontFamily: mono, fontSize: 7.5, color: '#8ee23e' }}>@you · thread 🧵</div>
+          <div style={{ width: '85%', height: 3.5, background: '#2c3a24', borderRadius: 2, marginTop: 4 }} />
+          <div style={{ width: '60%', height: 3.5, background: '#2c3a24', borderRadius: 2, marginTop: 3 }} />
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
+const SCENES = [
+  { key: 'dashboard', C: DashboardCard, title: 'A dashboard you can touch', blurb: 'Every figure in the video becomes a live widget beside the player — drag the matrix, sweep the temperature, watch it recompute.' },
+  { key: 'notebook', C: NotebookCard, title: 'Notebooks with the video\'s own code', blurb: 'The code on screen becomes runnable Python in your browser — sliders wired to the variables. Export to Jupyter for tonight\'s lab.' },
+  { key: 'mindmap', C: MindmapCard, title: 'The lecture\'s concept graph', blurb: 'See how every idea hangs together — one glance instead of two hours of scrubbing.' },
+  { key: 'flashcards', C: FlashcardCard, title: 'Flashcards that mint themselves', blurb: 'Key questions extracted per chapter, scheduled for spaced recall. Study the lecture, not your notes.' },
+  { key: 'chart', C: ChartCard, title: 'Every plot, re-plotted live', blurb: 'Curves from the whiteboard become interactive charts — with the exact values the speaker used.' },
+  { key: 'sheet', C: SheetCard, title: 'The speaker\'s numbers, editable', blurb: 'Financial and data examples land as sheets — swap in your own numbers and re-run the scenario.' },
+  { key: 'slides', C: SlidesCard, title: 'A deck in one click', blurb: 'Selected moments become slides — each one linking back to its live widget for in-class play.' },
+  { key: 'concept', C: ConceptCard, title: 'Key ideas, quotable', blurb: 'The claims that matter, timestamped and cited — ready for your notes or your newsletter.' },
+  { key: 'remix', C: RemixCard, title: 'Creator studio: remix everything', blurb: 'Creators and educators reuse any artifact — charts into decks, quotes into threads, notebooks into courses. One lecture, endless content.' },
+]
+
+function ArtifactCarousel({ T }) {
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [idx, setIdx] = useState(0)
+  const [dir, setDir] = useState(1)
+  const [paused, setPaused] = useState(false)
+  const go = (n, d) => { setDir(d); setIdx((n + SCENES.length) % SCENES.length) }
+  useEffect(() => {
+    if (reduced || paused) return
+    const id = setInterval(() => go(idx + 1, 1), 5200)
+    return () => clearInterval(id)
+  }, [idx, paused, reduced])
+  const S = SCENES[idx]
+  const arrow = {
+    background: T.panel, border: `1px solid ${T.line}`, color: T.text, width: 44, height: 44,
+    borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0,
+  }
+  return (
+    <div style={{ padding: '58px 0 30px', textAlign: 'center' }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>look closer</div>
+      <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 0', maxWidth: '26ch', textWrap: 'balance' }}>
+        Every artifact, full size.
+      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,3vw,34px)', marginTop: 8 }}>
+        <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={arrow}>‹</button>
+        <div style={{ width: 'min(560px, 72vw)', height: 470, position: 'relative', overflow: 'hidden' }}>
+          <motion.div key={S.key}
+            initial={reduced ? false : { opacity: 0, x: 90 * dir, scale: .94 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 170, damping: 22 }}
+            style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+            <div style={{ height: 400, display: 'flex', alignItems: 'center' }}>
+              <div style={{ transform: 'scale(min(2.35, 1))' }} className="big-art"><S.C /></div>
+            </div>
+            <div style={{ color: T.text, fontSize: 19, fontWeight: 750, marginTop: -14 }}>{S.title}</div>
+            <div style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, maxWidth: '46ch', marginTop: 6 }}>{S.blurb}</div>
+          </motion.div>
+        </div>
+        <button aria-label="next" onClick={() => go(idx + 1, 1)} style={arrow}>›</button>
+      </div>
+      <style>{`.big-art{transform:scale(2.35)!important}@media(max-width:700px){.big-art{transform:scale(1.55)!important}}`}</style>
+      <div style={{ display: 'flex', gap: 7, justifyContent: 'center', marginTop: 6 }}>
+        {SCENES.map((s, i) => (
+          <button key={s.key} aria-label={s.title} onClick={() => go(i, i > idx ? 1 : -1)}
+            style={{ width: i === idx ? 22 : 8, height: 8, borderRadius: 5, border: 'none', cursor: 'pointer',
+              background: i === idx ? T.acc : T.line, transition: 'all .25s' }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function OutputShowcase({ T, onOpen }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const [cycle, setCycle] = useState(0)
@@ -1113,6 +1210,9 @@ function Landing({ onOpen }) {
           <motion.div variants={rise}><OutputShowcase T={T} onOpen={onOpen} /></motion.div>
         </motion.div>
       </div>
+
+      {/* LOOK CLOSER — full-size artifact carousel */}
+      <ArtifactCarousel T={T} />
 
       {/* BODY */}
       <div style={{ maxWidth: 940, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
