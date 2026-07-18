@@ -99,5 +99,6 @@ ingest.py  analyze.py  serve.py     # python pipeline + ask API
 app/src/    App.jsx widgets.jsx exporters.js main.jsx
 data/<videoId>/                     # per-video: transcript, frames, chapters, concepts
 spec/spec.md                        # build-from-scratch spec
-HACKATHON.md                        # rebuild playbook + agent plan
+docs/architecture.pdf|.html         # architecture diagram (previewable)
+docs/hackguide/                     # PLAN · STRATEGY · HACKATHON (hackathon docs)
 ```
