@@ -6,29 +6,55 @@ Run forever:    uv run ... agent/loop.py --interval 60
 """
 import argparse
 import time
-from agent import db, brain
+from agent import db, brain, tools
 
 DECIDE_SYSTEM = (
     "You are 8kEdu, an autonomous learning agent. On each heartbeat you decide the single next "
     "action that best advances the learner toward their goal. Actions: "
-    "FIND_VIDEO (search for a lecture on the weakest uncovered concept), "
-    "PROCESS_VIDEO (turn a found video into interactive widgets), "
-    "SEQUENCE (order the curriculum), "
+    "FIND_VIDEO (search for a lecture — set 'concept' to a good YouTube query), "
+    "PROCESS_VIDEO (turn the next planned video into interactive widgets), "
+    "SEQUENCE (the planned videos are enough; stop finding), "
     "MONITOR (check watched channels for new uploads), "
-    "IDLE (nothing needed this tick). "
-    'Return JSON: {"action": <one of above>, "concept": <string or null>, "why": <one sentence>}.'
+    "IDLE (nothing needed). "
+    "Prefer FIND_VIDEO when the curriculum has no planned videos; PROCESS_VIDEO when planned videos "
+    "await processing. "
+    'Return JSON: {"action": <one of above>, "concept": <query string or null>, "why": <one sentence>}.'
 )
 
 
 def tick(user_id, goal):
     curr = db.curriculum(goal["id"])
-    state = (f'Goal: "{goal["goal_text"]}". Curriculum has {len(curr)} items. '
-             f'{"No videos processed yet." if not curr else ""}')
+    planned = [c for c in curr if c["state"] == "planned"]
+    ready = [c for c in curr if c["state"] == "ready"]
+    state = (f'Goal: "{goal["goal_text"]}". Curriculum: {len(curr)} items '
+             f'({len(planned)} planned/unprocessed, {len(ready)} processed).')
     decision = brain.decide(DECIDE_SYSTEM, state)
     action = decision.get("action", "IDLE")
-    # P0: log the autonomous decision. (Tool execution wired in P1.)
-    run = db.log_run(user_id, "curriculum", decision, {"planned": action}, "ok")
-    print(f"[tick] {run['woke_at']}  decided={action}  why={decision.get('why','')[:80]}")
+    actions = {}
+
+    if action == "FIND_VIDEO":
+        q = decision.get("concept") or goal["goal_text"]
+        vids = tools.find_video(q, 3)
+        added = []
+        for v in vids[:1]:  # add the top hit to the course
+            if db.add_to_curriculum(goal["id"], v["id"], decision.get("why", "")):
+                added.append(v)
+        actions = {"query": q, "found": [v["title"][:60] for v in vids], "added": added}
+    elif action == "PROCESS_VIDEO":
+        nxt = db.next_unprocessed(goal["id"])
+        if nxt:
+            res = tools.process_video(nxt["video_id"])
+            db.mark_curriculum(nxt["id"], "ready")
+            actions = res
+        else:
+            actions = {"note": "nothing planned to process"}
+    elif action == "MONITOR":
+        actions = {"note": "monitor stub — Apify channel check"}
+
+    run = db.log_run(user_id, "curriculum", decision, actions, "ok")
+    print(f"[tick] {str(run['woke_at'])[11:19]}  {action:13} {decision.get('why','')[:70]}")
+    if actions:
+        print(f"        → {str(actions)[:110]}")
     return decision
 
 
