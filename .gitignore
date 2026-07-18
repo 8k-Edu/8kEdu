@@ -1,0 +1,11 @@
+data/*/video.*
+data/*/frames/
+data/pyodide-dist/
+data/pyodide
+.env
+serve.log
+nohup.out
+.venv/
+node_modules/
+__pycache__/
+dist/
