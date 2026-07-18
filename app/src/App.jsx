@@ -22,24 +22,31 @@ const ROLES = {
 
 const DEFAULT_URL = 'https://www.youtube.com/watch?v=kCc8FmEb1nY' // Karpathy — Let's build GPT
 
-// the showcase shelf — videos with pipeline data available, grouped by theme
+// the showcase shelf — videos with pipeline data available, grouped by theme.
+// `inside` = the real artifacts the agent produced from each (sneak peek).
 const CATEGORIES = [
   {
     name: 'AI & STEM', icon: '🧠',
     videos: [
-      { id: 'kCc8FmEb1nY', title: "Karpathy — Let's build GPT from scratch" },
+      { id: 'kCc8FmEb1nY', title: "Karpathy — Let's build GPT from scratch",
+        inside: { count: '55 touchable moments', mix: [['#79c0ff', 17], ['#ffab70', 16], ['#b48eff', 11], ['#56d364', 10], ['#ff9bce', 1]],
+          peek: [['57:11', 'Masked self-attention, live', '#ffab70'], ['106:38', 'GELU curve you can drag', '#56d364'], ['63:20', 'The tril trick — runnable numpy', '#ff9bce']] } },
     ],
   },
   {
     name: 'Real estate', icon: '🏠',
     videos: [
-      { id: 'BV6i8MNZ-BI', title: 'How to Buy your First House [Noob vs Pro] — $0 to Millionaire' },
+      { id: 'BV6i8MNZ-BI', title: 'How to Buy your First House [Noob vs Pro] — $0 to Millionaire',
+        inside: { count: '6 live calculators', mix: [['#ff9bce', 6]],
+          peek: [['5:30', 'Mortgage & PMI calculator', '#ff9bce'], ['2:20', 'Cost of waiting: Noob vs Pro', '#ff9bce'], ['9:10', 'Sell vs hold — your numbers', '#ff9bce']] } },
     ],
   },
   {
     name: 'Fintech & markets', icon: '💰',
     videos: [
-      { id: '3FZipnSI_po', title: 'Andrei Jikh — Japan Just Broke the Global Economy' },
+      { id: '3FZipnSI_po', title: 'Andrei Jikh — Japan Just Broke the Global Economy',
+        inside: { count: '8 live simulators', mix: [['#ff9bce', 8]],
+          peek: [['6:50', 'Yen carry trade simulator', '#ff9bce'], ['18:40', 'DCA vs currency devaluation', '#ff9bce'], ['17:00', 'Debt sustainability curve', '#ff9bce']] } },
     ],
   },
 ]
@@ -1284,17 +1291,53 @@ function Landing({ onOpen }) {
                 <span style={{ fontSize: 14.5, fontWeight: 700, color: T.text }}>{cat.icon} {cat.name}</span>
                 <span style={{ fontSize: 11.5, color: T.faint }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
-                {cat.videos.map(v => (
-                  <button key={v.id} className="edu-card" onClick={() => onOpen(v.id)} style={{
-                    textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12,
-                    padding: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                    <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
-                      style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
-                    <div style={{ padding: '8px 10px 10px' }}>
-                      <span style={{ fontSize: 12.5, color: T.text, lineHeight: 1.4 }}>{v.title}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 12 }}>
+                {cat.videos.map((v, vi) => (
+                  <motion.button key={v.id} onClick={() => onOpen(v.id)}
+                    initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ delay: vi * .08, type: 'spring', stiffness: 170, damping: 20 }}
+                    whileHover="peek" animate="rest"
+                    style={{ textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
+                      padding: 0, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
+                    <div style={{ position: 'relative', overflow: 'hidden' }}>
+                      <motion.img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
+                        variants={{ rest: { scale: 1 }, peek: { scale: 1.06 } }}
+                        transition={{ type: 'spring', stiffness: 160, damping: 20 }}
+                        style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+                      {/* sneak peek — what the agent produced, slides up on hover */}
+                      <motion.div
+                        variants={{ rest: { y: '102%' }, peek: { y: 0 } }}
+                        transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+                        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: '#0a0d08f2', padding: '10px 12px 9px', borderTop: `1px solid ${T.acc}44` }}>
+                        <div style={{ fontFamily: mono, fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: '#8ee23e', marginBottom: 6 }}>inside — made by the agent</div>
+                        {v.inside.peek.map(([t, label, c]) => (
+                          <div key={t} style={{ display: 'flex', gap: 7, alignItems: 'center', marginTop: 3.5 }}>
+                            <span style={{ fontFamily: mono, fontSize: 9, color: '#79c0ff', background: '#1f6feb22', borderRadius: 3, padding: '1px 4px', flexShrink: 0 }}>{t}</span>
+                            <span style={{ width: 6, height: 6, borderRadius: 3, background: c, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, color: '#e6edf3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                          </div>
+                        ))}
+                      </motion.div>
                     </div>
-                  </button>
+                    <div style={{ padding: '9px 11px 11px' }}>
+                      <div style={{ fontSize: 12.5, color: T.text, lineHeight: 1.4 }}>{v.title}</div>
+                      {/* the widget mix as a colored strip — real distribution */}
+                      <div style={{ display: 'flex', gap: 2, height: 5, borderRadius: 3, overflow: 'hidden', marginTop: 8 }}>
+                        {v.inside.mix.map(([c, n], i) => (
+                          <motion.span key={i}
+                            initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: .3 + i * .09, duration: .5, ease: 'easeOut' }}
+                            style={{ flex: n, background: c, transformOrigin: 'left', borderRadius: 2 }} />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 7 }}>
+                        <span style={{ fontFamily: mono, fontSize: 10, color: T.acc }}>{v.inside.count}</span>
+                        <span style={{ fontFamily: mono, fontSize: 10, color: T.faint }}>hover to peek · open →</span>
+                      </div>
+                    </div>
+                  </motion.button>
                 ))}
               </div>
             </div>
