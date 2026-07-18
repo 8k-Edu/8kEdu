@@ -168,10 +168,14 @@ def dashboard_state(limit=12):
         g = cur.fetchone()
         goal = g["goal_text"] if g else None
 
+        cur.execute("select channel_id, last_checked, last_video_id from monitored_channels order by id")
+        channels = [dict(r) for r in cur.fetchall()]
+
     return {
         "goal": goal,
         "runs": runs,
         "curriculum": curriculum,
+        "channels": channels,
         "cache": {
             "concepts_cached": concepts_cached,
             "videos_cached": videos_cached,
