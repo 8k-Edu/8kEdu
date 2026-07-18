@@ -1,0 +1,64 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Risotto Rice to Stock Ratio Calculator",
+  "explanation": "Adjust the rice amount to instantly see how much stock is needed for perfect risotto.",
+  "params": {
+   "cells": [
+    "stock_cups = rice_cups * stock_multiplier\nprint(f\"For {rice_cups} cup(s) of rice, you need {stock_cups:.1f} cups of stock.\")"
+   ],
+   "sliders": [
+    {
+     "name": "rice_cups",
+     "type": "float",
+     "default": 1.0
+    },
+    {
+     "name": "stock_multiplier",
+     "type": "float",
+     "default": 5.0
+    }
+   ]
+  },
+  "time": 10,
+  "frame": "f_000010.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Risotto Stock Ratio Calculator",
+  "explanation": "Adjusting the rice\u2011to\u2011stock proportion controls creaminess and prevents overflow, ensuring perfect risotto texture.",
+  "params": {
+   "expr": "total_volume = rice_cups + stock_cups",
+   "sliders": [
+    {
+     "name": "rice_cups",
+     "default": 1.0
+    },
+    {
+     "name": "stock_cups",
+     "default": 5.0
+    }
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Risotto Recipe Scaler",
+  "explanation": "Changing the serving size updates ingredient quantities and total cooking time.",
+  "params": {
+   "cells": [
+    "import numpy as np\\nimport matplotlib.pyplot as plt\\n\\ndef compute():\\n    total_time = 20 + (servings/4) * 5\\n    rice_cups = 1 * (servings/4)\\n    stock_cups = 2 * (servings/4)\\n    shallots_cups = 0.5 * (servings/4)\\n    xs = np.arange(1, 10)\\n    ys = 20 + (xs/4) * 5\\n    plt.plot(xs, ys)\\n    plt.xlabel('Servings')\\n    plt.ylabel('Total Time (min)')\\n    plt.title('Risotto Cooking Time vs Servings')\\n    plt.show()\\n    print(f'Total time: {total_time} min')\\n    print(f'Rice: {rice_cups} cups')\\n    print(f'Stock: {stock_cups} cups')\\n    print(f'Shallots: {shallots_cups} cups')\\n\\ncompute()"
+   ],
+   "sliders": [
+    "servings"
+   ]
+  },
+  "time": 70,
+  "frame": "f_000070.jpg"
+ }
+]
