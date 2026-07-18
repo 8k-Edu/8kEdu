@@ -86,6 +86,19 @@ cd app && npm run dev                            # http://localhost:5173
 
 Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` / `openai` (any OpenAI-compatible endpoint via `TACTILE_BASE_URL`/`TACTILE_MODEL`) · `gemini` (BYOK).
 
+### The autonomous agent + live dashboard
+
+```bash
+# heartbeat loop — Nemotron decides FIND / PROCESS / SEQUENCE / MONITOR each tick
+uv run --with openai --with psycopg2-binary agent/loop.py --interval 60
+
+# dashboard API (light, no VLM) — powers ?view=agent
+uv run --with fastapi --with uvicorn --with psycopg2-binary agent/api.py   # :8787, vite proxies /agent → here
+```
+Then open **http://localhost:5173/?view=agent** (or `dev.localhost:5174` on the dev branch) — the live
+heartbeat feed, the curriculum building itself, the cache moat, and the OpenShell containment status.
+Containment is applied + proven separately: see [`claw-agent/`](claw-agent/).
+
 > **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `TACTILE_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`) is unrestricted. Secrets live in a gitignored `.env`.
 
 Pyodide (for notebook widgets) is vendored under `data/pyodide-dist/` for offline use.
