@@ -1825,8 +1825,10 @@ const ACTION_STYLE = {
   PROCESS_VIDEO: { c: '#56d364', label: 'process', glyph: '⚙' },
   SEQUENCE: { c: '#b48eff', label: 'sequence', glyph: '✓' },
   MONITOR: { c: '#ffab70', label: 'monitor', glyph: '📡' },
+  CURATE: { c: '#8ee23e', label: 'curate', glyph: '📚' },
   IDLE: { c: '#8b9682', label: 'idle', glyph: '·' },
 }
+const GENRE_LABEL = { ai_stem: 'AI & STEM', how_to: 'How-To', cooking: 'Cooking', finance: 'Finance', real_estate: 'Real estate', fitness: 'Fitness', unknown: 'Uncategorized' }
 const tclock = (iso) => { try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) } catch { return '' } }
 
 function StatTile({ T, label, value, sub, accent }) {
@@ -1869,6 +1871,7 @@ function AgentDashboard({ onExit }) {
   const runs = state?.runs || []
   const curriculum = state?.curriculum || []
   const channels = state?.channels || []
+  const library = state?.library || []
   const cache = state?.cache || { concepts_cached: 0, videos_cached: 0, reuses: 0, widgets_served_free: 0 }
 
   return (
@@ -1999,6 +2002,27 @@ function AgentDashboard({ onExit }) {
               ))}
               {!channels.length && <div style={{ color: T.faint, fontSize: 13, padding: '4px 0' }}>no channels watched yet</div>}
             </div>
+
+            {/* curator — the library growing itself per genre */}
+            {library.length > 0 && (
+              <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 750 }}>Library, growing itself</span>
+                  <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, color: '#8ee23e', background: '#8ee23e1f', borderRadius: 5, padding: '2px 7px', marginLeft: 'auto' }}>📚 curator</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: T.muted, marginBottom: 12 }}>a 2nd agent finds + frames new videos per genre — cached for every learner</div>
+                {(() => { const max = Math.max(...library.map(l => l.videos), 1); return library.map(l => (
+                  <div key={l.genre} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '5px 0' }}>
+                    <span style={{ fontSize: 12, color: T.text, width: 96, flexShrink: 0 }}>{GENRE_LABEL[l.genre] || l.genre}</span>
+                    <div style={{ flex: 1, height: 8, background: T.line, borderRadius: 4, overflow: 'hidden' }}>
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${(l.videos / max) * 100}%` }} transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                        style={{ height: '100%', background: '#8ee23e', borderRadius: 4 }} />
+                    </div>
+                    <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, width: 20, textAlign: 'right' }}>{l.videos}</span>
+                  </div>
+                )) })()}
+              </div>
+            )}
 
             {/* containment strip */}
             <div style={{ background: T.panel, border: `1px solid ${contain?.active ? T.acc + '55' : T.line}`, borderRadius: 16, padding: '16px' }}>
