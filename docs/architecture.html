@@ -1,0 +1,161 @@
+<style>
+  :root{
+    --bg:#f4f6f3; --card:#ffffff; --ink:#12160f; --muted:#5b6656; --line:#dde3d8;
+    --nv:#5c9500; --nv-ink:#3f6800; --blue:#2f6fed; --red:#d1382c;
+    --chip:#eef3e8; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0c0f0a; --card:#12160f; --ink:#e8ede2; --muted:#8f9a86; --line:#242c1e;
+      --nv:#8ccb2e; --nv-ink:#a6dd4e; --blue:#6ea0ff; --red:#ff6b5e; --chip:#18200f; }
+  }
+  :root[data-theme="dark"]{ --bg:#0c0f0a; --card:#12160f; --ink:#e8ede2; --muted:#8f9a86; --line:#242c1e;
+    --nv:#8ccb2e; --nv-ink:#a6dd4e; --blue:#6ea0ff; --red:#ff6b5e; --chip:#18200f; }
+  :root[data-theme="light"]{ --bg:#f4f6f3; --card:#ffffff; --ink:#12160f; --muted:#5b6656; --line:#dde3d8;
+    --nv:#5c9500; --nv-ink:#3f6800; --blue:#2f6fed; --red:#d1382c; --chip:#eef3e8; }
+
+  *{box-sizing:border-box}
+  .wrap{max-width:940px;margin:0 auto;padding:48px 24px 80px;color:var(--ink);
+    background:var(--bg);font-family:var(--sans);line-height:1.55}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--nv-ink);font-weight:600}
+  h1{font-size:clamp(34px,6vw,52px);line-height:1.02;margin:.3em 0 .1em;letter-spacing:-.02em;text-wrap:balance}
+  .one{font-size:clamp(17px,2.6vw,22px);font-weight:650;margin:.2em 0 .1em}
+  .sub{color:var(--muted);font-size:16px;max-width:60ch}
+  h2{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+  section{margin-top:52px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font-family:var(--mono);font-size:12.5px;background:var(--chip);border:1px solid var(--line);
+    color:var(--ink);border-radius:999px;padding:6px 12px}
+  .chip b{color:var(--nv-ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .diagram{padding:14px;overflow-x:auto;margin-top:18px}
+  .diagram pre.mermaid{background:#fbfdf8;border-radius:10px;padding:14px;min-width:640px;margin:0}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  td:first-child{white-space:nowrap;font-weight:600}
+  .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.03em}
+  .tag.nv{background:var(--chip);color:var(--nv-ink);border:1px solid var(--line)}
+  .tag.dat{background:transparent;color:var(--blue);border:1px solid var(--line)}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--chip);padding:1px 5px;border-radius:4px}
+  .meters{display:grid;gap:14px;margin-top:18px}
+  .meter{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+  .meter .name{font-family:var(--mono);font-size:12.5px}
+  .meter .name b{display:block;font-family:var(--sans);font-size:15px;color:var(--ink)}
+  .bar{height:auto;background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13.5px;color:var(--muted)}
+  .bar b{color:var(--ink);font-weight:600}
+  .loop{font-family:var(--mono);font-size:13px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:18px;overflow-x:auto;white-space:pre;color:var(--ink);margin-top:16px;line-height:1.5}
+  .blk{color:var(--red);font-weight:700}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;font-family:var(--mono)}
+  @media (max-width:560px){ .meter{grid-template-columns:1fr} }
+</style>
+
+<div class="wrap">
+  <p class="sr-only">8kEdu autonomous learning agent — architecture and hackathon bounty strategy.</p>
+
+  <header>
+    <p class="eyebrow">AITX × NVIDIA Claw Agent Hackathon · Jul 17–19</p>
+    <h1>8kEdu</h1>
+    <p class="one">YouTube video → interactive learning dashboard</p>
+    <p class="sub">An <b>autonomous learning agent</b>: give it a goal, it builds and maintains your course — finding lectures, turning each into live widgets, tracking mastery, watching for new uploads — all on a heartbeat, no prompting.</p>
+    <div class="chips">
+      <span class="chip">✓ <b>heartbeat-driven</b> — wakes on a loop, not a prompt</span>
+      <span class="chip">✓ <b>proactively autonomous</b> — finds, builds, recovers</span>
+      <span class="chip">✓ <b>persistent</b> — Supabase workspace + memory</span>
+    </div>
+  </header>
+
+  <section>
+    <p class="eyebrow">Architecture</p>
+    <h2>One heartbeat, a contained brain, a shared-cache memory</h2>
+    <div class="card diagram">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'ui-monospace,monospace','fontSize':'13px','primaryColor':'#eef3e8','primaryBorderColor':'#5c9500','primaryTextColor':'#12160f','lineColor':'#8a9a7d','clusterBkg':'#f6faf0','clusterBorder':'#bcd39a'}}}%%
+flowchart TB
+  L["Learner<br/>sets Goal + Channels"] --> HB
+  HB(["HEARTBEAT · OpenClaw Cron<br/>wakes on interval → checks state → acts / waits"])
+  HB -. "JOB 1 · build curriculum" .-> BRAIN
+  HB -. "JOB 2 · monitor channels" .-> BRAIN
+
+  subgraph SB ["NemoClaw harness · OpenShell sandbox — CONTAINED"]
+    BRAIN["Nemotron-3-Nano-Omni · 30B-A3B<br/>vision + reasoning + tool-calling · local · $0<br/>reads frames · plans course · generates widgets · grades"]
+    BRAIN --> T1["find_videos<br/>Apify"]
+    BRAIN --> T2["process_video<br/>frames → omni → widget spec"]
+    BRAIN --> T3["run_widget<br/>pyodide · executes Python"]
+    BRAIN --> T4["persist<br/>Supabase"]
+    T1 --> POL
+    T2 --> POL
+    T3 --> POL
+    T4 --> POL
+    POL["OpenShell policy — network allowlist (youtube · apify · supabase) + fs guard<br/>off-list host or ~/.ssh → BLOCKED + logged"]
+  end
+
+  POL --> DB
+  subgraph DB ["Supabase — persistent memory"]
+    G["GLOBAL CACHE (video-keyed)<br/>videos · transcripts · frames · concepts · inference<br/>computed once · reused for every user → marginal cost ~0"]
+    U["PER-USER STATE<br/>goals · curriculum · mastery · monitored_channels · runs"]
+  end
+  DB --> DASH["8kEdu dashboard<br/>interactive course · mastery map · quizzes · alerts"]
+  DASH -. "quiz results → re-plan (recursive)" .-> HB
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Coverage</p>
+    <h2>Every requirement, bounty, and track — mapped to a real part of the build</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Target</th><th>Kind</th><th>How 8kEdu hits it</th></tr></thead>
+      <tbody>
+        <tr><td>Heartbeat</td><td><span class="tag nv">claw-agent</span></td><td>OpenClaw Cron wakes on interval → reads Supabase state → advances curriculum or checks channels → acts or waits. Trigger is time/state, never a human message.</td></tr>
+        <tr><td>Autonomous</td><td><span class="tag nv">claw-agent</span></td><td>Finds lectures, builds & repairs the curriculum, generates + verifies widgets, alerts on new uploads, recovers from interruption via persisted state — all unprompted.</td></tr>
+        <tr><td>Persistent</td><td><span class="tag nv">claw-agent</span></td><td>Supabase = the agent's workspace/memory/session: learner model, course, mastery, run log. Literally the requirement.</td></tr>
+        <tr><td>NemoClaw + OpenShell</td><td><span class="tag nv">bounty</span></td><td><code>nemoclaw onboard --agents agents.yaml</code>. Agent has web (Apify/yt-dlp) + <b>exec</b> (runs generated Python) → genuinely worth containing. OpenShell allowlists youtube/apify/supabase + guards the filesystem. <b>Demo:</b> agent reaches an off-list host or <code>~/.ssh</code> → <span class="blk">blocked + logged</span>.</td></tr>
+        <tr><td>Nemotron</td><td><span class="tag nv">bounty</span></td><td><code>nemotron-3-nano-omni</code> is the <b>whole brain</b> — one model reads video frames (omni vision), plans the course, generates widget specs, grades quizzes, calls tools. "Why": multimodal + thinking budget + tool-calling in one open, sandbox-runnable model.</td></tr>
+        <tr><td>vLLM</td><td><span class="tag nv">bounty</span></td><td>Blueprint <code>vllm</code> serving profile hosts Nemotron; local LM Studio proves the loop today.</td></tr>
+        <tr><td>Supabase</td><td><span class="tag dat">sponsor</span></td><td>Two tiers: global content cache (compute once, reuse for all users) + per-user state. Postgres + realtime for the alert stream. The caching moat.</td></tr>
+        <tr><td>Apify</td><td><span class="tag dat">sponsor</span></td><td>Discovers lectures for a goal and monitors channels for new uploads — the heartbeat's eyes on the world.</td></tr>
+        <tr><td>Most Commercializable</td><td><span class="tag nv">bounty</span></td><td>A personal AI tutor that auto-builds your course from YouTube — obvious market, near-zero marginal cost via the shared cache.</td></tr>
+        <tr><td>Recursive Intelligence</td><td><span class="tag dat">track</span></td><td>Quiz performance feeds back each cycle → the agent re-sequences the curriculum and re-picks sources. Self-improving.</td></tr>
+        <tr><td>Frontier factor</td><td><span class="tag dat">judging</span></td><td>Creativity: a contained, code-executing learning agent. Performance: global cache + small-active (A3B) model = fast + scales to many learners.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Judging · 100 points</p>
+    <h2>Where the score comes from</h2>
+    <div class="meters">
+      <div class="meter"><div class="name"><b>Technical</b>30 pts</div><div class="bar">Real pipeline, not a wrapper: heartbeat loop + 4 sandboxed tools + omni brain + 2-tier DB. <b>Completes its core workflow without crashing.</b></div></div>
+      <div class="meter"><div class="name"><b>Sponsor use</b>30 pts</div><div class="bar">Six sponsors, each load-bearing: <b>NemoClaw · OpenShell · Nemotron · Supabase · Apify · vLLM</b> — with a one-line "why" for each.</div></div>
+      <div class="meter"><div class="name"><b>Value</b>20 pts</div><div class="bar">Non-obvious + usable tomorrow: paste a goal, get a maintained interactive course you can act on.</div></div>
+      <div class="meter"><div class="name"><b>Frontier</b>20 pts</div><div class="bar">Novel combo (contained code-gen learning agent) + performance (shared cache, A3B active params).</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The loop</p>
+    <h2>What runs every heartbeat</h2>
+    <div class="loop">HEARTBEAT (OpenClaw Cron) — wake, read state from Supabase:
+
+  JOB 1 · advance curriculum
+    goal not met?
+      gap in coverage  → Apify: find a lecture for the weakest concept
+      unprocessed video → process_video: frames → omni → widgets
+      new material      → Nemotron: re-sequence course, update mastery
+    else → idle till next tick
+
+  JOB 2 · monitor channels
+    new upload since last cycle? → build its dashboard → alert learner
+
+  every cycle → write run log + state (recoverable)
+  quiz results → re-plan next cycle   <span class="blk">(recursive intelligence)</span></div>
+  </section>
+
+  <p class="foot">8kEdu · autonomous learning agent · NemoClaw + OpenShell · Nemotron omni · Supabase · Apify</p>
+</div>
