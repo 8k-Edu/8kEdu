@@ -96,6 +96,52 @@ Reply with ONLY a JSON object:
 
 ALLOWED = {"matrix_mul", "attention", "softmax", "function_plot", "notebook"}
 
+# S_g — genre-conditioned system prompts. The artifact equation:
+#   A_i = M(S_g, m_i ⊕ {f_i..f_n} ⊕ Tr_i), cached on (video, i, g) and reused for every learner.
+# Genre picks the lens the model reads the frame through (taxonomy grows toward 20-100 genres).
+GENRE_PROMPTS = {
+    "ai_stem": (
+        "This is an AI/STEM lecture. Favor matrix_mul/attention/softmax for the linear-algebra "
+        "moments, function_plot for curves, notebook whenever code is on screen. Reproduce the "
+        "speaker's tensors and shapes exactly; translate torch to numpy faithfully."
+    ),
+    "finance": (
+        "This is a finance/markets video. The manipulable concept is the CALCULATION behind each "
+        "claim — emit notebook calculators with sliders for the numbers a viewer would change "
+        "(principal, rate, years, fees, allocation) and cells that compute and plot the outcome "
+        "(compound growth, cash flow, drawdown). Ground defaults in the speaker's actual numbers."
+    ),
+    "real_estate": (
+        "This is a real-estate video. Every claim hides a calculator: mortgage payment, PMI, "
+        "down-payment %, rent-vs-buy, appreciation vs opportunity cost, sell-vs-hold. Emit "
+        "notebook calculators with sliders for those inputs, defaults from the speaker's numbers."
+    ),
+}
+GENRE_KEYWORDS = {
+    "ai_stem": ["matrix", "neural", "gradient", "attention", "token", "tensor", "model", "training"],
+    "finance": ["invest", "stock", "market", "portfolio", "dollar", "inflation", "interest rate", "economy"],
+    "real_estate": ["house", "mortgage", "down payment", "rent", "property", "real estate", "closing"],
+}
+
+
+def detect_genre(cues: list[dict]) -> str:
+    """Cheap g = G(Tr) — keyword vote over the first ~10 minutes of transcript."""
+    text = " ".join(c["text"] for c in cues[:600]).lower()
+    scores = {g: sum(text.count(k) for k in kws) for g, kws in GENRE_KEYWORDS.items()}
+    best = max(scores, key=scores.get)
+    return best if scores[best] >= 3 else "general"
+
+
+def apply_genre(genre: str) -> str:
+    """Compose SYSTEM = base ⊕ S_g. 'general' keeps the base prompt as-is."""
+    global SYSTEM
+    block = GENRE_PROMPTS.get(genre)
+    if block:
+        SYSTEM = SYSTEM.replace(
+            "Reply with ONLY a JSON object:",
+            f"GENRE LENS ({genre}): {block}\n\nReply with ONLY a JSON object:")
+    return genre
+
 
 def transcript_window(cues: list[dict], t: float, radius: float = 30.0) -> str:
     return " ".join(c["text"] for c in cues if t - radius <= c["start"] <= t + radius)[:1500]
@@ -272,6 +318,8 @@ def main() -> None:
     ap.add_argument("--start", type=int, default=0, help="skip first N frames")
     ap.add_argument("--out-name", default="concepts.json",
                     help="output filename (use e.g. concepts.mlx.json for eval runs)")
+    ap.add_argument("--genre", default="auto",
+                    help=f"system-prompt lens: auto|general|{'|'.join(GENRE_PROMPTS)}")
     args = ap.parse_args()
     data = Path(args.data) / args.video if args.video else Path(args.data)
 
@@ -281,6 +329,8 @@ def main() -> None:
     if args.limit:
         frames = frames[: args.limit]
 
+    genre = apply_genre(detect_genre(cues) if args.genre == "auto" else args.genre)
+    print(f"genre lens: {genre}")
     backend = make_backend(args.backend)
 
     concepts = []
