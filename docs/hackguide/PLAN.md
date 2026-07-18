@@ -81,7 +81,10 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] proven live: bootstrap → 0 added (baseline), then 2 new uploads detected → curriculum 1→3
 
 **P4 — submit (Sun AM)**
-- [ ] Harden the loop (don't crash = 15 pts) · demo video · the 6 sponsor "why" blurbs · submit by 11:00
+- [x] Harden the loop — heuristic fallback + per-action/-channel error isolation + failed runs logged; never crashes
+- [x] [`SUBMISSION.md`](SUBMISSION.md) — what-it-is, 6 sponsor "why" blurbs, 100-pt rubric self-map
+- [x] [`DEMO.md`](DEMO.md) — 2-min runbook (5 scenes) + `run.sh` one-command startup + `contain_demo.sh`
+- [ ] **YOURS:** record the demo video (follow DEMO.md) · submit on the platform by 11:00
 
 ---
 
