@@ -1,0 +1,113 @@
+<!doctype html><html><head><meta charset="utf-8"><title>8kEdu — Architecture</title>
+<style>
+  @page{ size:A4; margin:16mm 14mm; }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:#12160f;line-height:1.5;font-size:12.5px;margin:0}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  h1{font-size:30px;letter-spacing:-.02em;margin:0 0 2px}
+  .one{font-size:15px;font-weight:650;color:#3f6800;margin:0 0 2px}
+  .sub{color:#5b6656;margin:0 0 18px;max-width:64ch}
+  h2{font-size:15px;margin:22px 0 6px;padding-bottom:4px;border-bottom:1px solid #dde3d8}
+  .eyebrow{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5c9500;font-weight:700}
+  p{margin:6px 0} ul{margin:6px 0 6px 18px;padding:0} li{margin:3px 0}
+  code{font-family:ui-monospace,monospace;font-size:11px;background:#eef3e8;padding:1px 4px;border-radius:3px}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11.5px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #dde3d8;vertical-align:top}
+  th{font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#5b6656}
+  td:first-child{white-space:nowrap;font-weight:600}
+  .loop{font-family:ui-monospace,monospace;font-size:11px;background:#f6faf0;border:1px solid #dde3d8;border-radius:8px;padding:12px;white-space:pre;line-height:1.45}
+  .blk{color:#c0392b;font-weight:700}
+  .foot{margin-top:22px;padding-top:8px;border-top:1px solid #dde3d8;color:#8a9a86;font-size:10px;font-family:ui-monospace,monospace}
+  svg{width:100%;height:auto}
+  .avoidbreak{break-inside:avoid}
+</style></head><body>
+
+<p class="eyebrow">Developer architecture</p>
+<h1>8kEdu</h1>
+<p class="one">YouTube video → interactive learning dashboard</p>
+<p class="sub">An autonomous learning agent: give it a goal, it builds and maintains your course on a heartbeat — finding lectures, turning each into live widgets, tracking mastery, watching for new uploads — with no step-by-step prompting.</p>
+
+<h2>System at a glance</h2>
+<div class="avoidbreak">
+<svg viewBox="0 0 720 470" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, monospace">
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a9a7d"/></marker>
+  <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5c9500"/></marker></defs>
+  <style>.b{rx:8;stroke-width:1.3} .t{fill:#12160f;font-size:11px} .s{fill:#5b6656;font-size:9.5px} .h{fill:#12160f;font-size:11.5px;font-weight:700}
+    .grn{fill:#eef3e8;stroke:#5c9500} .blu{fill:#eaf1ff;stroke:#2f6fed} .neu{fill:#f5f7f2;stroke:#c9d3bf} .red{fill:#fbeeec;stroke:#c0392b}</style>
+
+  <rect x="14" y="14" width="200" height="42" class="neu b"/><text x="26" y="33" class="h">Learner</text><text x="26" y="48" class="s">sets a goal or video URL</text>
+  <rect x="260" y="14" width="200" height="42" class="grn b"/><text x="272" y="31" class="t" font-weight="700">HEARTBEAT · OpenClaw Cron</text><text x="272" y="47" class="s">wakes on interval → acts / waits</text>
+  <line x1="214" y1="35" x2="258" y2="35" stroke="#8a9a7d" stroke-width="1.3" marker-end="url(#a)"/>
+
+  <!-- sandbox -->
+  <rect x="14" y="78" width="500" height="238" rx="12" fill="none" stroke="#5c9500" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="28" y="98" fill="#3f6800" font-size="10" font-weight="700">NEMOCLAW HARNESS · OPENSHELL SANDBOX — contained</text>
+  <line x1="360" y1="56" x2="360" y2="76" stroke="#5c9500" stroke-width="1.3" marker-end="url(#ag)"/>
+
+  <rect x="30" y="110" width="468" height="52" class="grn b"/><text x="44" y="132" class="h">Nemotron-3-Nano-Omni · 30B-A3B</text>
+  <text x="44" y="150" class="s">reads video frames (vision) · reasons · generates widgets · grades · calls tools · local · $0</text>
+
+  <rect x="30" y="176" width="112" height="56" class="neu b"/><text x="42" y="197" class="t">find_videos</text><text x="42" y="212" class="s">Apify · search</text><text x="42" y="225" class="s">& monitor</text>
+  <rect x="150" y="176" width="120" height="56" class="neu b"/><text x="162" y="197" class="t">process_video</text><text x="162" y="212" class="s">frames → omni</text><text x="162" y="225" class="s">→ widget spec</text>
+  <rect x="278" y="176" width="112" height="56" class="neu b"/><text x="290" y="197" class="t">run_widget</text><text x="290" y="212" class="s">pyodide runs</text><text x="290" y="225" class="s">Python</text>
+  <rect x="398" y="176" width="100" height="56" class="blu b"/><text x="410" y="197" class="t">persist</text><text x="410" y="212" class="s">Supabase</text>
+
+  <rect x="30" y="246" width="468" height="58" class="red b"/><text x="44" y="266" fill="#c0392b" font-size="10" font-weight="700">OPENSHELL POLICY</text>
+  <text x="44" y="283" class="s">network allowlist: youtube · apify · supabase only  ·  filesystem read-only guard</text>
+  <text x="44" y="297" class="t">off-list host or ~/.ssh → <tspan class="blk">BLOCKED + logged</tspan></text>
+
+  <!-- jobs -->
+  <rect x="536" y="78" width="170" height="110" class="neu b"/><text x="548" y="98" fill="#3f6800" font-size="9.5" font-weight="700">JOB 1 · curriculum</text>
+  <text x="548" y="114" class="s">find → process →</text><text x="548" y="127" class="s">sequence → mastery</text>
+  <text x="548" y="150" fill="#3f6800" font-size="9.5" font-weight="700">JOB 2 · monitor</text><text x="548" y="166" class="s">new upload →</text><text x="548" y="179" class="s">auto-build</text>
+  <line x1="514" y1="130" x2="534" y2="130" stroke="#8a9a7d" stroke-width="1.3" marker-end="url(#a)"/>
+
+  <!-- supabase -->
+  <rect x="14" y="336" width="500" height="86" class="blu b"/><text x="28" y="356" fill="#2f6fed" font-size="10" font-weight="700">SUPABASE — persistent memory</text>
+  <rect x="28" y="364" width="238" height="48" rx="6" fill="#fff" stroke="#2f6fed"/><text x="40" y="382" class="t">GLOBAL CACHE (video-keyed)</text><text x="40" y="398" class="s">transcripts · frames · concepts · inference — reuse ∀ users</text>
+  <rect x="276" y="364" width="226" height="48" rx="6" fill="#fff" stroke="#2f6fed"/><text x="288" y="382" class="t">PER-USER STATE</text><text x="288" y="398" class="s">goals · curriculum · mastery · runs</text>
+  <line x1="264" y1="304" x2="264" y2="334" stroke="#2f6fed" stroke-width="1.3" marker-end="url(#a)" opacity=".7"/>
+
+  <!-- dashboard -->
+  <rect x="536" y="336" width="170" height="86" class="neu b"/><text x="548" y="358" class="h">8kEdu dashboard</text><text x="548" y="376" class="s">interactive course</text><text x="548" y="390" class="s">mastery · quizzes</text><text x="548" y="404" class="s">proactive alerts</text>
+  <line x1="514" y1="379" x2="534" y2="379" stroke="#8a9a7d" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="620" y1="336" x2="620" y2="190" stroke="#8a9a7d" stroke-width="1.1" marker-end="url(#a)" opacity=".5" stroke-dasharray="3 3"/>
+  <text x="628" y="270" class="s" transform="rotate(0)">progress</text><text x="628" y="282" class="s">re-plans</text>
+</svg>
+</div>
+
+<h2>Components</h2>
+<table>
+  <tr><th>Layer</th><th>What it is</th></tr>
+  <tr><td>Agent harness</td><td>NemoClaw runs an OpenClaw agent inside an OpenShell sandbox; heartbeat via OpenClaw Cron jobs.</td></tr>
+  <tr><td>Brain</td><td><code>nemotron-3-nano-omni</code> (30B-A3B, ~3B active) — one omni model does vision, reasoning, and tool-calling. Runs local (LM Studio / vLLM profile).</td></tr>
+  <tr><td>Tools</td><td><code>find_videos</code> (Apify), <code>process_video</code> (yt-dlp + ffmpeg frames → omni → concept spec), <code>run_widget</code> (pyodide), <code>persist</code> (Supabase).</td></tr>
+  <tr><td>Containment</td><td>OpenShell policy: per-binary network egress allowlist (<code>enforce</code>/<code>audit</code>) + filesystem read-only/read-write + landlock.</td></tr>
+  <tr><td>Memory</td><td>Supabase Postgres, two tiers — global content cache (shared across users) + per-user learner state.</td></tr>
+  <tr><td>Surface</td><td>Vite + React dashboard: player, timeline, transcript, live widgets, notebooks, exports.</td></tr>
+</table>
+
+<h2>Data model — two tiers</h2>
+<p><b>Global cache</b> (keyed by YouTube video id, shared by all learners): <code>videos · transcripts · frames · concepts · inference_cache</code>. A video is analyzed once; every learner reuses it, so marginal cost approaches zero. <b>Per-user state</b>: <code>goals · curriculum · mastery · monitored_channels · runs</code> — the agent's recoverable workspace and session history.</p>
+
+<h2 class="avoidbreak">The heartbeat loop</h2>
+<div class="loop avoidbreak">HEARTBEAT (OpenClaw Cron) — wake, read state from Supabase:
+
+  JOB 1 · advance curriculum
+    goal not met?
+      gap in coverage  → Apify: find a lecture for the weakest concept
+      unprocessed video → process_video: frames → omni → widgets
+      new material      → Nemotron: re-sequence course, update mastery
+    else → idle till next tick
+
+  JOB 2 · monitor channels
+    new upload since last cycle? → build its dashboard → alert learner
+
+  every cycle → write run log + state (recoverable)
+  quiz results → re-plan next cycle</div>
+
+<h2>Run locally</h2>
+<p><code>uv sync</code> and <code>cd app &amp;&amp; npm install</code>, then <code>npm run dev</code> (frontend, pre-baked demos work with zero model calls). To process a new video: <code>uv run ingest.py "&lt;url&gt;"</code> → <code>uv run analyze.py --backend mlx --video &lt;id&gt;</code> → <code>uv run serve.py --backend mlx</code>. Cloud backends are blocked unless <code>TACTILE_ALLOW_CLOUD=1</code>.</p>
+
+<p class="foot">8kEdu · autonomous learning agent · NemoClaw + OpenShell · Nemotron Omni · Supabase · Apify</p>
+</body></html>
