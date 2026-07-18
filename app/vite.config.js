@@ -31,6 +31,9 @@ export default defineConfig({
     port: PORT,
     strictPort: true,
     allowedHosts: ['localhost', 'dev.localhost', '.localhost'],
-    proxy: { '/api': 'http://127.0.0.1:8756' },    // ask endpoint (serve.py)
+    proxy: {
+      '/api': 'http://127.0.0.1:8756',             // ask endpoint (serve.py)
+      '/agent': 'http://127.0.0.1:8787',           // agent dashboard API (agent/api.py)
+    },
   },
 })
