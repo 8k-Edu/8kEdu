@@ -1047,7 +1047,7 @@ function ArtifactCarousel({ T }) {
   const go = (n, d) => { setDir(d); setIdx((n + SCENES.length) % SCENES.length) }
   useEffect(() => {
     if (reduced || paused) return
-    const id = setInterval(() => go(idx + 1, 1), 5200)
+    const id = setInterval(() => go(idx + 1, 1), 4600)
     return () => clearInterval(id)
   }, [idx, paused, reduced])
   const S = SCENES[idx]
@@ -1056,11 +1056,11 @@ function ArtifactCarousel({ T }) {
     borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0,
   }
   return (
-    <div style={{ padding: '58px 0 30px', textAlign: 'center' }}
+    <div style={{ padding: '54px 0 26px', textAlign: 'center' }}
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>look closer</div>
+      <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>what comes out</div>
       <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 0', maxWidth: '26ch', textWrap: 'balance' }}>
-        Every artifact, full size.
+        Eight artifacts. One drop.
       </h2>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,3vw,34px)', marginTop: 8 }}>
         <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={arrow}>‹</button>
@@ -1071,7 +1071,7 @@ function ArtifactCarousel({ T }) {
             transition={{ type: 'spring', stiffness: 170, damping: 22 }}
             style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
             <div style={{ height: 400, display: 'flex', alignItems: 'center' }}>
-              <div style={{ transform: 'scale(min(2.35, 1))' }} className="big-art"><S.C /></div>
+              <div className="big-art"><S.C /></div>
             </div>
             <div style={{ color: T.text, fontSize: 19, fontWeight: 750, marginTop: 4 }}>{S.title}</div>
             <div style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, maxWidth: '46ch', marginTop: 6 }}>{S.blurb}</div>
@@ -1079,85 +1079,102 @@ function ArtifactCarousel({ T }) {
         </div>
         <button aria-label="next" onClick={() => go(idx + 1, 1)} style={arrow}>›</button>
       </div>
-      <style>{`.big-art{transform:scale(2.35)!important}@media(max-width:700px){.big-art{transform:scale(1.55)!important}}`}</style>
-      <div style={{ display: 'flex', gap: 7, justifyContent: 'center', marginTop: 6 }}>
+      <style>{`
+        .big-art{transform:scale(2.35)}
+        .thumb{width:98px;height:81px;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;flex-shrink:0;transition:opacity .2s,transform .2s}
+        .thumb>div{transform:scale(.5);transform-origin:top left;pointer-events:none}
+        .thumb:hover{transform:translateY(-4px)}
+        @media(max-width:700px){.big-art{transform:scale(1.55)}.thumb{display:none}}
+      `}</style>
+      {/* thumbnail filmstrip = navigation */}
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10, padding: '0 16px' }}>
         {SCENES.map((s, i) => (
           <button key={s.key} aria-label={s.title} onClick={() => go(i, i > idx ? 1 : -1)}
-            style={{ width: i === idx ? 22 : 8, height: 8, borderRadius: 5, border: 'none', cursor: 'pointer',
-              background: i === idx ? T.acc : T.line, transition: 'all .25s' }} />
+            className="thumb"
+            style={{ border: i === idx ? `2px solid ${T.acc}` : `1px solid ${T.line}`, opacity: i === idx ? 1 : .55, background: 'transparent', padding: 0 }}>
+            <div><s.C /></div>
+          </button>
         ))}
       </div>
     </div>
   )
 }
 
-function OutputShowcase({ T, onOpen }) {
-  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const [cycle, setCycle] = useState(0)
-  useEffect(() => {
-    if (reduced) return
-    const id = setInterval(() => setCycle(c => c + 1), 9500)
-    return () => clearInterval(id)
-  }, [reduced])
-  const DROP = 0.15, LAND = 0.75, BURST = 1.25
+const HOW_STEPS = [
+  { n: '01', title: 'Drop a lecture', body: 'Paste any YouTube link — a 2-hour course or a 10-minute explainer. Any topic.', tag: 'you · 5 seconds' },
+  { n: '02', title: 'The agent watches it', body: 'Nemotron Omni reads the frames and transcript — every figure, equation and code block, with the speaker\'s actual numbers.', tag: 'agent · vision + reasoning' },
+  { n: '03', title: 'Artifacts appear', body: 'A touchable dashboard, runnable notebooks, flashcards, mind maps, charts, sheets and slides — minted from the video itself.', tag: 'agent · builds & verifies' },
+  { n: '04', title: 'Learn, remix, repeat', body: 'Tweak and run everything. Export to Jupyter, decks or threads. The agent keeps watching for new uploads on a heartbeat.', tag: 'you + agent · forever' },
+]
+
+function HowItWorks({ T }) {
   return (
-    <div style={{ marginTop: 26 }}>
-      <style>{`
-        .fan{display:flex;justify-content:center;align-items:center;margin-top:18px;min-height:205px}
-        .fan>*{margin:0 -30px}
-        .fan .art{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
-        .fan .art:hover{transform:translateY(-14px) rotate(0deg) scale(1.07)!important;z-index:9!important}
-        @media(max-width:860px){.fan{flex-wrap:wrap;gap:12px}.fan>*{margin:0}.fan .art{transform:none!important}}
-      `}</style>
-      <motion.div key={cycle} initial={false}>
-        {/* the lecture drops in */}
-        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 3 }}>
-          <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
-            initial={reduced ? false : { y: -150, opacity: 0, rotate: -7, scale: .9 }}
-            animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
-            transition={{ delay: DROP, type: 'spring', stiffness: 210, damping: 13, mass: 1.1 }}
-            style={{ position: 'relative', display: 'flex', gap: 12, alignItems: 'center', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: 10, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 22px 50px -20px rgba(0,0,0,.5)' }}>
-            <div style={{ position: 'relative' }}>
-              <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/mqdefault.jpg" alt=""
-                style={{ width: 118, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-              <span style={{ position: 'absolute', right: 4, bottom: 4, fontFamily: mono, fontSize: 8.5, background: '#000c', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>1:56:20</span>
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: '54px 24px 10px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>how it works</div>
+        <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 26px', maxWidth: '28ch', textWrap: 'balance' }}>
+          From link to lab in one drop.
+        </h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
+        {HOW_STEPS.map((s, i) => (
+          <motion.div key={s.n}
+            initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ delay: i * 0.1, type: 'spring', stiffness: 160, damping: 20 }}
+            className="edu-card"
+            style={{ position: 'relative', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: '18px 16px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: mono, fontSize: 26, fontWeight: 800, color: T.acc, letterSpacing: '-.02em' }}>{s.n}</span>
+              {i < HOW_STEPS.length - 1 && <span style={{ color: T.faint, fontSize: 16 }}>→</span>}
             </div>
-            <div>
-              <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: '.1em', color: T.faint, textTransform: 'uppercase' }}>one lecture, dropped</div>
-              <div style={{ color: T.text, fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginTop: 3 }}>Karpathy — Let's build GPT</div>
-              <div style={{ color: T.muted, fontSize: 12 }}>watch it become all of this ↓</div>
-            </div>
-            {/* scan-line sweep on landing */}
-            {!reduced && <motion.div initial={{ x: '-110%' }} animate={{ x: '110%' }}
-              transition={{ delay: LAND, duration: .55, ease: 'easeInOut' }}
-              style={{ position: 'absolute', inset: 0, background: `linear-gradient(100deg, transparent 30%, ${T.acc}55 50%, transparent 70%)` }} />}
-          </motion.button>
+            <div style={{ color: T.text, fontSize: 15.5, fontWeight: 750, marginTop: 8 }}>{s.title}</div>
+            <div style={{ color: T.muted, fontSize: 12.5, lineHeight: 1.55, marginTop: 6 }}>{s.body}</div>
+            <div style={{ fontFamily: mono, fontSize: 9.5, color: T.faint, marginTop: 12, letterSpacing: '.06em', textTransform: 'uppercase' }}>{s.tag}</div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HeroDrop({ T, onOpen }) {
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 30, perspective: 900 }}>
+      <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
+        initial={reduced ? false : { y: -320, opacity: 0, rotate: -9, scaleY: 1 }}
+        animate={reduced ? { opacity: 1 } : {
+          y: [-320, 0, -22, 0], opacity: [0, 1, 1, 1], rotate: [-9, 0, 1.2, 0], scaleY: [1, .94, 1.03, 1],
+        }}
+        transition={{ delay: .25, duration: 1.05, times: [0, .55, .78, 1], ease: ['easeIn', 'easeOut', 'easeIn', 'easeOut'] }}
+        whileHover={{ scale: 1.025, rotate: -0.5 }}
+        style={{ position: 'relative', width: 'min(500px, 88vw)', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 12, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 42px 90px -30px rgba(0,0,0,.65)' }}>
+        <div style={{ position: 'relative' }}>
+          <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/hqdefault.jpg" alt=""
+            style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 12, display: 'block' }} />
+          <span style={{ position: 'absolute', right: 8, bottom: 8, fontFamily: mono, fontSize: 11, background: '#000c', color: '#fff', borderRadius: 5, padding: '2px 7px' }}>1:56:20</span>
+          <span style={{ position: 'absolute', left: 8, top: 8, fontFamily: mono, fontSize: 9.5, letterSpacing: '.1em', background: '#000c', color: '#8ee23e', borderRadius: 5, padding: '3px 8px', textTransform: 'uppercase' }}>one lecture, dropped</span>
+          {/* play glyph */}
+          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ width: 54, height: 54, borderRadius: 30, background: '#0a0d08cc', border: `1.5px solid ${T.acc}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.acc, fontSize: 20, paddingLeft: 4 }}>▶</span>
+          </span>
         </div>
-        {/* artifacts burst out, fanned + overlapping */}
-        <div className="fan">
-          {ARTIFACTS.map(({ key, C }, i) => {
-            const mid = (ARTIFACTS.length - 1) / 2
-            const off = i - mid
-            const rot = off * 2.6
-            const lift = Math.abs(off) * 9
-            return (
-              <motion.div key={key} className="art"
-                initial={reduced ? false : { opacity: 0, y: -60, scale: .55, rotate: 0 }}
-                animate={{ opacity: 1, y: lift, scale: 1, rotate: rot }}
-                transition={{ delay: BURST + i * .1, type: 'spring', stiffness: 200, damping: 19 }}
-                style={{ zIndex: i < 4 ? i + 1 : ARTIFACTS.length - i, rotate: rot }}>
-                <C />
-              </motion.div>
-            )
-          })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 4px 2px' }}>
+          <div style={{ color: T.text, fontSize: 15.5, fontWeight: 750 }}>Karpathy — Let's build GPT</div>
+          <div style={{ fontFamily: mono, fontSize: 11, color: T.acc }}>try it →</div>
         </div>
-      </motion.div>
+        {/* scan-line after impact */}
+        {!reduced && <motion.div initial={{ x: '-115%' }} animate={{ x: '115%' }}
+          transition={{ delay: 1.35, duration: .6, ease: 'easeInOut' }}
+          style={{ position: 'absolute', inset: 0, background: `linear-gradient(100deg, transparent 32%, ${T.acc}44 50%, transparent 68%)`, pointerEvents: 'none' }} />}
+      </motion.button>
     </div>
   )
 }
 
 function Landing({ onOpen }) {
-  const [url, setUrl] = useState(DEFAULT_URL)
+  const [url, setUrl] = useState('')
   const [err, setErr] = useState(null)
   const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
   const T = THEMES[theme]
@@ -1213,6 +1230,9 @@ function Landing({ onOpen }) {
 
       {/* LOOK CLOSER — full-size artifact carousel */}
       <ArtifactCarousel T={T} />
+
+      {/* HOW IT WORKS */}
+      <HowItWorks T={T} />
 
       {/* BODY */}
       <div style={{ maxWidth: 940, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
