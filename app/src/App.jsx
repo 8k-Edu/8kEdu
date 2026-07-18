@@ -1125,6 +1125,90 @@ function ArtifactCarousel({ T }) {
   )
 }
 
+// typewriter headline — types itself when scrolled into view, caret keeps blinking
+function TypeTitle({ text, T }) {
+  const ref = useRef(null)
+  const [on, setOn] = useState(false)
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ob = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setOn(true); ob.disconnect() } }, { rootMargin: '-40px' })
+    ob.observe(el)
+    return () => ob.disconnect()
+  }, [])
+  useEffect(() => {
+    if (!on || n >= text.length) return
+    const id = setTimeout(() => setN(x => x + 1), 55)
+    return () => clearTimeout(id)
+  }, [on, n, text])
+  return (
+    <h2 ref={ref} style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 4px' }}>
+      <span style={{ position: 'relative', display: 'inline-block' }}>
+        <span style={{ visibility: 'hidden' }}>{text}</span>
+        <span style={{ position: 'absolute', left: 0, top: 0, width: '100%', textAlign: 'left' }}>
+          {text.slice(0, n)}
+          <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ duration: .9, repeat: Infinity }}
+            style={{ display: 'inline-block', width: '.5ch', height: '.9em', background: T.acc, verticalAlign: '-0.08em', marginLeft: 3, borderRadius: 2 }} />
+        </span>
+      </span>
+    </h2>
+  )
+}
+
+// animated vector backdrops for the market tiles — one little world per persona
+function MarketBG({ kind, color }) {
+  const wrap = { position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }
+  if (kind === 'student') return ( // math drifting up from tonight's lab
+    <div style={wrap} aria-hidden="true">
+      {['∑', '∫', 'π', '∂', 'x²'].map((g, i) => (
+        <motion.span key={i}
+          animate={{ y: [16, -110], opacity: [0, .85, 0] }}
+          transition={{ duration: 5.5 + i * 1.1, repeat: Infinity, delay: i * 1.2, ease: 'linear' }}
+          style={{ position: 'absolute', bottom: -14, left: `${10 + i * 19}%`, fontFamily: mono,
+            fontSize: 16 + (i % 3) * 7, fontWeight: 700, color: color + '30' }}>{g}</motion.span>
+      ))}
+    </div>
+  )
+  if (kind === 'teacher') return ( // a deck shuffling itself
+    <div style={wrap} aria-hidden="true">
+      {[0, 1, 2].map(i => (
+        <motion.span key={i}
+          animate={{ y: [0, -5, 0], opacity: [.5, 1, .5] }}
+          transition={{ duration: 3.4, repeat: Infinity, delay: i * .55, ease: 'easeInOut' }}
+          style={{ position: 'absolute', right: 12 + i * 12, bottom: 8 + i * 10, width: 62, height: 40,
+            border: `1.5px solid ${color}38`, borderRadius: 6, background: color + '0d' }}>
+          <span style={{ display: 'block', margin: '7px 8px 0', height: 3, borderRadius: 2, background: color + '45', width: 26 }} />
+          <span style={{ display: 'block', margin: '4px 8px 0', height: 2, borderRadius: 2, background: color + '2b', width: 38 }} />
+        </motion.span>
+      ))}
+    </div>
+  )
+  if (kind === 'creator') return ( // an equalizer that never stops
+    <div style={wrap} aria-hidden="true">
+      {[...Array(9)].map((_, i) => (
+        <motion.span key={i}
+          animate={{ scaleY: [.25, 1, .4, .85, .25] }}
+          transition={{ duration: 2.1 + (i % 4) * .35, repeat: Infinity, delay: i * .13, ease: 'easeInOut' }}
+          style={{ position: 'absolute', bottom: 0, left: `${7 + i * 10}%`, width: 5, height: 36,
+            transformOrigin: 'bottom', background: color + '38', borderRadius: '3px 3px 0 0' }} />
+      ))}
+    </div>
+  )
+  return ( // researcher — a constellation of findings
+    <svg viewBox="0 0 220 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style={wrap}>
+      {[[30, 128, 80, 62], [80, 62, 158, 98], [158, 98, 122, 146], [80, 62, 190, 34]].map(([x1, y1, x2, y2], i) => (
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1" opacity=".14" />
+      ))}
+      {[[30, 128, 4], [80, 62, 5], [158, 98, 4], [122, 146, 3], [190, 34, 3.5]].map(([cx, cy, r], i) => (
+        <motion.circle key={i} cx={cx} cy={cy} r={r} fill={color}
+          animate={{ opacity: [.15, .55, .15] }}
+          transition={{ duration: 2.6, repeat: Infinity, delay: i * .5, ease: 'easeInOut' }} />
+      ))}
+    </svg>
+  )
+}
+
 const HOW_STEPS = [
   { n: '01', title: 'Drop a lecture', body: 'Paste any YouTube link — a 2-hour course or a 10-minute explainer. Any topic.', tag: 'you · 5 seconds' },
   { n: '02', title: 'The agent watches it', body: 'Nemotron Omni reads the frames and transcript — every figure, equation and code block, with the speaker\'s actual numbers.', tag: 'agent · vision + reasoning' },
@@ -1399,40 +1483,41 @@ function Landing({ onOpen }) {
       <div style={{ maxWidth: 940, margin: '0 auto', padding: '30px 24px 0' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>who it's for</div>
-          <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 4px', textWrap: 'balance' }}>
-            Four markets. One engine.
-          </h2>
+          <TypeTitle text="Four markets. One engine." T={T} />
           <div style={{ color: T.muted, fontSize: 13.5 }}>every video analyzed once is cached for all — marginal cost per learner → 0</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 18 }}>
           {[
-            ['student', '🎓', 'Students', '$400B', 'e-learning', '1.5B learners', 'tonight\'s lab, from tonight\'s lecture', .92],
-            ['teacher', '👩‍🏫', 'Teachers', '$160B', 'edtech tools', '85M educators', 'one-click decks, live in class', .55],
-            ['creator', '✍️', 'Creators', '$250B', 'creator economy', '200M creators', 'one lecture → endless content', .72],
-            ['researcher', '🔬', 'Researchers', '$35B', 'research tools', '10M researchers', 'mint the widget you need', .3],
-          ].map(([key, icon, title, big, label, pop, hook, arc], i) => (
+            ['student', '🎓', 'Students', '$400B', 'e-learning', '1.5B learners', 'tonight\'s lab, from tonight\'s lecture', .92, '#79c0ff'],
+            ['teacher', '👩‍🏫', 'Teachers', '$160B', 'edtech tools', '85M educators', 'one-click decks, live in class', .55, '#ffab70'],
+            ['creator', '✍️', 'Creators', '$250B', 'creator economy', '200M creators', 'one lecture → endless content', .72, '#ff9bce'],
+            ['researcher', '🔬', 'Researchers', '$35B', 'research tools', '10M researchers', 'mint the widget you need', .3, '#b48eff'],
+          ].map(([key, icon, title, big, label, pop, hook, arc, c], i) => (
             <motion.button key={key} onClick={() => onOpen('kCc8FmEb1nY', key)}
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ delay: i * .08, type: 'spring', stiffness: 170, damping: 20 }}
-              className="edu-card"
+              className="edu-card" whileHover={{ borderColor: c + '77' }}
               style={{ textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
-                padding: '16px 16px 14px', display: 'flex', flexDirection: 'column', gap: 2, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+                padding: '16px 16px 14px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+              <MarketBG kind={key} color={c} />
               {/* market-share arc glyph */}
-              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', top: 14, right: 12, opacity: .9 }}>
+              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', top: 14, right: 12, opacity: .9, zIndex: 1 }}>
                 <circle cx="23" cy="23" r="18" fill="none" stroke={T.line} strokeWidth="5" />
-                <motion.circle cx="23" cy="23" r="18" fill="none" stroke={T.acc} strokeWidth="5" strokeLinecap="round"
+                <motion.circle cx="23" cy="23" r="18" fill="none" stroke={c} strokeWidth="5" strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 18}
                   initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
                   whileInView={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - arc) }}
                   viewport={{ once: true }} transition={{ delay: .3 + i * .1, duration: .9, ease: 'easeOut' }}
                   transform="rotate(-90 23 23)" />
               </svg>
-              <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{icon} {title}</span>
-              <span style={{ fontFamily: mono, fontSize: 'clamp(30px,3.4vw,38px)', fontWeight: 800, color: T.acc, letterSpacing: '-.03em', lineHeight: 1.1, marginTop: 6 }}>{big}</span>
-              <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
-              <span style={{ fontSize: 12.5, color: T.text, fontWeight: 650, marginTop: 10 }}>{pop}</span>
-              <span style={{ fontSize: 11.5, color: T.muted }}>{hook}</span>
+              <span style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{icon} {title}</span>
+                <span style={{ fontFamily: mono, fontSize: 'clamp(30px,3.4vw,38px)', fontWeight: 800, color: c, letterSpacing: '-.03em', lineHeight: 1.1, marginTop: 6 }}>{big}</span>
+                <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
+                <span style={{ fontSize: 12.5, color: T.text, fontWeight: 650, marginTop: 10 }}>{pop}</span>
+                <span style={{ fontSize: 11.5, color: T.muted }}>{hook}</span>
+              </span>
             </motion.button>
           ))}
         </div>
