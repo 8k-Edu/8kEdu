@@ -1610,6 +1610,7 @@ function AgentDashboard({ onExit }) {
 
   const runs = state?.runs || []
   const curriculum = state?.curriculum || []
+  const channels = state?.channels || []
   const cache = state?.cache || { concepts_cached: 0, videos_cached: 0, reuses: 0, widgets_served_free: 0 }
 
   return (
@@ -1716,6 +1717,27 @@ function AgentDashboard({ onExit }) {
                 )
               })}
               {!curriculum.length && <div style={{ color: T.faint, fontSize: 13, padding: '10px 0' }}>empty — wake the agent to build it</div>}
+            </div>
+
+            {/* JOB2 — channels the agent watches for new uploads */}
+            <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 750 }}>Watching for new uploads</span>
+                <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, color: '#ffab70', background: '#ffab701f', borderRadius: 5, padding: '2px 7px', marginLeft: 'auto' }}>📡 via Apify</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: T.muted, marginBottom: 12 }}>new upload on a watched channel → auto-builds its dashboard</div>
+              {channels.map((ch, i) => (
+                <div key={ch.channel_id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderTop: i ? `1px solid ${T.line}` : 'none' }}>
+                  <span className="edu-pulse" style={{ width: 8, height: 8, borderRadius: 4, background: '#ffab70', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: T.text, fontWeight: 600 }}>{ch.channel_id}</div>
+                    <div style={{ fontFamily: mono, fontSize: 10.5, color: T.faint }}>
+                      {ch.last_checked ? `last checked ${tclock(ch.last_checked)}` : 'not checked yet'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!channels.length && <div style={{ color: T.faint, fontSize: 13, padding: '4px 0' }}>no channels watched yet</div>}
             </div>
 
             {/* containment strip */}
