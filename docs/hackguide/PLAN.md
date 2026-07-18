@@ -3,7 +3,7 @@
 **Event:** AITX × NVIDIA Claw Agent Hackathon · Jul 17–19 2026 · Antler VC, 800 Brazos St #340, Austin
 **Hack window:** Fri 6:45 PM → Sun 11:00 AM code freeze (~40h) · **Team: 2–3**
 **Build:** a fresh **autonomous learning agent** — *YouTube video → interactive learning dashboard*
-**Last updated:** Jul 18 2026 (pre-event prep)
+**Last updated:** Sat Jul 18 2026, ~12:00 (T-23h to code freeze)
 
 ---
 
@@ -33,23 +33,44 @@ It qualifies as a "Claw Agent": **heartbeat-driven** (wakes on a loop, not a pro
 
 ---
 
-## What's left  ⏳ (Friday build)
+## The funnel, formalized  🧮 (whiteboard, Sat AM)
 
-**P0 — spine (Fri night)**
-- [ ] Wire Omni into the sandbox — OpenShell blocks private-address custom endpoints; 3 known fixes: load omni GGUF into **ollama** (proven `ollama-local` path) / match `vllm-local` port / find the private-endpoint override
-- [ ] `agents.yaml` — manager/worker on Nemotron; onboard via `nemoclaw onboard --agents`
-- [ ] One manual cycle end-to-end: Apify find → process_video → Nemotron reason → Supabase write
+What goes into the funnel and what comes out — the artifact equation:
 
-**P1 — heartbeat (Sat AM)**
-- [ ] The loop: wake → read state → JOB1 curriculum / JOB2 monitor → act/wait
-- [ ] Interruption recovery from Supabase; alert-on-change
+```
+V   = [(m_i, Tr_i)]  i=1..M          # video → segments: keyframes m_i = {f_i1..f_in} + transcript chunk Tr_i
+      payload: transcript [{chunk:str, timestamp}], video_payload [{t_i, f_i}]
+g   = G(Tr, title) ∈ Genres          # genre classifier; taxonomy grows 20→100 (AI, RE, FIN, …)
+S_g = system prompt for genre g      # the lens the model reads the frame through
+A_i = M̂(S_g, UC_k, m_i ⊕ f_i..f_n ⊕ Tr_i)   # M̂ = Nemotron-3-Nano-Omni; UC_k = user context/question
+C[(v, i, g)] = A_i                   # Supabase global cache — computed once, reused ∀ learners
+O   = Map(⋃ A_i, t_i → T_i)          # dashboard: artifacts pinned to the timeline
+```
 
-**P2 — containment + depth (Sat PM)**
-- [ ] `sandbox-policy.yaml` + the **"unauthorized action blocked"** demo (the NemoClaw+OpenShell bounty proof)
-- [ ] Self-improving curriculum from quiz results (Recursive Intelligence track)
+Marginal cost per learner → 0 because C is keyed on (video, segment, genre), not on user.
 
-**P3 — surface (Sat night)**
-- [ ] Thin dashboard: live course + run log + the blocked-action proof (reuse existing widgets)
+**Implemented:** `analyze.py --genre auto|ai_stem|finance|real_estate` — `detect_genre()` votes over the
+transcript, `apply_genre()` composes `SYSTEM ⊕ S_g`. UC_k is the live ask-path (`serve.py /api/widget`, `/api/region`).
+
+**Ingest access notes (whiteboard):** yt-dlp today; scale options = (a) rotating proxies, (b) piggyback the
+user's own IP via a browser extension (screen-capture permission?). Beyond YouTube: Nebula / Vimeo APIs.
+
+---
+
+## What's left  ⏳
+
+**P0 — spine** ✅ done — Omni local (LM Studio :1234), tools wired, end-to-end cycle proven
+**P1 — heartbeat** ✅ done — `agent/loop.py`: Nemotron decides FIND→PROCESS→SEQUENCE, Supabase persists runs; cache-reuse verified (`supabase-cache, reused: True`)
+**Landing** ✅ done — hero pour-in/pop-out artifact loop, river carousel, genre shelves, typed markets section, light/dark
+
+**P2 — containment (NOW, ~2h)** ← the NemoClaw+OpenShell bounty proof
+- [ ] `sandbox-policy` — network allowlist (youtube/apify/supabase) + fs guard; `shields up`; demo an out-of-policy exfil → **BLOCKED + logged**
+
+**P3 — agent dashboard (~2h)**
+- [ ] Live view: runs feed from Supabase, curriculum building itself, cache-hit counter — judges must SEE autonomy
+
+**JOB2 — monitor (~1h)**
+- [ ] `monitor_channel` (Apify) wired into the heartbeat: new upload → auto-process
 
 **P4 — submit (Sun AM)**
 - [ ] Harden the loop (don't crash = 15 pts) · demo video · the 6 sponsor "why" blurbs · submit by 11:00
