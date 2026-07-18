@@ -26,8 +26,12 @@ def tick(user_id, goal):
     curr = db.curriculum(goal["id"])
     planned = [c for c in curr if c["state"] == "planned"]
     ready = [c for c in curr if c["state"] == "ready"]
+    channels = db.monitored_channels(user_id)
     state = (f'Goal: "{goal["goal_text"]}". Curriculum: {len(curr)} items '
-             f'({len(planned)} planned/unprocessed, {len(ready)} processed).')
+             f'({len(planned)} planned/unprocessed, {len(ready)} processed). '
+             f'Monitored channels: {len(channels)}. '
+             f'If planned videos await, PROCESS_VIDEO. If none planned and the course is thin, FIND_VIDEO. '
+             f'If the course looks complete and channels are monitored, MONITOR for new uploads.')
     decision = brain.decide(DECIDE_SYSTEM, state)
     action = decision.get("action", "IDLE")
     actions = {}
@@ -49,7 +53,27 @@ def tick(user_id, goal):
         else:
             actions = {"note": "nothing planned to process"}
     elif action == "MONITOR":
-        actions = {"note": "monitor stub — Apify channel check"}
+        channels = db.monitored_channels(user_id)
+        checked, new_uploads = [], []
+        for ch in channels:
+            res = tools.monitor_channel(ch["channel_id"], 3)
+            vids = res.get("videos", [])
+            newest = vids[0]["id"] if vids else None
+            if ch["last_video_id"] is None:
+                # first sight of this channel → set a baseline, don't backfill old uploads
+                fresh = []
+            else:
+                # order-independent: a video is new if it isn't the baseline and isn't already planned
+                fresh = [v for v in vids if v["id"] != ch["last_video_id"]]
+            for v in fresh:  # add_to_curriculum dedupes (goal_id, video_id) — safe on unstable order
+                if db.add_to_curriculum(goal["id"], v["id"], f'new upload on {ch["channel_id"]}',
+                                        title=v.get("title", "")):
+                    new_uploads.append({"channel": ch["channel_id"], **v})
+            if newest:
+                db.mark_channel_checked(ch["id"], newest)
+            checked.append({"channel": ch["channel_id"], "source": res.get("source", "?"),
+                            "seen": len(vids), "new": len(new_uploads)})
+        actions = {"channels_checked": checked, "new_uploads": new_uploads}
 
     run = db.log_run(user_id, "curriculum", decision, actions, "ok")
     print(f"[tick] {str(run['woke_at'])[11:19]}  {action:13} {decision.get('why','')[:70]}")
