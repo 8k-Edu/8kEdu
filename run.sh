@@ -13,7 +13,8 @@ stop() {
   echo "stopping 8kEdu services…"
   pkill -f "serve.py" 2>/dev/null
   pkill -f "agent.api" 2>/dev/null
-  pkill -f "agent/loop.py" 2>/dev/null
+  pkill -f "agent.loop" 2>/dev/null
+  pkill -f "agent.curator" 2>/dev/null
   pkill -f "vite" 2>/dev/null
   echo "stopped."
 }
@@ -30,8 +31,10 @@ echo "→ frontend (vite) — dev.localhost:5174 on dev branch, localhost:5173 o
 ( cd app && npm run dev > "$LOGDIR/vite.log" 2>&1 & )
 
 if [ "${1:-}" = "--loop" ]; then
-  echo "→ autonomous heartbeat (60s interval)"
-  uv run agent/loop.py --interval 60 > "$LOGDIR/loop.log" 2>&1 &
+  echo "→ autonomous learner heartbeat (60s)"
+  uv run python -m agent.loop --interval 60 > "$LOGDIR/loop.log" 2>&1 &
+  echo "→ autonomous curator heartbeat (grows the library, every 5 min)"
+  uv run python -m agent.curator --interval 300 > "$LOGDIR/curator.log" 2>&1 &
 fi
 
 sleep 6

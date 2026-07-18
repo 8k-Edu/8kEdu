@@ -11,10 +11,14 @@ Runs alongside the learner loop; both are Claw Agents (heartbeat, autonomous, pe
   uv run agent/curator.py --interval 300         # forever, one video every 5 min
 """
 import argparse
+import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
+# allow both `python -m agent.curator` and `uv run agent/curator.py`
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent import db, brain, tools
 
 ROOT = Path(__file__).resolve().parent.parent
