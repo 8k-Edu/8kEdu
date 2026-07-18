@@ -736,8 +736,18 @@ function Lecture({ videoId, role }) {
   )
 }
 
+// theme tokens — light + dark
+const THEMES = {
+  dark: { bg: 'radial-gradient(1200px 600px at 50% -10%, #10160c 0%, #0a0d08 55%, #080a06 100%)',
+    solid: '#0a0d08', panel: '#0f140b', text: '#f2f6ec', sub: '#cbd6c0', muted: '#8b9682',
+    faint: '#66735b', line: '#2b3a1e', acc: '#7bd33f', accText: '#0a0d08', dim720: '#5a6a4e', field: false },
+  light: { bg: 'radial-gradient(1200px 600px at 50% -10%, #eef4e6 0%, #f5f8f1 55%, #f7faf3 100%)',
+    solid: '#f5f8f1', panel: '#ffffff', text: '#14180f', sub: '#39452f', muted: '#5c6b50',
+    faint: '#8a9880', line: '#dbe4d1', acc: '#3f8f18', accText: '#ffffff', dim720: '#a7b39a', field: true },
+}
+
 // ambient attention-field — the app's own widget, alive, reacting to the cursor
-function AttentionField() {
+function AttentionField({ light = false }) {
   const ref = useRef(null)
   useEffect(() => {
     const cv = ref.current, ctx = cv.getContext('2d')
@@ -761,18 +771,19 @@ function AttentionField() {
       ctx.clearRect(0, 0, w, h)
       for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
         const x = i * (CELL + GAP), y = j * (CELL + GAP)
-        // flowing softmax-like wave
         let v = 0.5 + 0.5 * Math.sin(t * 0.9 + i * 0.55 + j * 0.4 + Math.sin(t * 0.3 + j))
         v *= 0.35
-        // cursor glow
         const dx = x + CELL / 2 - mx, dy = y + CELL / 2 - my
-        const d2 = dx * dx + dy * dy
-        const glow = Math.exp(-d2 / 9000)
+        const glow = Math.exp(-(dx * dx + dy * dy) / 9000)
         const lit = Math.min(1, v + glow * 0.95)
-        const g = Math.round(90 + lit * 150), rr = Math.round(20 + lit * 40), b = Math.round(15 + lit * 40)
-        ctx.fillStyle = `rgba(${rr},${g},${b},${0.10 + lit * 0.82})`
-        const s = CELL * (0.62 + lit * 0.38)
-        const o = (CELL - s) / 2
+        if (light) {
+          const g = Math.round(150 - lit * 60), rr = Math.round(120 - lit * 90), b = Math.round(110 - lit * 90)
+          ctx.fillStyle = `rgba(${rr},${g},${b},${0.05 + lit * 0.5})`
+        } else {
+          const g = Math.round(90 + lit * 150), rr = Math.round(20 + lit * 40), b = Math.round(15 + lit * 40)
+          ctx.fillStyle = `rgba(${rr},${g},${b},${0.10 + lit * 0.82})`
+        }
+        const s = CELL * (0.62 + lit * 0.38), o = (CELL - s) / 2
         ctx.beginPath(); ctx.roundRect(x + o, y + o, s, s, 5); ctx.fill()
       }
       t += 0.016
@@ -781,128 +792,182 @@ function AttentionField() {
     if (reduced) { t = 2; draw(); cancelAnimationFrame(raf) } else draw()
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize)
       cv.parentElement.removeEventListener('pointermove', onMove); cv.parentElement.removeEventListener('pointerleave', onLeave) }
-  }, [])
+  }, [light])
   return <canvas ref={ref} style={{ position: 'absolute', inset: 0, display: 'block' }} aria-hidden="true" />
 }
 
-function LandingStyles() {
+function LandingStyles({ acc }) {
   return <style>{`
-    @keyframes eduUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
     @keyframes eduGlow{0%,100%{opacity:.55}50%{opacity:1}}
-    .edu-up{animation:eduUp .7s cubic-bezier(.2,.7,.2,1) both}
     .edu-card{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-    .edu-card:hover{transform:translateY(-3px);border-color:#7bd33f88;box-shadow:0 10px 30px -12px #7bd33f55}
+    .edu-card:hover{transform:translateY(-3px);border-color:${acc}99;box-shadow:0 12px 34px -14px ${acc}66}
     .edu-open{transition:transform .12s ease,filter .18s ease}
-    .edu-open:hover{filter:brightness(1.08)}.edu-open:active{transform:scale(.97)}
-    .edu-in:focus{outline:2px solid #7bd33f;outline-offset:1px}
+    .edu-open:hover{filter:brightness(1.06)}.edu-open:active{transform:scale(.97)}
+    .edu-in:focus{outline:2px solid ${acc};outline-offset:1px}
     .edu-pulse{animation:eduGlow 2.4s ease-in-out infinite}
-    @media (prefers-reduced-motion:reduce){.edu-up,.edu-pulse{animation:none}}
+    @media (prefers-reduced-motion:reduce){.edu-pulse{animation:none}}
   `}</style>
 }
 
 // 8kEdu mark — a pixel grid that "upscales": dim/sparse corner → bright/dense corner (720p → 8K)
-function Logo({ size = 40 }) {
+function Logo({ size = 40, wordColor = '#f2f6ec' }) {
   const N = 4, gap = size * 0.14, cell = (size - gap * (N - 1)) / N
   const cells = []
-  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
-    const lit = (r + c) / (2 * (N - 1)) // 0 (top-left, low-res) → 1 (bottom-right, 8K)
-    cells.push({ r, c, lit, i: r * N + c })
-  }
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
+    cells.push({ r, c, lit: (r + c) / (2 * (N - 1)), i: r * N + c })
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.32 }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="8kEdu logo">
         {cells.map(({ r, c, lit, i }) => (
           <motion.rect key={i}
             x={c * (cell + gap)} y={r * (cell + gap)} width={cell} height={cell} rx={cell * 0.28}
-            fill={`rgb(${Math.round(30 + lit * 90)},${Math.round(60 + lit * 150)},${Math.round(25 + lit * 50)})`}
-            initial={{ opacity: 0, scale: 0.3 }}
-            animate={{ opacity: 0.35 + lit * 0.65, scale: 1 }}
+            fill={`rgb(${Math.round(30 + lit * 90)},${Math.round(70 + lit * 140)},${Math.round(25 + lit * 50)})`}
+            initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 0.4 + lit * 0.6, scale: 1 }}
             transition={{ delay: 0.15 + lit * 0.5, type: 'spring', stiffness: 260, damping: 18 }} />
         ))}
       </svg>
-      <span style={{ fontSize: size * 0.7, fontWeight: 800, letterSpacing: '-.03em', color: '#f2f6ec' }}>
-        <span style={{ color: '#8ee23e' }}>8k</span>Edu
+      <span style={{ fontSize: size * 0.7, fontWeight: 800, letterSpacing: '-.03em', color: wordColor }}>
+        <span style={{ color: '#63b524' }}>8k</span>Edu
       </span>
     </span>
+  )
+}
+
+// what one dropped lecture turns into — the OpusClip-style "generate" showcase
+const OUTPUTS = [
+  { icon: '🐍', label: 'Notebooks', hint: 'runnable python' },
+  { icon: '🃏', label: 'Flashcards', hint: 'spaced recall' },
+  { icon: '🧠', label: 'Mind maps', hint: 'concept graph' },
+  { icon: '📊', label: 'Charts', hint: 'live plots' },
+  { icon: '▦', label: 'Dashboards', hint: 'touch & tweak' },
+  { icon: '📄', label: 'Sheets', hint: 'tables you edit' },
+  { icon: '🎞', label: 'Slides', hint: 'one-click deck' },
+  { icon: '❝', label: 'Concept cards', hint: 'the key ideas' },
+]
+
+function OutputShowcase({ T, onOpen }) {
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [gen, setGen] = useState(0)
+  useEffect(() => {
+    if (reduced) return
+    const id = setInterval(() => setGen(g => g + 1), 5200)
+    return () => clearInterval(id)
+  }, [reduced])
+  return (
+    <div style={{ marginTop: 30 }}>
+      {/* source lecture */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button onClick={() => onOpen('kCc8FmEb1nY')} className="edu-card" style={{
+          display: 'flex', gap: 12, alignItems: 'center', background: T.panel, border: `1px solid ${T.line}`,
+          borderRadius: 14, padding: 10, cursor: 'pointer', maxWidth: 420, textAlign: 'left' }}>
+          <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/mqdefault.jpg" alt=""
+            style={{ width: 108, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8 }} />
+          <div>
+            <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: 10.5, letterSpacing: '.1em', color: T.faint, textTransform: 'uppercase' }}>one lecture, dropped</div>
+            <div style={{ color: T.text, fontSize: 14, fontWeight: 600, lineHeight: 1.3, marginTop: 3 }}>Karpathy — Let's build GPT</div>
+            <div style={{ color: T.muted, fontSize: 12 }}>1:56:20 · try it →</div>
+          </div>
+        </button>
+      </div>
+      {/* generating connector */}
+      <div style={{ textAlign: 'center', fontFamily: 'ui-monospace,monospace', fontSize: 11, color: T.acc, margin: '14px 0 4px' }}>
+        <span className="edu-pulse">↓ 8kEdu upscales it into ↓</span>
+      </div>
+      {/* the outputs fan in */}
+      <motion.div key={gen} initial="hide" animate="show"
+        variants={{ show: { transition: { staggerChildren: 0.07 } } }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 8 }}>
+        {OUTPUTS.map((o, i) => (
+          <motion.div key={o.label}
+            variants={{ hide: { opacity: 0, y: 18, scale: 0.92 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 240, damping: 20 } } }}
+            className="edu-card"
+            style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12, padding: '13px 14px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ fontSize: 20 }}>{o.icon}</span>
+            <span style={{ color: T.text, fontSize: 14, fontWeight: 700 }}>{o.label}</span>
+            <span style={{ color: T.muted, fontSize: 11.5 }}>{o.hint}</span>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
   )
 }
 
 function Landing({ onOpen }) {
   const [url, setUrl] = useState(DEFAULT_URL)
   const [err, setErr] = useState(null)
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  useEffect(() => {
+    localStorage.setItem('8kedu-theme', theme)
+    document.documentElement.style.background = T.solid
+  }, [theme, T.solid])
   const go = () => {
     const id = parseVideoId(url.trim())
     if (!id) { setErr('paste a YouTube link (or 11-char video id)'); return }
     onOpen(id)
   }
-  const d = (n) => ({ animationDelay: `${n}s` })
+  const rise = { hide: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } } }
   return (
-    <div style={{ minHeight: '100vh', background: 'radial-gradient(1200px 600px at 50% -10%, #10160c 0%, #0a0d08 55%, #080a06 100%)' }}>
-      <LandingStyles />
+    <div style={{ minHeight: '100vh', background: T.bg }}>
+      <LandingStyles acc={T.acc} />
+      {/* top bar */}
+      <div style={{ position: 'relative', zIndex: 2, maxWidth: 1040, margin: '0 auto', padding: '18px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Logo size={30} wordColor={T.text} />
+        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="toggle theme"
+          style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>
+          {theme === 'dark' ? '☀ light' : '☾ dark'}
+        </button>
+      </div>
       {/* HERO */}
-      <div style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1c2416' }}>
-        <AttentionField />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(700px 340px at 50% 42%, transparent, #0a0d08cc 78%)' }} />
-        <motion.div style={{ position: 'relative', maxWidth: 880, margin: '0 auto', padding: '80px 24px 72px', textAlign: 'center' }}
-          initial="hide" animate="show"
-          variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}>
-          {(() => {
-            const rise = { hide: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } } }
-            return <>
-              <motion.div variants={rise} style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}><Logo size={44} /></motion.div>
-              <motion.div variants={rise} style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.24em', textTransform: 'uppercase', color: '#7bd33f' }}>
-                <span className="edu-pulse">●</span>&nbsp; the resolution of understanding
-              </motion.div>
-              <motion.h1 variants={rise} style={{ fontSize: 'clamp(42px,7.5vw,82px)', lineHeight: 1.0, letterSpacing: '-.035em', margin: '16px 0 0', textWrap: 'balance', color: '#f2f6ec' }}>
-                Watch in <span style={{ color: '#5a6a4e' }}>720p</span>.<br />Learn in <span style={{ color: '#8ee23e' }}>8K</span>.
-              </motion.h1>
-              <motion.p variants={rise} style={{ fontSize: 'clamp(17px,2.4vw,22px)', color: '#cbd6c0', margin: '20px auto 0', maxWidth: '40ch', fontWeight: 600, lineHeight: 1.4 }}>
-                8kEdu turns any YouTube lecture into an interactive dashboard — touch, run and remix every idea.
-              </motion.p>
-              <motion.p variants={rise} style={{ fontSize: 15, color: '#8b9682', margin: '10px auto 0', maxWidth: '52ch', lineHeight: 1.6 }}>
-                An autonomous agent watches the video, builds the widgets, and upscales passive watching into the highest-resolution way to understand. On any topic.
-              </motion.p>
-              <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 560, margin: '30px auto 0' }}>
-                <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
-                  onKeyDown={e => e.key === 'Enter' && go()}
-                  placeholder="paste a YouTube lecture link…"
-                  style={{ flex: 1, background: '#0f140b', color: '#f2f6ec', border: '1px solid #2b3a1e', borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
-                <motion.button className="edu-open" onClick={go} whileTap={{ scale: 0.96 }}
-                  style={{ background: '#7bd33f', color: '#0a0d08', border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
-                  upscale →
-                </motion.button>
-              </motion.div>
-              {err && <div style={{ color: '#ff8a7d', fontSize: 13, marginTop: 10 }}>{err}</div>}
-              <motion.div variants={rise} style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 22, fontFamily: 'ui-monospace,monospace', fontSize: 11.5, color: '#66735b' }}>
-                <span>◱ vision + reasoning — one model</span><span>⟳ runs on a heartbeat</span><span>▶ python in your browser</span>
-              </motion.div>
-            </>
-          })()}
+      <div style={{ position: 'relative', overflow: 'hidden', borderBottom: `1px solid ${T.line}` }}>
+        <AttentionField light={T.field} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(760px 360px at 50% 44%, transparent, ${T.solid}dd 80%)` }} />
+        <motion.div style={{ position: 'relative', maxWidth: 940, margin: '0 auto', padding: '52px 24px 68px', textAlign: 'center' }}
+          initial="hide" animate="show" variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } } }}>
+          <motion.div variants={rise} style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.24em', textTransform: 'uppercase', color: T.acc }}>
+            <span className="edu-pulse">●</span>&nbsp; the resolution of understanding
+          </motion.div>
+          <motion.h1 variants={rise} style={{ fontSize: 'clamp(36px,6vw,68px)', lineHeight: 1.03, letterSpacing: '-.035em', margin: '16px auto 0', textWrap: 'balance', color: T.text, maxWidth: '16ch' }}>
+            1 lecture, 8 ways to learn it. Understand <span style={{ color: T.acc }}>8× faster</span>.
+          </motion.h1>
+          <motion.p variants={rise} style={{ fontSize: 'clamp(16px,2.2vw,20px)', color: T.sub, margin: '18px auto 0', maxWidth: '54ch', lineHeight: 1.5 }}>
+            8kEdu turns any YouTube lecture into notebooks, flashcards, mind maps, charts and a dashboard you can touch — an autonomous agent watches the video and builds them all. Watch in 720p, learn in 8K.
+          </motion.p>
+          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 560, margin: '28px auto 0' }}>
+            <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
+              onKeyDown={e => e.key === 'Enter' && go()} placeholder="drop a YouTube lecture link…"
+              style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
+            <motion.button className="edu-open" onClick={go} whileTap={{ scale: 0.96 }}
+              style={{ background: T.acc, color: T.accText, border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              upscale →
+            </motion.button>
+          </motion.div>
+          {err && <div style={{ color: '#e5484d', fontSize: 13, marginTop: 10 }}>{err}</div>}
+          <motion.div variants={rise}><OutputShowcase T={T} onOpen={onOpen} /></motion.div>
         </motion.div>
       </div>
 
       {/* BODY */}
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ maxWidth: 940, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ fontFamily: 'ui-monospace,monospace', color: '#66735b', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.14em' }}>
+          <div style={{ fontFamily: 'ui-monospace,monospace', color: T.faint, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.14em' }}>
             ready to touch — any topic, not just code
           </div>
           {CATEGORIES.map(cat => (
             <div key={cat.name}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 14.5, fontWeight: 700, color: '#e8ede2' }}>{cat.icon} {cat.name}</span>
-                <span style={{ fontSize: 11.5, color: '#4d5946' }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: T.text }}>{cat.icon} {cat.name}</span>
+                <span style={{ fontSize: 11.5, color: T.faint }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
                 {cat.videos.map(v => (
                   <button key={v.id} className="edu-card" onClick={() => onOpen(v.id)} style={{
-                    textAlign: 'left', background: '#0f140b', border: '1px solid #2b3a1e', borderRadius: 12,
-                    padding: 0, overflow: 'hidden', cursor: 'pointer',
-                  }}>
+                    textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12,
+                    padding: 0, overflow: 'hidden', cursor: 'pointer' }}>
                     <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
                       style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
                     <div style={{ padding: '8px 10px 10px' }}>
-                      <span style={{ fontSize: 12.5, color: '#e8ede2', lineHeight: 1.4 }}>{v.title}</span>
+                      <span style={{ fontSize: 12.5, color: T.text, lineHeight: 1.4 }}>{v.title}</span>
                     </div>
                   </button>
                 ))}
@@ -919,15 +984,14 @@ function Landing({ onOpen }) {
             ['researcher', '🔬', 'Researcher', 'Select any sentence, mint the widget you need. Coming soon: trace a concept across lectures, citation export.'],
           ].map(([key, icon, title, text]) => (
             <button key={key} className="edu-card" onClick={() => onOpen('kCc8FmEb1nY', key)} style={{
-              textAlign: 'left', background: '#0f140b', border: '1px solid #2b3a1e', borderRadius: 12,
-              padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer',
-            }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#e8ede2' }}>{icon} {title}</span>
-              <span style={{ fontSize: 12.5, color: '#8b9682', lineHeight: 1.55 }}>{text}</span>
+              textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12,
+              padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{icon} {title}</span>
+              <span style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>{text}</span>
             </button>
           ))}
         </div>
-        <div style={{ color: '#4d5946', fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
+        <div style={{ color: T.faint, fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
           yt-dlp → keyframes → Nemotron Omni → spec JSON → live widgets · python in-browser via pyodide · remix = a URL
         </div>
       </div>
