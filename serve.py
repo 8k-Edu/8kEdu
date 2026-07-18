@@ -6,6 +6,7 @@ POST /api/widget {"text": "...", "time": 1234.5, "ask": "let me play with the ma
 """
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -21,9 +22,39 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 DATA = Path("data")
 DEFAULT_VIDEO = "kCc8FmEb1nY"
+PROMPT_VERSION = "v1"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
 _frames_cache: dict[str, list] = {}
 backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
+
+# R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
+try:
+    from agent import db as _db
+except Exception:
+    _db = None
+
+
+def _prompt_hash(video: str, frame: str, context: str) -> str:
+    key = f"{PROMPT_VERSION}|{info.get('model','?')}|{video}|{frame}|{context}"
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def _cache_get(h: str):
+    if not _db:
+        return None
+    try:
+        return _db.cache_get(h)
+    except Exception:
+        return None
+
+
+def _cache_put(h: str, video: str, result: dict):
+    if not _db:
+        return
+    try:
+        _db.cache_put(h, video, info.get("model", "?"), result)
+    except Exception:
+        pass
 
 
 class Ask(BaseModel):
@@ -53,17 +84,25 @@ def make_widget(req: Ask):
         + "\nHonor the student's request if it maps to an available widget type."
         + "\nEmit the concept spec JSON."
     )
+    h = _prompt_hash(req.video, fr["file"], context)
+    cached = _cache_get(h)
+    if cached is not None:
+        cached["cached"] = True
+        return cached
     raw = backend.ask(DATA / req.video / "frames" / fr["file"], context)
     spec = extract_json(raw)
     if not valid(spec):
         # not manipulable — still be useful: return the model's explanation as an answer card
         answer = (spec or {}).get("explanation") or raw.strip()[:600]
         if answer:
-            return {"answer": answer, "time": req.time, "frame": fr["file"]}
+            out = {"answer": answer, "time": req.time, "frame": fr["file"]}
+            _cache_put(h, req.video, out)
+            return out
         return {"error": "no widget found for this moment", "raw": raw[:400]}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
+    _cache_put(h, req.video, spec)
     return spec
 
 

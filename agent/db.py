@@ -99,6 +99,28 @@ def mark_curriculum(cid, state):
         c.commit()
 
 
+# ---------- inference_cache — frame-level moat: identical asks across users never recompute ----------
+def cache_get(prompt_hash):
+    """Hit → return the stored result and bump the hits counter. Miss → None."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select result from inference_cache where prompt_hash=%s", (prompt_hash,))
+        row = _one(cur)
+        if not row:
+            return None
+        cur.execute("update inference_cache set hits = hits + 1 where prompt_hash=%s", (prompt_hash,))
+        c.commit()
+        return row["result"]
+
+
+def cache_put(prompt_hash, video_id, model, result):
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            "insert into inference_cache(cache_key,video_id,model,prompt_hash,result,hits) "
+            "values (%s,%s,%s,%s,%s,0) on conflict (cache_key) do nothing",
+            (prompt_hash, video_id, model, prompt_hash, json.dumps(result)))
+        c.commit()
+
+
 def add_channel(user_id, channel_id):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select id from monitored_channels where user_id=%s and channel_id=%s",
@@ -163,6 +185,10 @@ def dashboard_state(limit=12):
         # cache reuses = ticks that hit the Supabase cache instead of recomputing
         cur.execute("select count(*) from runs where actions->>'source' = 'supabase-cache'")
         cache_reuses = cur.fetchone()["count"]
+        # frame-level cache: identical asks served without a VLM call
+        cur.execute("select coalesce(sum(hits),0) as h, count(*) as n from inference_cache")
+        ic = cur.fetchone()
+        infer_hits, infer_entries = int(ic["h"]), int(ic["n"])
 
         cur.execute("select goal_text from goals where status='active' order by created_at limit 1")
         g = cur.fetchone()
@@ -182,5 +208,11 @@ def dashboard_state(limit=12):
             "reuses": cache_reuses,
             # each reuse serves a full video's widgets to another learner for free
             "widgets_served_free": cache_reuses * (concepts_cached // max(1, videos_cached)),
+            # frame-level cache (identical asks across users)
+            "infer_hits": infer_hits,
+            "infer_entries": infer_entries,
+            "hit_rate": round(infer_hits / (infer_hits + infer_entries), 3) if infer_entries else 0.0,
+            # a saved VLM call ≈ $0.002 (what the same inference would cost on a cloud VLM)
+            "usd_saved": round((cache_reuses * concepts_cached + infer_hits) * 0.002, 2),
         },
     }
