@@ -63,8 +63,11 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 **P1 — heartbeat** ✅ done — `agent/loop.py`: Nemotron decides FIND→PROCESS→SEQUENCE, Supabase persists runs; cache-reuse verified (`supabase-cache, reused: True`)
 **Landing** ✅ done — hero pour-in/pop-out artifact loop, river carousel, genre shelves, typed markets section, light/dark
 
-**P2 — containment (NOW, ~2h)** ← the NemoClaw+OpenShell bounty proof
-- [ ] `sandbox-policy` — network allowlist (youtube/apify/supabase) + fs guard; `shields up`; demo an out-of-policy exfil → **BLOCKED + logged**
+**P2 — containment** ✅ done — the NemoClaw+OpenShell bounty proof
+- [x] `claw-agent/policies/8kedu.yaml` — egress allowlist (youtube/apify/supabase/local-inference), schema-valid, applied as **policy v4** on `scoutclaw`
+- [x] Blocked-exfil demo: `claw-agent/contain_demo.sh` — YouTube→200, Supabase→401 (reached), webhook.site exfil→**BLOCKED**; agent's own `python3` urllib path denied too
+- [x] OCSF audit log proof: `NET:OPEN DENIED python3.13 -> webhook.site:443 [reason: not allowed by any policy]`, `denied_action_count=1`
+- [ ] final step for demo: `nemoclaw scoutclaw shields up` on camera
 
 **P3 — agent dashboard (~2h)**
 - [ ] Live view: runs feed from Supabase, curriculum building itself, cache-hit counter — judges must SEE autonomy

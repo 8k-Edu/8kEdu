@@ -14,7 +14,9 @@ tamper-evident OCSF audit log.
 | [`policies/8kedu.yaml`](policies/8kedu.yaml) | Egress policy preset — YouTube, Apify, Supabase, local inference. Nothing else. |
 | [`agent_egress_probe.py`](agent_egress_probe.py) | The agent's own urllib egress pattern + a rogue exfil. Run inside the sandbox. |
 | [`contain_demo.sh`](contain_demo.sh) | One-command demo: allowed sinks succeed, exfil blocked + logged. |
-| [`schema.sql`](schema.sql) | Supabase two-tier schema (global cache + per-user state). |
+
+Persistence (Supabase two-tier schema — global cache + per-user state) is applied to the
+live DB and accessed via [`agent/db.py`](../agent/db.py).
 
 ## Run it
 ```bash
