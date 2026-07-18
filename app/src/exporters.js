@@ -74,7 +74,7 @@ function conceptToPython(c) {
       ].join('\n')]
     }
     default:
-      return [`# ${c.widget} spec (render in EduClaw)\nspec = ${JSON.stringify(c.params, null, 2)}`]
+      return [`# ${c.widget} spec (render in 8kEdu)\nspec = ${JSON.stringify(c.params, null, 2)}`]
   }
 }
 
@@ -82,7 +82,7 @@ const ytLink = (videoId, t) => `https://youtu.be/${videoId}?t=${Math.floor(t)}`
 
 export function buildNotebook(concepts, videoId, title) {
   const cells = [
-    md(`# ${title}\n\nInteractive moments extracted from [the lecture](https://youtu.be/${videoId}) with **EduClaw** — each section links back to the exact moment.`),
+    md(`# ${title}\n\nInteractive moments extracted from [the lecture](https://youtu.be/${videoId}) with **8kEdu** — each section links back to the exact moment.`),
   ]
   for (const c of concepts) {
     cells.push(md(`## ${c.title}\n\n*${c.explanation ?? ''}*\n\n[▶ watch this moment (${fmt(c.time)})](${ytLink(videoId, c.time)})`))
@@ -102,7 +102,7 @@ export function buildNotebook(concepts, videoId, title) {
 export function buildMarkdown(concepts, videoId, title, origin) {
   const lines = [
     `# ${title}`, '',
-    `*Interactive study notes from [the lecture](https://youtu.be/${videoId}), extracted with EduClaw — every figure is a live widget you can remix.*`, '',
+    `*Interactive study notes from [the lecture](https://youtu.be/${videoId}), extracted with 8kEdu — every figure is a live widget you can remix.*`, '',
   ]
   for (const c of concepts) {
     lines.push(`## ${fmt(c.time)} — ${c.title}`, '')
@@ -112,7 +112,7 @@ export function buildMarkdown(concepts, videoId, title, origin) {
     const spec = btoa(unescape(encodeURIComponent(JSON.stringify(c))))
     lines.push(`[▶ watch this moment](${ytLink(videoId, c.time)}) · [🔁 open the live widget](${origin}/?v=${videoId}#s=${spec})`, '')
   }
-  lines.push('---', '', '*Made with EduClaw — lectures you can touch.*')
+  lines.push('---', '', '*Made with 8kEdu — YouTube video to interactive learning dashboard.*')
   return lines.join('\n')
 }
 
@@ -139,8 +139,8 @@ export function buildDeckHtml(concepts, videoId, title) {
   .hint { position: fixed; top: 10px; right: 12px; background: #111; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
 </style></head><body>
 <div class="hint">⌘P → save as PDF</div>
-<section class="slide cover"><div class="k">EduClaw deck</div><h1>${esc(title)}</h1>
-<p>${concepts.length} interactive moments from <b>youtu.be/${videoId}</b> — live versions in EduClaw.</p></section>
+<section class="slide cover"><div class="k">8kEdu deck</div><h1>${esc(title)}</h1>
+<p>${concepts.length} interactive moments from <b>youtu.be/${videoId}</b> — live versions in 8kEdu.</p></section>
 ${concepts.map(slide).join('\n')}
 </body></html>`
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;') }
