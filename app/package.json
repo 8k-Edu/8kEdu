@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^12.42.2",
     "pyodide": "^314.0.2",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
