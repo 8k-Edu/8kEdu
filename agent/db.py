@@ -101,3 +101,45 @@ def recent_runs(limit=10):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select job,woke_at,status,decided from runs order by woke_at desc limit %s", (limit,))
         return [dict(r) for r in cur.fetchall()]
+
+
+def dashboard_state(limit=12):
+    """Everything the live agent dashboard shows, in one round-trip-ish read."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "select id, job, woke_at, status, decided, actions from runs order by woke_at desc limit %s",
+            (limit,))
+        runs = [dict(r) for r in cur.fetchall()]
+
+        cur.execute(
+            "select c.seq, c.video_id, c.rationale, c.state, "
+            "coalesce(v.title, c.video_id) as title "
+            "from curriculum c left join videos v on v.video_id = c.video_id "
+            "order by c.seq")
+        curriculum = [dict(r) for r in cur.fetchall()]
+
+        # the moat: concepts cached once, reusable by every learner at ~0 marginal cost
+        cur.execute("select count(*) from concepts")
+        concepts_cached = cur.fetchone()["count"]
+        cur.execute("select count(distinct video_id) from concepts")
+        videos_cached = cur.fetchone()["count"]
+        # cache reuses = ticks that hit the Supabase cache instead of recomputing
+        cur.execute("select count(*) from runs where actions->>'source' = 'supabase-cache'")
+        cache_reuses = cur.fetchone()["count"]
+
+        cur.execute("select goal_text from goals where status='active' order by created_at limit 1")
+        g = cur.fetchone()
+        goal = g["goal_text"] if g else None
+
+    return {
+        "goal": goal,
+        "runs": runs,
+        "curriculum": curriculum,
+        "cache": {
+            "concepts_cached": concepts_cached,
+            "videos_cached": videos_cached,
+            "reuses": cache_reuses,
+            # each reuse serves a full video's widgets to another learner for free
+            "widgets_served_free": cache_reuses * (concepts_cached // max(1, videos_cached)),
+        },
+    }
