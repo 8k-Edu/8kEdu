@@ -1,17 +1,39 @@
 [
  {
   "has_concept": true,
-  "widget": "function_plot",
-  "title": "Scrambled Eggs \u2013 Butter & Timing Controls",
-  "explanation": "Adjusting butter amount and cooking time lets you control how creamy the eggs become.",
+  "widget": "notebook",
+  "title": "Scrambled Eggs Timing Calculator",
+  "explanation": "Adjust egg count, preheat time and butter amount to compute the ideal cooking duration for silky scrambled eggs.",
   "params": {
-   "expr": "creaminess = butter_tbsp * 0.5 + cook_minutes * 0.2",
-   "sliders": [
-    "butter_tbsp",
-    "cook_minutes"
+   "egg_count": 3,
+   "preheat_minutes": 0.5,
+   "butter_g": 5,
+   "cells": [
+    "def cooking_time(egg_count, preheat_minutes=0, butter_g=5):\n        seconds_per_egg = 30\n        base_seconds = egg_count * seconds_per_egg\n        total_seconds = base_seconds + butter_g\n        total_seconds += preheat_minutes * 60\n        return total_seconds\n\n# Use injected slider variables\n time_sec = cooking_time(egg_count, preheat_minutes, butter_g)\n print(f\"Estimated cooking time: {time_sec:.1f} seconds\")",
+    "import matplotlib.pyplot as plt\n\ndef plot_time_vs_eggs():\n    egg_counts = list(range(1,7))\n    times = [cooking_time(n) / 60 for n in egg_counts]  # minutes\n    plt.plot(egg_counts, times, marker='o')\n    plt.xlabel('Number of Eggs')\n    plt.ylabel('Cooking Time (minutes)')\n    plt.title('Scrambled Egg Cooking Time')\n    plt.grid(True)\n    plt.show()\n\nplot_time_vs_eggs()"
    ]
   },
-  "time": 10,
-  "frame": "f_000010.jpg"
+  "time": 50,
+  "frame": "f_000050.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Scrambled Egg Doneness",
+  "explanation": "Adjusting cooking time lets you see how the eggs transition from creamy to overcooked.",
+  "params": {
+   "expr": "y = time / 5",
+   "sliders": [
+    {
+     "name": "time",
+     "min": 0,
+     "max": 10,
+     "step": 0.5,
+     "default": 2
+    }
+   ]
+  },
+  "time": 160,
+  "frame": "f_000160.jpg"
  }
 ]
