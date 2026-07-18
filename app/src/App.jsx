@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
@@ -1159,58 +1159,101 @@ function HowItWorks({ T }) {
   )
 }
 
+// the hero loop — a lecture pours into the funnel, an artifact comes out. Forever.
 function HeroDrop({ T, onOpen }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [cycle, setCycle] = useState(0)
+  useEffect(() => {
+    if (reduced) return
+    const id = setInterval(() => setCycle(c => c + 1), 4400)
+    return () => clearInterval(id)
+  }, [reduced])
+  const scene = SCENES[cycle % SCENES.length]
+  const Art = scene.C
+  // shelf of artifacts already minted this session (newest right)
+  const made = []
+  for (let k = Math.max(0, cycle - 6); k < cycle; k++) made.push({ s: SCENES[k % SCENES.length], k })
   return (
-    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginTop: 26, paddingBottom: 168 }}>
-      {/* the funnel — big, behind the card, stem reaching the input below */}
-      <svg width="860" height="440" viewBox="0 0 860 440" aria-hidden="true"
-        style={{ position: 'absolute', top: 110, left: '50%', transform: 'translateX(-50%)', zIndex: 0, maxWidth: '98vw' }}>
-        <path d="M20,8 L840,8 L500,240 L500,412 L360,412 L360,240 Z"
-          fill={T.panel} stroke={T.line} strokeWidth="1.8" opacity=".9" />
-        <path d="M20,8 L840,8" stroke={T.acc} strokeWidth="2.5" opacity=".55" />
-        {/* stem center line continuing to the input */}
-        <line x1="430" y1="412" x2="430" y2="440" stroke={T.acc} strokeWidth="1.5" strokeDasharray="3 4" opacity=".6" />
-      </svg>
-      {/* pixels dripping through the stem into the input — the 8K distillate */}
-      {!reduced && [0, 1, 2].map(i => (
-        <motion.span key={i}
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: [0, 1, 0], y: [0, 84] }}
-          transition={{ delay: 1.7 + i * .5, duration: 1.5, repeat: Infinity, repeatDelay: .5, ease: 'easeIn' }}
-          style={{ position: 'absolute', top: 448, left: `calc(50% + ${(i - 1) * 13}px)`, width: 9, height: 9, borderRadius: 2.5, background: T.acc, zIndex: 0 }} />
-      ))}
-      <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
-        initial={reduced ? false : { x: -380, y: -300, opacity: 0, rotate: -18 }}
-        animate={reduced ? { opacity: 1 } : {
-          x: [-380, -250, -115, -18, 0],
-          y: [-300, -272, -172, -20, 0],
-          rotate: [-18, -12, -5, 2, 0],
-          scaleY: [1, 1, 1, .95, 1],
-          opacity: [0, 1, 1, 1, 1],
-        }}
-        transition={{ delay: .3, duration: 1.15, times: [0, .3, .62, .88, 1], ease: 'easeIn' }}
-        whileHover={{ scale: 1.025, rotate: -0.5 }}
-        style={{ position: 'relative', zIndex: 1, width: 'min(500px, 88vw)', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 12, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 42px 90px -30px rgba(0,0,0,.65)' }}>
-        <div style={{ position: 'relative' }}>
-          <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/hqdefault.jpg" alt=""
-            style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 12, display: 'block' }} />
-          <span style={{ position: 'absolute', right: 8, bottom: 8, fontFamily: mono, fontSize: 11, background: '#000c', color: '#fff', borderRadius: 5, padding: '2px 7px' }}>1:56:20</span>
-          <span style={{ position: 'absolute', left: 8, top: 8, fontFamily: mono, fontSize: 9.5, letterSpacing: '.1em', background: '#000c', color: '#8ee23e', borderRadius: 5, padding: '3px 8px', textTransform: 'uppercase' }}>one lecture, dropped</span>
-          {/* play glyph */}
-          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ width: 54, height: 54, borderRadius: 30, background: '#0a0d08cc', border: `1.5px solid ${T.acc}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.acc, fontSize: 20, paddingLeft: 4 }}>▶</span>
-          </span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 4px 2px' }}>
-          <div style={{ color: T.text, fontSize: 15.5, fontWeight: 750 }}>Karpathy — Let's build GPT</div>
-          <div style={{ fontFamily: mono, fontSize: 11, color: T.acc }}>try it →</div>
-        </div>
-        {/* scan-line after impact */}
-        {!reduced && <motion.div initial={{ x: '-115%' }} animate={{ x: '115%' }}
-          transition={{ delay: 1.35, duration: .6, ease: 'easeInOut' }}
-          style={{ position: 'absolute', inset: 0, background: `linear-gradient(100deg, transparent 32%, ${T.acc}44 50%, transparent 68%)`, pointerEvents: 'none' }} />}
-      </motion.button>
+    <div style={{ position: 'relative', marginTop: 6 }}>
+      <div style={{ position: 'relative', height: 545 }}>
+        {/* funnel */}
+        <svg width="640" height="250" viewBox="0 0 640 250" aria-hidden="true"
+          style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 0, maxWidth: '96vw' }}>
+          <path d="M20,6 L620,6 L365,150 L365,244 L275,244 L275,150 Z"
+            fill={T.panel} stroke={T.line} strokeWidth="1.8" opacity=".9" />
+          <path d="M20,6 L620,6" stroke={T.acc} strokeWidth="2.5" opacity=".55" />
+          {/* mouth flash when the lecture lands */}
+          {!reduced && (
+            <motion.path key={`flash-${cycle}`} d="M20,6 L620,6" stroke={T.acc} strokeWidth="4"
+              initial={{ opacity: 0 }} animate={{ opacity: [0, .95, 0] }}
+              transition={{ delay: 1.35, duration: .55 }} />
+          )}
+        </svg>
+        {/* the lecture card — arcs in, sinks into the throat */}
+        <motion.button key={`vid-${cycle}`} onClick={() => onOpen('kCc8FmEb1nY')}
+          initial={reduced ? false : { x: -340, y: -170, opacity: 0, rotate: -16 }}
+          animate={reduced ? { opacity: 1 } : {
+            x: [-340, -220, -95, -10, 0, 0],
+            y: [-170, -150, -85, -14, 0, 92],
+            rotate: [-16, -11, -5, 1, 0, 0],
+            scale: [1, 1, 1, 1, .92, .26],
+            opacity: [0, 1, 1, 1, 1, 0],
+          }}
+          transition={{ delay: .15, duration: 1.55, times: [0, .2, .42, .6, .7, 1], ease: 'easeIn' }}
+          style={{ position: 'absolute', top: 0, left: '50%', marginLeft: -125, width: 250, zIndex: 2,
+            background: T.panel, border: `1px solid ${T.line}`, borderRadius: 13, padding: 7, cursor: 'pointer',
+            textAlign: 'left', overflow: 'hidden', boxShadow: '0 30px 60px -24px rgba(0,0,0,.6)' }}>
+          <div style={{ position: 'relative' }}>
+            <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/mqdefault.jpg" alt=""
+              style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+            <span style={{ position: 'absolute', right: 5, bottom: 5, fontFamily: mono, fontSize: 9.5, background: '#000c', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>1:56:20</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 3px 1px' }}>
+            <span style={{ color: T.text, fontSize: 11.5, fontWeight: 700 }}>Karpathy — Let's build GPT</span>
+            <span style={{ fontFamily: mono, fontSize: 9, color: T.acc }}>▶</span>
+          </div>
+        </motion.button>
+        {/* distillate dripping from the stem */}
+        {!reduced && [0, 1].map(i => (
+          <motion.span key={i}
+            animate={{ opacity: [0, 1, 0], y: [0, 34] }}
+            transition={{ delay: 1.6 + i * .4, duration: .9, repeat: Infinity, repeatDelay: 1.2, ease: 'easeIn' }}
+            style={{ position: 'absolute', top: 272, left: `calc(50% + ${(i - .5) * 14}px)`, width: 8, height: 8, borderRadius: 2, background: T.acc, zIndex: 0 }} />
+        ))}
+        {/* the artifact — the star. Pops out of the stem, holds, slides to the shelf */}
+        <AnimatePresence>
+          <motion.div key={`art-${cycle}`}
+            initial={reduced ? false : { y: -36, scale: .2, opacity: 0 }}
+            animate={{ y: 12, scale: 1.34, opacity: 1 }}
+            exit={{ y: 130, scale: .42, opacity: 0, transition: { duration: .45, ease: 'easeIn' } }}
+            transition={{ delay: reduced ? 0 : 1.7, type: 'spring', stiffness: 130, damping: 16 }}
+            style={{ position: 'absolute', top: 292, left: '50%', marginLeft: -98, zIndex: 3, transformOrigin: '50% 0%' }}>
+            <Art />
+          </motion.div>
+        </AnimatePresence>
+        {/* caption for the artifact on stage */}
+        <motion.div key={`cap-${cycle}`}
+          initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ delay: reduced ? 0 : 2.1 }}
+          style={{ position: 'absolute', top: 522, left: 0, right: 0, textAlign: 'center', fontFamily: mono, fontSize: 11.5, color: T.acc, zIndex: 3 }}>
+          {scene.title}
+        </motion.div>
+      </div>
+      {/* the shelf — everything minted so far */}
+      <div style={{ height: 96, marginTop: 16, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 8 }}>
+        {made.map(({ s, k }) => (
+          <motion.div key={k} initial={{ scale: .5, opacity: 0, y: -16 }} animate={{ scale: 1, opacity: .9, y: 0 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 20 }}
+            style={{ width: 86, height: 71, overflow: 'hidden', borderRadius: 8, border: `1px solid ${T.line}`, flexShrink: 0 }}>
+            <div style={{ transform: 'scale(.439)', transformOrigin: 'top left' }}><s.C /></div>
+          </motion.div>
+        ))}
+        {made.length > 0 && (
+          <div style={{ alignSelf: 'center', fontFamily: mono, fontSize: 10, color: T.faint, marginLeft: 6 }}>
+            +{made.length < 8 ? 8 - made.length : '∞'} more…
+          </div>
+        )}
+      </div>
     </div>
   )
 }
