@@ -1073,7 +1073,7 @@ function ArtifactCarousel({ T }) {
             <div style={{ height: 400, display: 'flex', alignItems: 'center' }}>
               <div style={{ transform: 'scale(min(2.35, 1))' }} className="big-art"><S.C /></div>
             </div>
-            <div style={{ color: T.text, fontSize: 19, fontWeight: 750, marginTop: -14 }}>{S.title}</div>
+            <div style={{ color: T.text, fontSize: 19, fontWeight: 750, marginTop: 4 }}>{S.title}</div>
             <div style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, maxWidth: '46ch', marginTop: 6 }}>{S.blurb}</div>
           </motion.div>
         </div>
