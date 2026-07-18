@@ -1062,29 +1062,40 @@ function ArtifactCarousel({ T }) {
       <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 0', maxWidth: '26ch', textWrap: 'balance' }}>
         Eight artifacts. One drop.
       </h2>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,3vw,34px)', marginTop: 8 }}>
-        <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={arrow}>‹</button>
-        <div style={{ width: 'min(560px, 72vw)', height: 470, position: 'relative', overflow: 'hidden' }}>
-          <motion.div key={S.key}
-            initial={reduced ? false : { opacity: 0, x: 90 * dir, scale: .94 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 170, damping: 22 }}
-            style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <div style={{ height: 400, display: 'flex', alignItems: 'center' }}>
-              <div className="big-art"><S.C /></div>
-            </div>
-            <div style={{ color: T.text, fontSize: 19, fontWeight: 750, marginTop: 4 }}>{S.title}</div>
-            <div style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, maxWidth: '46ch', marginTop: 6 }}>{S.blurb}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px,2vw,20px)', marginTop: 6 }}>
+        <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={{ ...arrow, zIndex: 6 }}>‹</button>
+        {/* circular coverflow — center big, neighbors peeking */}
+        <div style={{ position: 'relative', width: 'min(880px, 82vw)', height: 486, overflow: 'hidden' }}>
+          {[-1, 0, 1].map(off => {
+            const i = (idx + off + SCENES.length) % SCENES.length
+            const Sc = SCENES[i]
+            const center = off === 0
+            const xOff = typeof window !== 'undefined' ? Math.min(316, window.innerWidth * 0.3) : 316
+            return (
+              <motion.div key={Sc.key}
+                animate={{ x: off * xOff, scale: center ? 2.1 : .92, opacity: center ? 1 : .38, zIndex: center ? 5 : 1 }}
+                transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 150, damping: 22 }}
+                onClick={() => !center && go(idx + off, off)}
+                style={{ position: 'absolute', left: '50%', top: 118, marginLeft: -98, cursor: center ? 'default' : 'pointer' }}>
+                <Sc.C />
+              </motion.div>
+            )
+          })}
+          <motion.div key={`cap-${S.key}`}
+            initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: .12 }}
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+            <div style={{ color: T.text, fontSize: 19, fontWeight: 750 }}>{S.title}</div>
+            <div style={{ color: T.muted, fontSize: 13.5, lineHeight: 1.5, maxWidth: '48ch', margin: '5px auto 0' }}>{S.blurb}</div>
           </motion.div>
         </div>
-        <button aria-label="next" onClick={() => go(idx + 1, 1)} style={arrow}>›</button>
+        <button aria-label="next" onClick={() => go(idx + 1, 1)} style={{ ...arrow, zIndex: 6 }}>›</button>
       </div>
       <style>{`
-        .big-art{transform:scale(2.35)}
         .thumb{width:98px;height:81px;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;flex-shrink:0;transition:opacity .2s,transform .2s}
         .thumb>div{transform:scale(.5);transform-origin:top left;pointer-events:none}
         .thumb:hover{transform:translateY(-4px)}
-        @media(max-width:700px){.big-art{transform:scale(1.55)}.thumb{display:none}}
+        @media(max-width:700px){.thumb{display:none}}
       `}</style>
       {/* thumbnail filmstrip = navigation */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10, padding: '0 16px' }}>
@@ -1217,11 +1228,11 @@ function Landing({ onOpen }) {
           <motion.div variants={rise}><HeroDrop T={T} onOpen={onOpen} /></motion.div>
           <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '26px auto 0' }}>
             <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
-              onKeyDown={e => e.key === 'Enter' && go()} placeholder="or drop your own lecture…"
+              onKeyDown={e => e.key === 'Enter' && go()} placeholder="drop a video to learn…"
               style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
             <motion.button className="edu-open" onClick={go} whileTap={{ scale: 0.96 }}
               style={{ background: T.acc, color: T.accText, border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              upscale →
+              learn →
             </motion.button>
           </motion.div>
           {err && <div style={{ color: '#e5484d', fontSize: 13, marginTop: 10 }}>{err}</div>}
