@@ -91,6 +91,9 @@ Where 8kEdu goes after the demo. Ordered by leverage. The schema foundation alre
 exists (`goals`, `curriculum`, `mastery`, `monitored_channels`, `inference_cache`) — most
 of this is surface + orchestration on top of the agent we built.
 
+> **Detailed, buildable specs** (data model → API → UI → effort → demo-scope) for all four:
+> **[`ROADMAP.md`](ROADMAP.md)**. Summary below.
+
 ### R1 — Learn track: dynamic curriculum, Duolingo-style  *(the core product)*
 The learner says **what** they want to learn — a *how-to*, a *concept*, a *subject*
 ("Reinforcement Learning", "Deep Learning", "buy my first house"). The agent then:
