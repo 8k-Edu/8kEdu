@@ -1109,20 +1109,12 @@ function ArtifactCarousel({ T }) {
         </div>
         <button aria-label="next" onClick={() => go(idx + 1, 1)} style={{ ...arrow, zIndex: 6 }}>›</button>
       </div>
-      <style>{`
-        .thumb{width:98px;height:81px;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;flex-shrink:0;transition:opacity .2s,transform .2s}
-        .thumb>div{transform:scale(.5);transform-origin:top left;pointer-events:none}
-        .thumb:hover{transform:translateY(-4px)}
-        @media(max-width:700px){.thumb{display:none}}
-      `}</style>
-      {/* thumbnail filmstrip = navigation */}
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10, padding: '0 16px' }}>
+      {/* dots — minimal, no second carousel */}
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8 }}>
         {SCENES.map((s, i) => (
           <button key={s.key} aria-label={s.title} onClick={() => go(i, i > idx ? 1 : -1)}
-            className="thumb"
-            style={{ border: i === idx ? `2px solid ${T.acc}` : `1px solid ${T.line}`, opacity: i === idx ? 1 : .55, background: 'transparent', padding: 0 }}>
-            <div><s.C /></div>
-          </button>
+            style={{ width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer',
+              background: i === idx ? T.acc : T.line, transition: 'all .25s', padding: 0 }} />
         ))}
       </div>
     </div>
@@ -1170,21 +1162,23 @@ function HowItWorks({ T }) {
 function HeroDrop({ T, onOpen }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
-    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginTop: 26, paddingBottom: 118 }}>
-      {/* the funnel — behind the card */}
-      <svg width="640" height="330" viewBox="0 0 640 330" aria-hidden="true"
-        style={{ position: 'absolute', top: 130, left: '50%', transform: 'translateX(-50%)', zIndex: 0, maxWidth: '96vw' }}>
-        <path d="M40,6 L600,6 L370,168 L370,252 L270,252 L270,168 Z"
-          fill={T.panel} stroke={T.line} strokeWidth="1.6" opacity=".85" />
-        <path d="M40,6 L600,6" stroke={T.acc} strokeWidth="2" opacity=".5" />
+    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginTop: 26, paddingBottom: 168 }}>
+      {/* the funnel — big, behind the card, stem reaching the input below */}
+      <svg width="860" height="440" viewBox="0 0 860 440" aria-hidden="true"
+        style={{ position: 'absolute', top: 110, left: '50%', transform: 'translateX(-50%)', zIndex: 0, maxWidth: '98vw' }}>
+        <path d="M20,8 L840,8 L500,240 L500,412 L360,412 L360,240 Z"
+          fill={T.panel} stroke={T.line} strokeWidth="1.8" opacity=".9" />
+        <path d="M20,8 L840,8" stroke={T.acc} strokeWidth="2.5" opacity=".55" />
+        {/* stem center line continuing to the input */}
+        <line x1="430" y1="412" x2="430" y2="440" stroke={T.acc} strokeWidth="1.5" strokeDasharray="3 4" opacity=".6" />
       </svg>
-      {/* pixels dripping from the funnel stem — the 8K distillate */}
+      {/* pixels dripping through the stem into the input — the 8K distillate */}
       {!reduced && [0, 1, 2].map(i => (
         <motion.span key={i}
           initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: [0, 1, 0], y: [0, 46] }}
-          transition={{ delay: 1.7 + i * .5, duration: 1.4, repeat: Infinity, repeatDelay: .6, ease: 'easeIn' }}
-          style={{ position: 'absolute', top: 388, left: `calc(50% + ${(i - 1) * 14}px)`, width: 9, height: 9, borderRadius: 2.5, background: T.acc, zIndex: 0 }} />
+          animate={{ opacity: [0, 1, 0], y: [0, 84] }}
+          transition={{ delay: 1.7 + i * .5, duration: 1.5, repeat: Infinity, repeatDelay: .5, ease: 'easeIn' }}
+          style={{ position: 'absolute', top: 448, left: `calc(50% + ${(i - 1) * 13}px)`, width: 9, height: 9, borderRadius: 2.5, background: T.acc, zIndex: 0 }} />
       ))}
       <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
         initial={reduced ? false : { x: -380, y: -300, opacity: 0, rotate: -18 }}
@@ -1263,7 +1257,7 @@ function Landing({ onOpen }) {
             An autonomous agent watches any lecture — and makes it touchable.
           </motion.p>
           <motion.div variants={rise}><HeroDrop T={T} onOpen={onOpen} /></motion.div>
-          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '26px auto 0' }}>
+          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '-38px auto 0', position: 'relative', zIndex: 2 }}>
             <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
               onKeyDown={e => e.key === 'Enter' && go()} placeholder="drop a video to learn…"
               style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
@@ -1354,22 +1348,36 @@ function Landing({ onOpen }) {
           </h2>
           <div style={{ color: T.muted, fontSize: 13.5 }}>every video analyzed once is cached for all — marginal cost per learner → 0</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 10 }}>
           {[
-            ['student', '🎓', 'Students', 'Watch — widgets appear beside the video. Check the best ones → export a Jupyter notebook. Tonight\'s lab, from tonight\'s lecture.', '1.5B learners · $400B e-learning'],
-            ['teacher', '👩‍🏫', 'Teachers', 'Opens on ☰ moments — pick the arc of the lesson → one-click deck (⌘P → PDF). Every slide links to its live widget for in-class play.', '85M educators · $160B edtech tools'],
-            ['creator', '✍️', 'Creators / Writers', 'Select a thread of moments → Markdown with keyframes, runnable code and remix links. Paste into Medium / Substack / your editor.', '200M creators · $250B creator economy'],
-            ['researcher', '🔬', 'Researchers', 'Select any sentence, mint the widget you need. Coming soon: trace a concept across lectures, citation export.', '10M researchers · $35B research tools'],
-          ].map(([key, icon, title, text, market]) => (
-            <button key={key} className="edu-card" onClick={() => onOpen('kCc8FmEb1nY', key)} style={{
-              textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12,
-              padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{icon} {title}</span>
-              <span style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>{text}</span>
-              <span style={{ fontFamily: mono, fontSize: 10.5, color: T.acc, borderTop: `1px solid ${T.line}`, paddingTop: 8, marginTop: 4, letterSpacing: '.03em' }}>
-                ◔ {market}
-              </span>
-            </button>
+            ['student', '🎓', 'Students', '$400B', 'e-learning', '1.5B learners', 'tonight\'s lab, from tonight\'s lecture', .92],
+            ['teacher', '👩‍🏫', 'Teachers', '$160B', 'edtech tools', '85M educators', 'one-click decks, live in class', .55],
+            ['creator', '✍️', 'Creators', '$250B', 'creator economy', '200M creators', 'one lecture → endless content', .72],
+            ['researcher', '🔬', 'Researchers', '$35B', 'research tools', '10M researchers', 'mint the widget you need', .3],
+          ].map(([key, icon, title, big, label, pop, hook, arc], i) => (
+            <motion.button key={key} onClick={() => onOpen('kCc8FmEb1nY', key)}
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: i * .08, type: 'spring', stiffness: 170, damping: 20 }}
+              className="edu-card"
+              style={{ textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
+                padding: '16px 16px 14px', display: 'flex', flexDirection: 'column', gap: 2, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+              {/* market-share arc glyph */}
+              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', top: 14, right: 12, opacity: .9 }}>
+                <circle cx="23" cy="23" r="18" fill="none" stroke={T.line} strokeWidth="5" />
+                <motion.circle cx="23" cy="23" r="18" fill="none" stroke={T.acc} strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 18}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
+                  whileInView={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - arc) }}
+                  viewport={{ once: true }} transition={{ delay: .3 + i * .1, duration: .9, ease: 'easeOut' }}
+                  transform="rotate(-90 23 23)" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{icon} {title}</span>
+              <span style={{ fontFamily: mono, fontSize: 'clamp(30px,3.4vw,38px)', fontWeight: 800, color: T.acc, letterSpacing: '-.03em', lineHeight: 1.1, marginTop: 6 }}>{big}</span>
+              <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
+              <span style={{ fontSize: 12.5, color: T.text, fontWeight: 650, marginTop: 10 }}>{pop}</span>
+              <span style={{ fontSize: 11.5, color: T.muted }}>{hook}</span>
+            </motion.button>
           ))}
         </div>
         <div style={{ color: T.faint, fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
