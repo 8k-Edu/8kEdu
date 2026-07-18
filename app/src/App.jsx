@@ -1049,73 +1049,77 @@ const SCENES = [
   { key: 'remix', C: RemixCard, title: 'Creator studio: remix everything', blurb: 'Creators and educators reuse any artifact — charts into decks, quotes into threads, notebooks into courses. One lecture, endless content.' },
 ]
 
+// a continuously flowing river of artifacts — never parks, slows on hover
 function ArtifactCarousel({ T }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const [idx, setIdx] = useState(0)
-  const [dir, setDir] = useState(1)
-  const [paused, setPaused] = useState(false)
-  const go = (n, d) => { setDir(d); setIdx((n + SCENES.length) % SCENES.length) }
+  const refs = useRef([])
+  const wrapRef = useRef(null)
+  const [centerIdx, setCenterIdx] = useState(0)
+  const st = useRef({ t: 0, target: 0, hover: false, last: 0, center: 0 })
+  const GAP = 252
+  const TOTAL = SCENES.length * GAP
   useEffect(() => {
-    if (reduced || paused) return
-    const id = setInterval(() => go(idx + 1, 1), 4600)
-    return () => clearInterval(id)
-  }, [idx, paused, reduced])
-  const S = SCENES[idx]
+    if (reduced) return
+    const s = st.current
+    s.t = s.target = -TOTAL / 2 // scene 0 starts centered
+    let raf
+    const frame = (now) => {
+      const dt = Math.min(.05, (now - (s.last || now)) / 1000)
+      s.last = now
+      if (!s.hover) s.target += 34 * dt // the river's pace
+      s.t += (s.target - s.t) * Math.min(1, dt * 5)
+      const stageW = wrapRef.current ? wrapRef.current.offsetWidth : 880
+      SCENES.forEach((sc, i) => {
+        const el = refs.current[i]
+        if (!el) return
+        const c = ((((i * GAP - s.t) % TOTAL) + TOTAL) % TOTAL) - TOTAL / 2
+        const a = Math.abs(c)
+        const scale = Math.max(.74, 2.05 - a * .0052)
+        el.style.transform = `translateX(${c}px) translateY(${a * .1}px) rotateY(${Math.max(-30, Math.min(30, -c * .075))}deg) scale(${scale})`
+        el.style.opacity = a > stageW / 2 + 80 ? 0 : String(Math.max(.15, 1 - a * .0028))
+        el.style.zIndex = String(Math.max(1, 200 - Math.round(a)))
+        if (a < GAP / 2 && s.center !== i) { s.center = i; setCenterIdx(i) }
+      })
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [reduced])
+  const S = SCENES[centerIdx]
   const arrow = {
     background: T.panel, border: `1px solid ${T.line}`, color: T.text, width: 44, height: 44,
-    borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0,
+    borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0, zIndex: 6,
   }
   return (
     <div style={{ padding: '54px 0 26px', textAlign: 'center' }}
-      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      onMouseEnter={() => { st.current.hover = true }} onMouseLeave={() => { st.current.hover = false }}>
       <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>what comes out</div>
       <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 0', maxWidth: '26ch', textWrap: 'balance' }}>
         Eight artifacts. One drop.
       </h2>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px,2vw,20px)', marginTop: 6 }}>
-        <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={{ ...arrow, zIndex: 6 }}>‹</button>
-        {/* curved coverflow — center big, neighbors arcing away in 3D */}
-        <div style={{ position: 'relative', width: 'min(880px, 82vw)', height: 486, overflow: 'hidden', perspective: 1300 }}>
-          {[-2, -1, 0, 1, 2].map(off => {
-            const i = (idx + off + SCENES.length) % SCENES.length
-            const Sc = SCENES[i]
-            const center = off === 0
-            const a = Math.abs(off)
-            const xo = typeof window !== 'undefined' ? Math.min(255, window.innerWidth * 0.24) : 255
-            return (
-              <motion.div key={Sc.key}
-                animate={{
-                  x: off * xo * (a === 2 ? 1.32 : 1),
-                  y: a * 26,
-                  rotateY: off * -28,
-                  scale: center ? 2.08 : a === 1 ? .92 : .78,
-                  opacity: center ? 1 : a === 1 ? .42 : .16,
-                  zIndex: center ? 5 : 3 - a,
-                }}
-                transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 150, damping: 22 }}
-                onClick={() => !center && go(idx + off, off > 0 ? 1 : -1)}
-                style={{ position: 'absolute', left: '50%', top: 112, marginLeft: -98, cursor: center ? 'default' : 'pointer', transformStyle: 'preserve-3d' }}>
-                <Sc.C />
-              </motion.div>
-            )
-          })}
-          <motion.div key={`cap-${S.key}`}
-            initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: .12 }}
-            style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-            <div style={{ color: T.text, fontSize: 19, fontWeight: 750 }}>{S.title}</div>
-            <div style={{ color: T.muted, fontSize: 13.5, lineHeight: 1.5, maxWidth: '48ch', margin: '5px auto 0' }}>{S.blurb}</div>
-          </motion.div>
+        <button aria-label="previous" onClick={() => { st.current.target -= GAP }} style={arrow}>‹</button>
+        <div ref={wrapRef} style={{ position: 'relative', width: 'min(880px, 82vw)', height: 486, overflow: 'hidden', perspective: 1300 }}>
+          {SCENES.map((Sc, i) => (
+            <div key={Sc.key} ref={el => { refs.current[i] = el }}
+              style={{ position: 'absolute', left: '50%', top: 112, marginLeft: -98,
+                transformStyle: 'preserve-3d', willChange: 'transform, opacity',
+                ...(reduced && i !== 0 ? { display: 'none' } : null),
+                ...(reduced && i === 0 ? { transform: 'scale(2.05)' } : null) }}>
+              <Sc.C />
+            </div>
+          ))}
+          <AnimatePresence mode="wait">
+            <motion.div key={S.key}
+              initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8, transition: { duration: .18 } }}
+              style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+              <div style={{ color: T.text, fontSize: 19, fontWeight: 750 }}>{S.title}</div>
+              <div style={{ color: T.muted, fontSize: 13.5, lineHeight: 1.5, maxWidth: '48ch', margin: '5px auto 0' }}>{S.blurb}</div>
+            </motion.div>
+          </AnimatePresence>
         </div>
-        <button aria-label="next" onClick={() => go(idx + 1, 1)} style={{ ...arrow, zIndex: 6 }}>›</button>
-      </div>
-      {/* dots — minimal, no second carousel */}
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8 }}>
-        {SCENES.map((s, i) => (
-          <button key={s.key} aria-label={s.title} onClick={() => go(i, i > idx ? 1 : -1)}
-            style={{ width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer',
-              background: i === idx ? T.acc : T.line, transition: 'all .25s', padding: 0 }} />
-        ))}
+        <button aria-label="next" onClick={() => { st.current.target += GAP }} style={arrow}>›</button>
       </div>
     </div>
   )
@@ -1250,7 +1254,7 @@ function HeroDrop({ T, onOpen }) {
         ))}
         {made.length > 0 && (
           <div style={{ alignSelf: 'center', fontFamily: mono, fontSize: 10, color: T.faint, marginLeft: 6 }}>
-            +{made.length < 8 ? 8 - made.length : '∞'} more…
+            {cycle >= SCENES.length ? '∞ on a heartbeat' : `+${SCENES.length - cycle} more…`}
           </div>
         )}
       </div>
@@ -1368,14 +1372,14 @@ function Landing({ onOpen }) {
           <motion.div variants={rise} style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.24em', textTransform: 'uppercase', color: T.acc }}>
             <span className="edu-pulse">●</span>&nbsp; the resolution of understanding
           </motion.div>
-          <motion.h1 variants={rise} style={{ fontSize: 'clamp(36px,6vw,68px)', lineHeight: 1.03, letterSpacing: '-.035em', margin: '16px auto 0', textWrap: 'balance', color: T.text, maxWidth: '16ch' }}>
+          <motion.h1 variants={rise} style={{ fontSize: 'clamp(28px,4.4vw,46px)', lineHeight: 1.06, letterSpacing: '-.03em', margin: '12px auto 0', textWrap: 'balance', color: T.text, maxWidth: '26ch' }}>
             1 lecture, 8 ways to learn it. Understand <span style={{ color: T.acc }}>8× faster</span>.
           </motion.h1>
-          <motion.p variants={rise} style={{ fontSize: 'clamp(15px,2.2vw,20px)', color: T.sub, margin: '16px auto 0', fontWeight: 600 }}>
+          <motion.p variants={rise} style={{ fontSize: 'clamp(14px,1.9vw,17px)', color: T.sub, margin: '10px auto 0', fontWeight: 600 }}>
             An autonomous agent watches any lecture — and makes it touchable.
           </motion.p>
           <motion.div variants={rise}><HeroDrop T={T} onOpen={onOpen} /></motion.div>
-          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '-38px auto 0', position: 'relative', zIndex: 2 }}>
+          <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 540, margin: '18px auto 0', position: 'relative', zIndex: 2 }}>
             <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
               onKeyDown={e => e.key === 'Enter' && go()} placeholder="drop a video to learn…"
               style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
