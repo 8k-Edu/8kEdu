@@ -31,6 +31,9 @@ const CATEGORIES = [
       { id: 'kCc8FmEb1nY', title: "Karpathy — Let's build GPT from scratch",
         inside: { count: '55 touchable moments', mix: [['#79c0ff', 17], ['#ffab70', 16], ['#b48eff', 11], ['#56d364', 10], ['#ff9bce', 1]],
           peek: [['57:11', 'Masked self-attention, live', '#ffab70'], ['106:38', 'GELU curve you can drag', '#56d364'], ['63:20', 'The tril trick — runnable numpy', '#ff9bce']] } },
+      { id: '42L1q1Z4Ojc', title: 'VisualAI — Multi-Head Attention Explained Visually',
+        inside: { count: '4 attention widgets · by Nemotron Omni', mix: [['#ffab70', 4]],
+          peek: [['3:10', 'Self-attention weights, editable', '#ffab70'], ['4:40', 'Multi-head split — 512 dims', '#ffab70'], ['5:30', 'Q·Kᵀ heatmap you can drag', '#ffab70']] } },
     ],
   },
   {
