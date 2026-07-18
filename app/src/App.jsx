@@ -565,10 +565,10 @@ function Lecture({ videoId, role }) {
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
         <a href="/" title="back to start" style={{ textDecoration: 'none', color: '#e6edf3' }}>
           <h1 style={{ fontSize: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: '#8b949e', fontSize: 15 }}>←</span> EduClaw
+            <span style={{ color: '#8b949e', fontSize: 15 }}>←</span> 8kEdu
           </h1>
         </a>
-        <span style={{ color: '#8b949e', fontSize: 14 }}>lectures you can touch — every moment can become a live widget</span>
+        <span style={{ color: '#8b949e', fontSize: 14 }}>YouTube video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {roleCfg && (
             <span style={{ fontSize: 11.5, color: '#d2a8ff', border: '1px solid #8957e555', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
@@ -747,9 +747,12 @@ function Landing({ onOpen }) {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: 640, maxWidth: '94vw', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <h1 style={{ fontSize: 40, letterSpacing: -1 }}>EduClaw</h1>
-          <div style={{ color: '#8b949e', fontSize: 17, marginTop: 6 }}>
-            lectures you can touch — paste a lecture, every figure becomes a live widget you can tweak and remix
+          <h1 style={{ fontSize: 40, letterSpacing: -1 }}>8kEdu</h1>
+          <div style={{ color: '#e6edf3', fontSize: 18, marginTop: 8, fontWeight: 600 }}>
+            YouTube video → interactive learning dashboard
+          </div>
+          <div style={{ color: '#8b949e', fontSize: 15, marginTop: 6, lineHeight: 1.5 }}>
+            Paste any lecture. Every figure, equation, and code block becomes a live widget you can tweak, run, and remix — on any topic.
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
