@@ -5,7 +5,12 @@ Run one tick:   uv run --with openai --with psycopg2-binary agent/loop.py --once
 Run forever:    uv run ... agent/loop.py --interval 60
 """
 import argparse
+import os
+import sys
 import time
+
+# allow both `python -m agent.loop` and `uv run agent/loop.py`
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent import db, brain, tools
 
 DECIDE_SYSTEM = (

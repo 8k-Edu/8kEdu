@@ -89,12 +89,16 @@ Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` / `openai` (any 
 ### The autonomous agent + live dashboard
 
 ```bash
-# heartbeat loop — Nemotron decides FIND / PROCESS / SEQUENCE / MONITOR each tick
-uv run --with openai --with psycopg2-binary agent/loop.py --interval 60
+# learner heartbeat — Nemotron decides FIND / PROCESS / SEQUENCE / MONITOR each tick
+uv run python -m agent.loop --interval 60
+
+# curator heartbeat — autonomously grows the shared library per genre (find → frame → cache)
+uv run python -m agent.curator --interval 300
 
 # dashboard API (light, no VLM) — powers ?view=agent
-uv run --with fastapi --with uvicorn --with psycopg2-binary agent/api.py   # :8787, vite proxies /agent → here
+uv run python -m agent.api   # :8787, vite proxies /agent → here
 ```
+Or just **`./run.sh --loop`** to start everything (serve + api + frontend + both heartbeats).
 Then open **http://localhost:5173/?view=agent** (or `dev.localhost:5174` on the dev branch) — the live
 heartbeat feed, the curriculum building itself, the cache moat, and the OpenShell containment status.
 Containment is applied + proven separately: see [`claw-agent/`](claw-agent/).
