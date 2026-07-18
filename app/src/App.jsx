@@ -1273,6 +1273,49 @@ function Landing({ onOpen }) {
       {/* LOOK CLOSER — full-size artifact carousel */}
       <ArtifactCarousel T={T} />
 
+      {/* WHO IT'S FOR — markets */}
+      <div style={{ maxWidth: 940, margin: '0 auto', padding: '30px 24px 0' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>who it's for</div>
+          <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 4px', textWrap: 'balance' }}>
+            Four markets. One engine.
+          </h2>
+          <div style={{ color: T.muted, fontSize: 13.5 }}>every video analyzed once is cached for all — marginal cost per learner → 0</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 18 }}>
+          {[
+            ['student', '🎓', 'Students', '$400B', 'e-learning', '1.5B learners', 'tonight\'s lab, from tonight\'s lecture', .92],
+            ['teacher', '👩‍🏫', 'Teachers', '$160B', 'edtech tools', '85M educators', 'one-click decks, live in class', .55],
+            ['creator', '✍️', 'Creators', '$250B', 'creator economy', '200M creators', 'one lecture → endless content', .72],
+            ['researcher', '🔬', 'Researchers', '$35B', 'research tools', '10M researchers', 'mint the widget you need', .3],
+          ].map(([key, icon, title, big, label, pop, hook, arc], i) => (
+            <motion.button key={key} onClick={() => onOpen('kCc8FmEb1nY', key)}
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: i * .08, type: 'spring', stiffness: 170, damping: 20 }}
+              className="edu-card"
+              style={{ textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
+                padding: '16px 16px 14px', display: 'flex', flexDirection: 'column', gap: 2, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+              {/* market-share arc glyph */}
+              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', top: 14, right: 12, opacity: .9 }}>
+                <circle cx="23" cy="23" r="18" fill="none" stroke={T.line} strokeWidth="5" />
+                <motion.circle cx="23" cy="23" r="18" fill="none" stroke={T.acc} strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 18}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
+                  whileInView={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - arc) }}
+                  viewport={{ once: true }} transition={{ delay: .3 + i * .1, duration: .9, ease: 'easeOut' }}
+                  transform="rotate(-90 23 23)" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{icon} {title}</span>
+              <span style={{ fontFamily: mono, fontSize: 'clamp(30px,3.4vw,38px)', fontWeight: 800, color: T.acc, letterSpacing: '-.03em', lineHeight: 1.1, marginTop: 6 }}>{big}</span>
+              <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
+              <span style={{ fontSize: 12.5, color: T.text, fontWeight: 650, marginTop: 10 }}>{pop}</span>
+              <span style={{ fontSize: 11.5, color: T.muted }}>{hook}</span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
       {/* HOW IT WORKS */}
       <HowItWorks T={T} />
 
@@ -1341,45 +1384,6 @@ function Landing({ onOpen }) {
           ))}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 34 }}>
-          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>who it's for</div>
-          <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 4px', textWrap: 'balance' }}>
-            Four markets. One engine.
-          </h2>
-          <div style={{ color: T.muted, fontSize: 13.5 }}>every video analyzed once is cached for all — marginal cost per learner → 0</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 10 }}>
-          {[
-            ['student', '🎓', 'Students', '$400B', 'e-learning', '1.5B learners', 'tonight\'s lab, from tonight\'s lecture', .92],
-            ['teacher', '👩‍🏫', 'Teachers', '$160B', 'edtech tools', '85M educators', 'one-click decks, live in class', .55],
-            ['creator', '✍️', 'Creators', '$250B', 'creator economy', '200M creators', 'one lecture → endless content', .72],
-            ['researcher', '🔬', 'Researchers', '$35B', 'research tools', '10M researchers', 'mint the widget you need', .3],
-          ].map(([key, icon, title, big, label, pop, hook, arc], i) => (
-            <motion.button key={key} onClick={() => onOpen('kCc8FmEb1nY', key)}
-              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ delay: i * .08, type: 'spring', stiffness: 170, damping: 20 }}
-              className="edu-card"
-              style={{ textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
-                padding: '16px 16px 14px', display: 'flex', flexDirection: 'column', gap: 2, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-              {/* market-share arc glyph */}
-              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', top: 14, right: 12, opacity: .9 }}>
-                <circle cx="23" cy="23" r="18" fill="none" stroke={T.line} strokeWidth="5" />
-                <motion.circle cx="23" cy="23" r="18" fill="none" stroke={T.acc} strokeWidth="5" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 18}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
-                  whileInView={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - arc) }}
-                  viewport={{ once: true }} transition={{ delay: .3 + i * .1, duration: .9, ease: 'easeOut' }}
-                  transform="rotate(-90 23 23)" />
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{icon} {title}</span>
-              <span style={{ fontFamily: mono, fontSize: 'clamp(30px,3.4vw,38px)', fontWeight: 800, color: T.acc, letterSpacing: '-.03em', lineHeight: 1.1, marginTop: 6 }}>{big}</span>
-              <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
-              <span style={{ fontSize: 12.5, color: T.text, fontWeight: 650, marginTop: 10 }}>{pop}</span>
-              <span style={{ fontSize: 11.5, color: T.muted }}>{hook}</span>
-            </motion.button>
-          ))}
-        </div>
         <div style={{ color: T.faint, fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
           yt-dlp → keyframes → Nemotron Omni → spec JSON → live widgets · python in-browser via pyodide · remix = a URL
         </div>
