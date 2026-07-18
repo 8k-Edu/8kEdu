@@ -147,6 +147,43 @@ def mark_channel_checked(cid, last_video_id):
         c.commit()
 
 
+# ---------- R1: dynamic curriculum — course paths ----------
+def create_path(goal_id, label, rationale, video_ids, est_minutes, auto=False):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "insert into paths(goal_id,label,rationale,video_ids,est_minutes,auto) "
+            "values (%s,%s,%s,%s,%s,%s) returning id",
+            (goal_id, label, rationale, video_ids, est_minutes, auto))
+        c.commit()
+        return _one(cur)["id"]
+
+
+def paths_for_goal(goal_id):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select * from paths where goal_id=%s order by est_minutes", (goal_id,))
+        return [dict(r) for r in cur.fetchall()]
+
+
+def choose_path(goal_id, path_id, titles=None):
+    """Materialize a chosen path into curriculum units (one unit per video)."""
+    titles = titles or {}
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select video_ids from paths where id=%s", (path_id,))
+        row = _one(cur)
+        if not row:
+            return 0
+        cur.execute("update goals set chosen_path_id=%s where id=%s", (path_id, goal_id))
+        cur.execute("delete from curriculum where goal_id=%s", (goal_id,))
+        c.commit()
+    for i, vid in enumerate(row["video_ids"], 1):
+        add_to_curriculum(goal_id, vid, f"unit {i} of the chosen path", title=titles.get(vid, ""))
+        with conn() as c, c.cursor() as cur:
+            cur.execute("update curriculum set unit=%s, lesson_title=%s where goal_id=%s and video_id=%s",
+                        (i, titles.get(vid, f"Unit {i}"), goal_id, vid))
+            c.commit()
+    return len(row["video_ids"])
+
+
 def log_run(user_id, job, decided, actions, status):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(

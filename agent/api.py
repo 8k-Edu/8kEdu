@@ -18,8 +18,9 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from agent import db
+from agent import db, tools
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -78,6 +79,73 @@ def containment():
         pass
     _containment_cache["data"] = out
     return out
+
+
+# ---------- R1: dynamic curriculum (Duolingo-style) ----------
+class Propose(BaseModel):
+    subject: str
+    kind: str = "subject"   # how-to | concept | subject
+    level: str = "beginner"
+
+
+@app.post("/agent/learn/propose")
+def learn_propose(req: Propose):
+    """Learner says what to learn → agent finds videos → proposes 2 course paths."""
+    try:
+        user_id = db.ensure_learner("demo")
+        goal_id = db.set_goal(user_id, req.subject)
+        with db.conn() as c, c.cursor() as cur:
+            cur.execute("update goals set kind=%s, level=%s where id=%s", (req.kind, req.level, goal_id))
+            c.commit()
+        vids = tools.find_video(req.subject, 6)
+        if not vids:
+            return {"ok": False, "error": "no videos found"}
+        titles = {v["id"]: v["title"] for v in vids}
+        # two real paths from the same search: a fast track and a deep dive
+        fast = vids[:3]
+        deep = vids[:6]
+        p_fast = db.create_path(goal_id, "Fast track",
+                                f"The {len(fast)} essential videos to grasp {req.subject} quickly.",
+                                [v["id"] for v in fast], len(fast) * 12)
+        p_deep = db.create_path(goal_id, "Deep dive",
+                                f"A thorough {len(deep)}-video path through {req.subject}, start to mastery.",
+                                [v["id"] for v in deep], len(deep) * 15)
+        paths = db.paths_for_goal(goal_id)
+        for p in paths:
+            p["videos"] = [{"id": vid, "title": titles.get(vid, vid)} for vid in p["video_ids"]]
+        return {"ok": True, "goal_id": goal_id, "subject": req.subject, "kind": req.kind,
+                "paths": paths, "titles": titles}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+class Choose(BaseModel):
+    goal_id: int
+    path_id: int
+    titles: dict = {}
+
+
+@app.post("/agent/learn/choose")
+def learn_choose(req: Choose):
+    try:
+        n = db.choose_path(req.goal_id, req.path_id, req.titles)
+        return {"ok": True, "units": n, **learn_course(req.goal_id)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+@app.get("/agent/learn/course")
+def learn_course(goal_id: int):
+    with db.conn() as c, c.cursor() as cur:
+        import psycopg2.extras
+        cur2 = c.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur2.execute(
+            "select c.unit, c.video_id, c.state, coalesce(nullif(c.lesson_title,''), v.title, c.video_id) as title, "
+            "(select count(*) from concepts cc where cc.video_id=c.video_id) as widgets "
+            "from curriculum c left join videos v on v.video_id=c.video_id "
+            "where c.goal_id=%s order by coalesce(c.unit, c.seq)", (goal_id,))
+        units = [dict(r) for r in cur2.fetchall()]
+    return {"goal_id": goal_id, "units": units}
 
 
 def main():

@@ -15,30 +15,38 @@ MAX_FRAMES = 120
 FRAME_HEIGHT = 720  # enough for VLM to read code/equations
 
 
-def run(cmd: list[str]) -> None:
+def run(cmd: list[str], check: bool = True) -> int:
     print("+", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    return subprocess.run(cmd, check=check).returncode
 
 
 def download(url: str, out: Path) -> Path:
-    video = out / "video.mp4"
-    if not video.exists():
+    """Video is required (merge to mkv — always works); subs are best-effort."""
+    existing = sorted(out.glob("video.mp4")) + sorted(out.glob("video.mkv")) + sorted(out.glob("video.webm"))
+    if not existing:
         run([
             "uv", "run", "yt-dlp",
-            "-f", "bv*[height<=480]+ba/b[height<=480]",
-            "--merge-output-format", "mp4",
-            "--write-auto-subs", "--write-subs", "--sub-langs", "en.*",
+            "-f", "bv*[height<=480]+ba/b[height<=480]/b",
+            "--merge-output-format", "mkv",
             "-o", str(out / "video.%(ext)s"),
             url,
         ])
-    return video
+        # subs: separate, non-fatal — many videos have none
+        run([
+            "uv", "run", "yt-dlp", "--skip-download",
+            "--write-auto-subs", "--write-subs", "--sub-langs", "en.*",
+            "-o", str(out / "video.%(ext)s"), url,
+        ], check=False)
+    found = sorted(out.glob("video.mp4")) + sorted(out.glob("video.mkv")) + sorted(out.glob("video.webm"))
+    return found[0]
 
 
 def parse_vtt(out: Path) -> list[dict]:
     """VTT → [{start: sec, end: sec, text}], deduped rolling captions."""
     vtts = sorted(out.glob("video*.vtt"))
     if not vtts:
-        sys.exit("no subtitles found — check --write-auto-subs output")
+        print("! no subtitles — continuing with frames only (empty transcript)")
+        return []
     ts = re.compile(
         r"(\d+):(\d+):(\d+)\.(\d+)\s*-->\s*(\d+):(\d+):(\d+)\.(\d+)"
     )
