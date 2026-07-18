@@ -183,7 +183,11 @@ class OpenAIBackend:
                 {"type": "text", "text": f'Teacher is saying: "{context}"\n\nEmit the concept spec JSON.'},
             ]},
         ]
-        # strictest → loosest: schema (vLLM guided decoding) → json mode → plain
+        # strictest → loosest: schema (vLLM guided decoding) → json mode → plain.
+        # Reasoning models (e.g. Nemotron Omni on LM Studio) can return the answer only in
+        # reasoning_content and leave `content` EMPTY under structured-output — so treat an
+        # empty content as a miss and fall through to the next (looser) format.
+        last = None
         for fmt in (
             {"type": "json_schema", "json_schema": {"name": "concept", "schema": CONCEPT_SCHEMA}},
             {"type": "json_object"},
@@ -195,12 +199,14 @@ class OpenAIBackend:
                     max_tokens=6000,  # thinking models spend reasoning tokens from this budget
                     **({"response_format": fmt} if fmt else {}),
                 )
-                return resp.choices[0].message.content or ""
+                content = (resp.choices[0].message.content or "").strip()
+                if content:
+                    return content
             except Exception as e:
-                if fmt is None:
-                    raise
                 last = e
-        raise last
+        if last:
+            raise last
+        return ""
 
 
 def load_dotenv() -> None:
