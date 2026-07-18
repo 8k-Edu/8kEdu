@@ -833,60 +833,227 @@ function Logo({ size = 40, wordColor = '#f2f6ec' }) {
   )
 }
 
-// what one dropped lecture turns into — the OpusClip-style "generate" showcase
-const OUTPUTS = [
-  { icon: '🐍', label: 'Notebooks', hint: 'runnable python' },
-  { icon: '🃏', label: 'Flashcards', hint: 'spaced recall' },
-  { icon: '🧠', label: 'Mind maps', hint: 'concept graph' },
-  { icon: '📊', label: 'Charts', hint: 'live plots' },
-  { icon: '▦', label: 'Dashboards', hint: 'touch & tweak' },
-  { icon: '📄', label: 'Sheets', hint: 'tables you edit' },
-  { icon: '🎞', label: 'Slides', hint: 'one-click deck' },
-  { icon: '❝', label: 'Concept cards', hint: 'the key ideas' },
+// ————— the "drop a lecture → artifacts burst out" showcase —————
+// Every card is a hand-drawn mini-render of a REAL artifact (real code, real numbers,
+// real frames from the lecture) — not an icon.
+
+const mono = 'ui-monospace,SFMono-Regular,Menlo,monospace'
+const cardBase = { width: 196, height: 162, borderRadius: 14, overflow: 'hidden', flexShrink: 0, position: 'relative', boxShadow: '0 18px 40px -18px rgba(0,0,0,.55)' }
+const Badge = ({ children, color = '#7bd33f' }) => (
+  <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', background: '#0a0d08d9', color, borderRadius: 5, padding: '3px 7px' }}>{children}</span>
+)
+
+const NotebookCard = () => (
+  <div style={{ ...cardBase, background: '#0d1117', border: '1px solid #26302a' }}>
+    <Badge>notebook</Badge>
+    <div style={{ display: 'flex', gap: 4, padding: '9px 10px 6px', justifyContent: 'flex-end' }}>
+      {['#ff5f57', '#febc2e', '#28c840'].map(c => <span key={c} style={{ width: 7, height: 7, borderRadius: 4, background: c }} />)}
+    </div>
+    <pre style={{ margin: 0, padding: '2px 12px', fontFamily: mono, fontSize: 8.5, lineHeight: 1.55 }}>
+      <span style={{ color: '#ff7b72' }}>import</span><span style={{ color: '#c9d1d9' }}> numpy </span><span style={{ color: '#ff7b72' }}>as</span><span style={{ color: '#c9d1d9' }}> np{'\n'}</span>
+      <span style={{ color: '#c9d1d9' }}>T = </span><span style={{ color: '#79c0ff' }}>8{'\n'}</span>
+      <span style={{ color: '#c9d1d9' }}>tril = np.tril(np.ones((T,T))){'\n'}</span>
+      <span style={{ color: '#c9d1d9' }}>wei = tril / tril.</span><span style={{ color: '#d2a8ff' }}>sum</span><span style={{ color: '#c9d1d9' }}>(1)</span>
+    </pre>
+    <div style={{ margin: '6px 12px', padding: '6px 8px', background: '#010409', borderRadius: 7, fontFamily: mono, fontSize: 8, color: '#7ee787', lineHeight: 1.5 }}>
+      [[1.  0.  0. ]{'\n'} [0.5 0.5 0. ]{'\n'} [0.33 0.33 0.33]]
+    </div>
+    <div style={{ position: 'absolute', right: 12, bottom: 10, display: 'flex', alignItems: 'flex-end', gap: 3, height: 26 }}>
+      {[10, 16, 22, 26].map((h, i) => <span key={i} style={{ width: 9, height: h, background: `rgba(126,231,135,${.4 + i * .15})`, borderRadius: 2 }} />)}
+    </div>
+  </div>
+)
+
+const MindmapCard = () => (
+  <div style={{ ...cardBase, background: '#0c130f', border: '1px solid #26302a' }}>
+    <Badge>mind map</Badge>
+    <svg viewBox="0 0 216 172" style={{ width: '100%', height: '100%' }}>
+      {[
+        'M108,88 C88,70 70,62 50,54', 'M108,88 C128,68 148,60 168,50',
+        'M108,88 C84,108 66,116 46,124', 'M108,88 C132,110 152,118 172,126', 'M108,88 C110,58 110,44 108,30',
+      ].map((d, i) => <path key={i} d={d} stroke="#3f5a33" strokeWidth="1.4" fill="none" />)}
+      {[
+        [108, 88, 'attention', '#8ee23e', '#12240c'],
+        [50, 50, 'queries', '#c9d1d9', '#161d18'], [170, 46, 'keys', '#c9d1d9', '#161d18'],
+        [44, 128, 'values', '#c9d1d9', '#161d18'], [174, 130, 'softmax', '#c9d1d9', '#161d18'], [108, 26, 'heads ×8', '#c9d1d9', '#161d18'],
+      ].map(([x, y, t, fg, bgc], i) => (
+        <g key={i}>
+          <rect x={x - (i === 0 ? 34 : 26)} y={y - 11} width={i === 0 ? 68 : 52} height={22} rx={11} fill={bgc} stroke={i === 0 ? '#8ee23e' : '#2c3a2e'} strokeWidth={i === 0 ? 1.4 : 1} />
+          <text x={x} y={y + 3.5} textAnchor="middle" fontFamily={mono} fontSize={i === 0 ? 10 : 9} fill={fg} fontWeight={i === 0 ? 700 : 400}>{t}</text>
+        </g>
+      ))}
+    </svg>
+  </div>
+)
+
+const FlashcardCard = () => (
+  <div style={{ ...cardBase, background: 'linear-gradient(160deg,#182013,#0e1410)', border: '1px solid #26302a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Badge>flashcards</Badge>
+    <div style={{ position: 'absolute', width: 158, height: 104, borderRadius: 10, background: '#e8e4d5', transform: 'rotate(6deg) translate(10px,8px)' }} />
+    <div style={{ position: 'relative', width: 162, height: 108, borderRadius: 10, background: '#f7f4e9', transform: 'rotate(-2.5deg)', padding: '12px 14px', boxShadow: '0 8px 18px -8px rgba(0,0,0,.5)' }}>
+      <div style={{ fontFamily: mono, fontSize: 8.5, color: '#8a8467', letterSpacing: '.1em' }}>CARD 12 / 55</div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1d2416', lineHeight: 1.35, marginTop: 6 }}>
+        What does temperature do to softmax?
+      </div>
+      <div style={{ position: 'absolute', bottom: 10, right: 14, fontFamily: mono, fontSize: 9, color: '#5c9500', fontWeight: 700 }}>flip ›</div>
+    </div>
+  </div>
+)
+
+const ChartCard = () => (
+  <div style={{ ...cardBase, background: '#fbfdf8', border: '1px solid #d7e0cc' }}>
+    <Badge color="#3f8f18">charts</Badge>
+    <svg viewBox="0 0 216 172" style={{ width: '100%', height: '100%' }}>
+      {[40, 72, 104, 136].map(y => <line key={y} x1="26" y1={y} x2="200" y2={y} stroke="#e4ebdb" strokeWidth="1" />)}
+      {[54, 92, 130, 168].map((x, i) => <rect key={x} x={x} y={140 - [26, 52, 34, 66][i]} width="18" height={[26, 52, 34, 66][i]} rx="3" fill="#bfe39b" />)}
+      <path d="M28,132 C70,132 84,128 104,104 C124,80 150,48 198,38" stroke="#3f8f18" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <circle cx="198" cy="38" r="4" fill="#3f8f18" />
+      <text x="30" y="160" fontFamily={mono} fontSize="9.5" fill="#7c8a6e">GELU(x) · from 106:38</text>
+    </svg>
+  </div>
+)
+
+const DashboardCard = () => (
+  <div style={{ ...cardBase, background: '#0b0f14', border: '1px solid #26302a' }}>
+    <Badge>dashboard</Badge>
+    <div style={{ display: 'flex', gap: 7, padding: '28px 10px 0' }}>
+      <div style={{ flex: 1.25 }}>
+        <img src="/kCc8FmEb1nY/frames/f_003780.jpg" alt="" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 6, border: '1px solid #22292f' }} />
+        <div style={{ position: 'relative', height: 10, background: '#141a21', borderRadius: 5, marginTop: 6 }}>
+          {[12, 25, 38, 55, 63, 78, 90].map((p, i) => (
+            <span key={p} style={{ position: 'absolute', left: `${p}%`, top: 2, width: 3, height: 6, borderRadius: 2, background: ['#b48eff', '#ffab70', '#79c0ff', '#56d364', '#79c0ff', '#ff9bce', '#e3b341'][i] }} />
+          ))}
+        </div>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 3 }}>
+          {[0.9, 0.2, 0.15, 0.5, 0.95, 0.3, 0.25, 0.6, 0.85].map((v, i) => (
+            <span key={i} style={{ aspectRatio: '1', borderRadius: 3, background: `rgba(123,211,63,${v})` }} />
+          ))}
+        </div>
+        <div style={{ height: 5, background: '#141a21', borderRadius: 3, marginTop: 8, position: 'relative' }}>
+          <span style={{ position: 'absolute', left: '58%', top: -3, width: 11, height: 11, borderRadius: 6, background: '#7bd33f' }} />
+        </div>
+        <div style={{ fontFamily: mono, fontSize: 7.5, color: '#5d6b78', marginTop: 7 }}>T = 1.85 · live</div>
+      </div>
+    </div>
+    <div style={{ position: 'absolute', bottom: 9, left: 10, fontFamily: mono, fontSize: 8, color: '#56d364' }}>55 touchable moments</div>
+  </div>
+)
+
+const SheetCard = () => (
+  <div style={{ ...cardBase, background: '#ffffff', border: '1px solid #d7e0cc' }}>
+    <Badge color="#3f8f18">sheets</Badge>
+    <table style={{ width: '100%', marginTop: 26, borderCollapse: 'collapse', fontFamily: mono, fontSize: 8.5 }}>
+      <thead><tr style={{ background: '#eef4e6' }}>
+        {['', 'A', 'B', 'C'].map(h => <th key={h} style={{ border: '1px solid #e0e8d6', padding: '3px 6px', color: '#7c8a6e', fontWeight: 600 }}>{h}</th>)}
+      </tr></thead>
+      <tbody>
+        {[['1', 'home price', '$300,000', ''], ['2', 'down', '10%', '$30,000'], ['3', 'rate', '6.5%', ''], ['4', 'PMI / mo', '$112.50', '⚠'], ['5', 'payment', '$1,908.82', '✓']].map(r => (
+          <tr key={r[0]}>{r.map((c, j) => (
+            <td key={j} style={{ border: '1px solid #e8eee0', padding: '3px 6px', color: j === 0 ? '#a9b59c' : c.startsWith('$1,9') ? '#3f8f18' : '#333d2b', fontWeight: c.startsWith('$1,9') ? 700 : 400, background: j === 0 ? '#f6f9f1' : '#fff' }}>{c}</td>
+          ))}</tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)
+
+const SlidesCard = () => (
+  <div style={{ ...cardBase, background: '#10150f', border: '1px solid #26302a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Badge>slides</Badge>
+    <div style={{ position: 'absolute', width: 150, height: 96, borderRadius: 8, background: '#232b1e', transform: 'translate(14px,12px) rotate(4deg)' }} />
+    <div style={{ position: 'absolute', width: 150, height: 96, borderRadius: 8, background: '#2e3627', transform: 'translate(7px,6px) rotate(2deg)' }} />
+    <div style={{ position: 'relative', width: 156, height: 100, borderRadius: 8, background: '#fbfdf8', padding: '12px 14px', boxShadow: '0 10px 22px -10px rgba(0,0,0,.6)' }}>
+      <div style={{ fontSize: 11.5, fontWeight: 800, color: '#1d2416', letterSpacing: '-.01em' }}>Self-Attention</div>
+      <div style={{ width: 34, height: 3, background: '#7bd33f', borderRadius: 2, margin: '5px 0 8px' }} />
+      {[86, 70, 78].map((w, i) => <div key={i} style={{ width: w, height: 4, background: '#dde5d3', borderRadius: 2, marginTop: 5 }} />)}
+      <div style={{ position: 'absolute', bottom: 8, right: 12, fontFamily: mono, fontSize: 8, color: '#a9b59c' }}>12 / 18</div>
+    </div>
+  </div>
+)
+
+const ConceptCard = () => (
+  <div style={{ ...cardBase, background: 'linear-gradient(150deg,#15240c,#0a1206)', border: '1px solid #2c4318', padding: '30px 18px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Badge>key idea</Badge>
+    <div style={{ fontSize: 34, lineHeight: .8, color: '#7bd33f', fontFamily: 'Georgia,serif' }}>“</div>
+    <div style={{ fontSize: 13.5, fontWeight: 650, color: '#e9f2df', lineHeight: 1.45, fontStyle: 'italic' }}>
+      Attention is just a data-dependent weighted average.
+    </div>
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <span style={{ fontFamily: mono, fontSize: 9, background: '#1f6feb26', color: '#79c0ff', borderRadius: 4, padding: '2px 6px' }}>57:11</span>
+      <span style={{ fontFamily: mono, fontSize: 9, color: '#66735b' }}>Karpathy · Let's build GPT</span>
+    </div>
+  </div>
+)
+
+const ARTIFACTS = [
+  { key: 'notebook', C: NotebookCard }, { key: 'mindmap', C: MindmapCard },
+  { key: 'dashboard', C: DashboardCard }, { key: 'flashcards', C: FlashcardCard },
+  { key: 'chart', C: ChartCard }, { key: 'sheet', C: SheetCard },
+  { key: 'slides', C: SlidesCard }, { key: 'concept', C: ConceptCard },
 ]
 
 function OutputShowcase({ T, onOpen }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const [gen, setGen] = useState(0)
+  const [cycle, setCycle] = useState(0)
   useEffect(() => {
     if (reduced) return
-    const id = setInterval(() => setGen(g => g + 1), 5200)
+    const id = setInterval(() => setCycle(c => c + 1), 9500)
     return () => clearInterval(id)
   }, [reduced])
+  const DROP = 0.15, LAND = 0.75, BURST = 1.25
   return (
-    <div style={{ marginTop: 30 }}>
-      {/* source lecture */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <button onClick={() => onOpen('kCc8FmEb1nY')} className="edu-card" style={{
-          display: 'flex', gap: 12, alignItems: 'center', background: T.panel, border: `1px solid ${T.line}`,
-          borderRadius: 14, padding: 10, cursor: 'pointer', maxWidth: 420, textAlign: 'left' }}>
-          <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/mqdefault.jpg" alt=""
-            style={{ width: 108, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8 }} />
-          <div>
-            <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: 10.5, letterSpacing: '.1em', color: T.faint, textTransform: 'uppercase' }}>one lecture, dropped</div>
-            <div style={{ color: T.text, fontSize: 14, fontWeight: 600, lineHeight: 1.3, marginTop: 3 }}>Karpathy — Let's build GPT</div>
-            <div style={{ color: T.muted, fontSize: 12 }}>1:56:20 · try it →</div>
-          </div>
-        </button>
-      </div>
-      {/* generating connector */}
-      <div style={{ textAlign: 'center', fontFamily: 'ui-monospace,monospace', fontSize: 11, color: T.acc, margin: '14px 0 4px' }}>
-        <span className="edu-pulse">↓ 8kEdu upscales it into ↓</span>
-      </div>
-      {/* the outputs fan in */}
-      <motion.div key={gen} initial="hide" animate="show"
-        variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 8 }}>
-        {OUTPUTS.map((o, i) => (
-          <motion.div key={o.label}
-            variants={{ hide: { opacity: 0, y: 18, scale: 0.92 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 240, damping: 20 } } }}
-            className="edu-card"
-            style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12, padding: '13px 14px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span style={{ fontSize: 20 }}>{o.icon}</span>
-            <span style={{ color: T.text, fontSize: 14, fontWeight: 700 }}>{o.label}</span>
-            <span style={{ color: T.muted, fontSize: 11.5 }}>{o.hint}</span>
-          </motion.div>
-        ))}
+    <div style={{ marginTop: 26 }}>
+      <style>{`
+        .fan{display:flex;justify-content:center;align-items:center;margin-top:18px;min-height:205px}
+        .fan>*{margin:0 -30px}
+        .fan .art{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+        .fan .art:hover{transform:translateY(-14px) rotate(0deg) scale(1.07)!important;z-index:9!important}
+        @media(max-width:860px){.fan{flex-wrap:wrap;gap:12px}.fan>*{margin:0}.fan .art{transform:none!important}}
+      `}</style>
+      <motion.div key={cycle} initial={false}>
+        {/* the lecture drops in */}
+        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 3 }}>
+          <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
+            initial={reduced ? false : { y: -150, opacity: 0, rotate: -7, scale: .9 }}
+            animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
+            transition={{ delay: DROP, type: 'spring', stiffness: 210, damping: 13, mass: 1.1 }}
+            style={{ position: 'relative', display: 'flex', gap: 12, alignItems: 'center', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: 10, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 22px 50px -20px rgba(0,0,0,.5)' }}>
+            <div style={{ position: 'relative' }}>
+              <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/mqdefault.jpg" alt=""
+                style={{ width: 118, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+              <span style={{ position: 'absolute', right: 4, bottom: 4, fontFamily: mono, fontSize: 8.5, background: '#000c', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>1:56:20</span>
+            </div>
+            <div>
+              <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: '.1em', color: T.faint, textTransform: 'uppercase' }}>one lecture, dropped</div>
+              <div style={{ color: T.text, fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginTop: 3 }}>Karpathy — Let's build GPT</div>
+              <div style={{ color: T.muted, fontSize: 12 }}>watch it become all of this ↓</div>
+            </div>
+            {/* scan-line sweep on landing */}
+            {!reduced && <motion.div initial={{ x: '-110%' }} animate={{ x: '110%' }}
+              transition={{ delay: LAND, duration: .55, ease: 'easeInOut' }}
+              style={{ position: 'absolute', inset: 0, background: `linear-gradient(100deg, transparent 30%, ${T.acc}55 50%, transparent 70%)` }} />}
+          </motion.button>
+        </div>
+        {/* artifacts burst out, fanned + overlapping */}
+        <div className="fan">
+          {ARTIFACTS.map(({ key, C }, i) => {
+            const mid = (ARTIFACTS.length - 1) / 2
+            const off = i - mid
+            const rot = off * 2.6
+            const lift = Math.abs(off) * 9
+            return (
+              <motion.div key={key} className="art"
+                initial={reduced ? false : { opacity: 0, y: -60, scale: .55, rotate: 0 }}
+                animate={{ opacity: 1, y: lift, scale: 1, rotate: rot }}
+                transition={{ delay: BURST + i * .1, type: 'spring', stiffness: 200, damping: 19 }}
+                style={{ zIndex: i < 4 ? i + 1 : ARTIFACTS.length - i, rotate: rot }}>
+                <C />
+              </motion.div>
+            )
+          })}
+        </div>
       </motion.div>
     </div>
   )
