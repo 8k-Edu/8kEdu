@@ -22,19 +22,27 @@ Part of the **8kedu autonomous learning agent** (built for the AITX × NVIDIA Cl
 
 ## Architecture
 
-```
-ingest.py    yt-dlp video + subs + chapters → ffmpeg uniform keyframes
-             → data/<videoId>/{video.mp4, transcript.json, frames/, chapters.json}
-                              │
-analyze.py   each keyframe + transcript window → VLM → concept-spec JSON (schema-enforced)
-             backends: mlx (local) · lmstudio · gemini · openai   (cloud OFF by default)
-             → data/<videoId>/concepts.json
-                              │
-app/         Vite + React — player + timeline + transcript/moments + widget panel + exports
-serve.py     FastAPI :8756 — live widget minting (/api/widget, /api/region) the app calls
+```mermaid
+flowchart TB
+  U["Learner — a goal or a video URL"] --> AG
+  AG(["8kEdu agent · heartbeat loop<br/>finds → processes → sequences → monitors"])
+  AG --> BRAIN["Nemotron Omni<br/>reads video frames · reasons · generates widgets · grades"]
+  BRAIN --> TOOLS
+  subgraph TOOLS["Tools (sandboxed)"]
+    F["find lectures"]
+    P["video → interactive widgets"]
+    R["run widget code"]
+  end
+  TOOLS --> CACHE[("Supabase<br/>shared content cache + learner state")]
+  CACHE --> DASH["Interactive learning dashboard<br/>live widgets · notebooks · mastery"]
+  DASH -. "progress feeds next cycle" .-> AG
 ```
 
+Under the hood, the pipeline: `ingest.py` (yt-dlp video + subs + chapters → ffmpeg keyframes) → `analyze.py` (each keyframe + transcript → vision-language model → concept-spec JSON) → `app/` (React player + timeline + widgets) with `serve.py` (FastAPI, live widget minting). Transcripts, frames, concept specs and inference results are cached in **Supabase** and shared across users — analyze a video once, everyone reuses it.
+
 **The product is the concept-spec schema:** the model emits data (`{widget, title, params, time, frame}`), a deterministic widget kit renders it. No live codegen for the parametric widgets; the one sandboxed exception is the Python notebook widget (pyodide, in-browser).
+
+> Full architecture + agent design: [`docs/architecture.html`](docs/architecture.html)
 
 Widget tiers: parametric kit (`matrix_mul`/`attention`/`softmax`/`function_plot`) → `composite` grammar → `notebook` (real numpy/matplotlib/scipy/sympy). Persistence/caching (transcripts, frames, concept specs, inference results — shared across users) is backed by **Supabase** in the agent build.
 
