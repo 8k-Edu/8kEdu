@@ -11,6 +11,7 @@ dependencies = [
     "numpy>=2.5.1",
     "openai>=2.45.0",
     "pillow>=12.3.0",
+    "psycopg2-binary>=2.9.9",
     "uvicorn>=0.51.0",
     "yt-dlp>=2026.7.4",
 ]
