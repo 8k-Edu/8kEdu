@@ -3,7 +3,7 @@
 **Event:** AITX × NVIDIA Claw Agent Hackathon · Jul 17–19 2026 · Antler VC, 800 Brazos St #340, Austin
 **Hack window:** Fri 6:45 PM → Sun 11:00 AM code freeze (~40h) · **Team: 2–3**
 **Build:** a fresh **autonomous learning agent** — *YouTube video → interactive learning dashboard*
-**Last updated:** Sat Jul 18 2026, ~12:00 (T-23h to code freeze)
+**Last updated:** Sat Jul 18 2026, ~13:10 (T-22h to code freeze) — P2 + P3 done; roadmap added
 
 ---
 
@@ -79,6 +79,48 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 
 **P4 — submit (Sun AM)**
 - [ ] Harden the loop (don't crash = 15 pts) · demo video · the 6 sponsor "why" blurbs · submit by 11:00
+
+---
+
+## Roadmap — the product beyond the hack  🚀
+
+Where 8kEdu goes after the demo. Ordered by leverage. The schema foundation already
+exists (`goals`, `curriculum`, `mastery`, `monitored_channels`, `inference_cache`) — most
+of this is surface + orchestration on top of the agent we built.
+
+### R1 — Learn track: dynamic curriculum, Duolingo-style  *(the core product)*
+The learner says **what** they want to learn — a *how-to*, a *concept*, a *subject*
+("Reinforcement Learning", "Deep Learning", "buy my first house"). The agent then:
+1. **Suggests source videos** from strong channels — offering **multiple course paths**
+   (e.g. "fast track · 4 videos" vs "deep · 12 videos", or by channel/teacher).
+2. Learner **picks a path, or auto-picks** (agent sequences the best subset).
+3. Builds a **Duolingo-style curriculum** — ordered units from *subsets of YouTube videos*
+   on that subject, each unit = a lecture segment → interactive artifacts.
+4. Learner **learns → generates artifacts → shares → remixes**; mastery tracked, gaps refilled.
+5. Everything is **cached** (per video·segment·genre) → the 2nd learner on that path pays ~0.
+- Builds on: `agent/loop.py` JOB1 (already finds + processes + sequences), `goals`/`curriculum`/`mastery` tables.
+- New: a "what do you want to learn?" intake → path proposals; unit/lesson UI (streak, progress, next-up).
+
+### R2 — Social + community: remix network
+Public feed of generated artifacts + courses. **Upvote, fork, remix** (a remix is already a URL).
+Creator/educator profiles; "most remixed this week". Turns single-player learning into a network
+where the best artifacts compound. Ties the **Creator** market ($250B) directly to the product.
+- New: public artifact/course records, votes, follow graph; moderation.
+
+### R3 — Breadth of examples (esp. "How To" + more categories)
+More pre-baked, high-quality demo courses across genres — **How-To** front and center, plus
+cooking, fitness, coding tutorials, business. Each new genre = a new `S_g` lens ([analyze.py](../../analyze.py)).
+Drives the "any topic, not just code" promise and the gallery.
+- Partly in-scope now: adds credibility to the demo. Cheap wins via the genre-lens system already built.
+
+### R4 — Robust caching for effectiveness
+Harden the moat: populate `inference_cache` (prompt-hash keyed, `hits` counter) so identical
+frame+prompt+genre asks never recompute; add cache-warming for popular channels; eviction/versioning
+when the model or prompt changes. Make marginal-cost-→0 a measured, dashboarded number, not a claim.
+- Builds on: `inference_cache` table (exists, empty) + the `process_video` 3-tier cache already live.
+
+**Sequencing:** R3 + R4 are partly in-scope (content + cache depth strengthen the demo). R1 is the
+next real build (the schema is ready). R2 is the growth layer once R1 has users.
 
 ---
 
