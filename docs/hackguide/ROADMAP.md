@@ -1,4 +1,4 @@
-# 8kEdu — Build Plans (post-hack roadmap, actionable)
+# 8kEdu — Build Plans (roadmap)
 
 Concrete build specs for the four roadmap items. Each: data model → agent/API → UI →
 effort → demo-scope. Built on what already exists — `goals`, `curriculum`, `mastery`,
@@ -7,6 +7,14 @@ effort → demo-scope. Built on what already exists — `goals`, `curriculum`, `
 
 Effort key: **S** ≤ half a day · **M** 1–2 days · **L** 3–5 days.
 Scope: **demo** (fits the hack) · **partial** (a slice fits) · **post** (after the hack).
+
+> **STATUS — all four have a working slice, built at the hack (Sat Jul 18):**
+> - **R4 ✅** frame-level `inference_cache` wired into the ask path; dashboard shows live hit-rate % + $ saved. Proven: identical ask → 0s cache hit.
+> - **R3 ✅** `how_to`/`cooking`/`fitness` genre lenses in `analyze.py`; a real How-To course (scrambled eggs) processed by Nemotron + added to the gallery.
+> - **R1 ✅** `paths` table + `/agent/learn/propose|choose|course` + `?view=learn`: intake → agent proposes 2 real paths → Duolingo unit map. End-to-end live.
+> - **R2 ✅** `artifacts_pub`/`votes` + `/pub/*` + `?view=community`: hot/new remix feed, upvote, fork. (Real identity/profiles still post-hack — see R2 blocker.)
+>
+> Sections below are the full specs; the demo slices are marked in each.
 
 ---
 

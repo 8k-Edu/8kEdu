@@ -3,7 +3,7 @@
 **Event:** AITX × NVIDIA Claw Agent Hackathon · Jul 17–19 2026 · Antler VC, 800 Brazos St #340, Austin
 **Hack window:** Fri 6:45 PM → Sun 11:00 AM code freeze (~40h) · **Team: 2–3**
 **Build:** a fresh **autonomous learning agent** — *YouTube video → interactive learning dashboard*
-**Last updated:** Sat Jul 18 2026, ~13:20 (T-22h to code freeze) — P2 + P3 + JOB2 done; roadmap added
+**Last updated:** Sat Jul 18 2026, ~14:35 (T-20h to code freeze) — P2 + P3 + JOB2 done; roadmap R1–R4 all have a working slice built
 
 ---
 
@@ -93,6 +93,9 @@ of this is surface + orchestration on top of the agent we built.
 
 > **Detailed, buildable specs** (data model → API → UI → effort → demo-scope) for all four:
 > **[`ROADMAP.md`](ROADMAP.md)**. Summary below.
+>
+> **✅ Update:** a working slice of **all four** was built at the hack — R4 cache hit-rate,
+> R3 How-To lens + course, R1 `?view=learn` Duolingo flow, R2 `?view=community` remix feed.
 
 ### R1 — Learn track: dynamic curriculum, Duolingo-style  *(the core product)*
 The learner says **what** they want to learn — a *how-to*, a *concept*, a *subject*
