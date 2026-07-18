@@ -3,7 +3,7 @@
 **Event:** AITX × NVIDIA Claw Agent Hackathon · Jul 17–19 2026 · Antler VC, 800 Brazos St #340, Austin
 **Hack window:** Fri 6:45 PM → Sun 11:00 AM code freeze (~40h) · **Team: 2–3**
 **Build:** a fresh **autonomous learning agent** — *YouTube video → interactive learning dashboard*
-**Last updated:** Sat Jul 18 2026, ~13:10 (T-22h to code freeze) — P2 + P3 done; roadmap added
+**Last updated:** Sat Jul 18 2026, ~13:20 (T-22h to code freeze) — P2 + P3 + JOB2 done; roadmap added
 
 ---
 
@@ -74,8 +74,11 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] `?view=agent` dashboard in the app: heartbeat feed (action-coded decisions + why + cache-reuse), curriculum building itself, cache-moat tiles (55 widgets, marginal cost → $0), containment strip (allowlist + N exfil blocked), "wake now" button; polls every 2.5s; "agent live" nav link on landing
 - [x] proven live: tick fires Nemotron decision → persists → feed updates 4→5
 
-**JOB2 — monitor (~1h)**
-- [ ] `monitor_channel` (Apify) wired into the heartbeat: new upload → auto-process
+**JOB2 — monitor** ✅ done — the 2nd autonomous job (proactive, not prompted)
+- [x] `monitor_channel` (Apify primary, yt-dlp fallback) wired into the heartbeat MONITOR action
+- [x] order-independent new-upload diff vs `last_video_id` baseline; FK-safe (`ensure_video`); auto-adds new uploads to the curriculum
+- [x] dashboard panel "Watching for new uploads" (@AndrejKarpathy · last checked · 📡 via Apify)
+- [x] proven live: bootstrap → 0 added (baseline), then 2 new uploads detected → curriculum 1→3
 
 **P4 — submit (Sun AM)**
 - [ ] Harden the loop (don't crash = 15 pts) · demo video · the 6 sponsor "why" blurbs · submit by 11:00
