@@ -1,1 +1,150 @@
-[]
+[
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Mechanism in Transformers",
+  "explanation": "It demonstrates how queries, keys, and values are used to compute attention weights that let the model relate different positions in the input.",
+  "params": {
+   "q": [
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ],
+   "k": [
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "time": 30,
+  "frame": "f_000030.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Head and Attention Weights",
+  "explanation": "The diagram illustrates how a single attention head assigns strong weight to one token pair and negligible weight to another, highlighting its limitation in capturing multiple relationships.",
+  "params": {
+   "q": [
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "k": [
+    [
+     1,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     0
+    ]
+   ]
+  },
+  "time": 150,
+  "frame": "f_000150.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi\u2011head attention splits the 512\u2011dim input into four 128\u2011dim heads",
+  "explanation": "Dividing the dimensions lets several independent attention modules run in parallel, cutting computation while enabling each head to learn different features.",
+  "params": {
+   "q": [
+    [
+     1,
+     2,
+     3,
+     4
+    ],
+    [
+     5,
+     6,
+     7,
+     8
+    ],
+    [
+     9,
+     10,
+     11,
+     12
+    ]
+   ],
+   "k": [
+    [
+     13,
+     14,
+     15,
+     16
+    ],
+    [
+     17,
+     18,
+     19,
+     20
+    ],
+    [
+     21,
+     22,
+     23,
+     24
+    ]
+   ]
+  },
+  "time": 240,
+  "frame": "f_000240.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-Head Attention Mechanism",
+  "explanation": "It enables the model to capture multiple perspectives simultaneously by using several query\u2011key projections.",
+  "params": {
+   "q": [
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ],
+   "k": [
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "time": 340,
+  "frame": "f_000340.jpg"
+ }
+]
