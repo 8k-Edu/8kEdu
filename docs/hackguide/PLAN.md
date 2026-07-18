@@ -69,8 +69,10 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] OCSF audit log proof: `NET:OPEN DENIED python3.13 -> webhook.site:443 [reason: not allowed by any policy]`, `denied_action_count=1`
 - [ ] final step for demo: `nemoclaw scoutclaw shields up` on camera
 
-**P3 — agent dashboard (~2h)**
-- [ ] Live view: runs feed from Supabase, curriculum building itself, cache-hit counter — judges must SEE autonomy
+**P3 — agent dashboard** ✅ done — judges SEE the autonomy
+- [x] `agent/api.py` (light, no VLM) — `/agent/state` (runs+curriculum+cache), `/agent/tick` (wake on demand), `/agent/containment` (live policy status)
+- [x] `?view=agent` dashboard in the app: heartbeat feed (action-coded decisions + why + cache-reuse), curriculum building itself, cache-moat tiles (55 widgets, marginal cost → $0), containment strip (allowlist + N exfil blocked), "wake now" button; polls every 2.5s; "agent live" nav link on landing
+- [x] proven live: tick fires Nemotron decision → persists → feed updates 4→5
 
 **JOB2 — monitor (~1h)**
 - [ ] `monitor_channel` (Apify) wired into the heartbeat: new upload → auto-process
