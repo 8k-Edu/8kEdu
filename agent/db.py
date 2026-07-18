@@ -63,7 +63,18 @@ def curriculum(goal_id):
         return [dict(r) for r in cur.fetchall()]
 
 
-def add_to_curriculum(goal_id, video_id, rationale):
+def ensure_video(video_id, title="", channel_name=""):
+    """Curriculum.video_id has an FK to videos — make sure the row exists first."""
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            "insert into videos(video_id,title,channel_name) values (%s,%s,%s) "
+            "on conflict (video_id) do update set title=coalesce(nullif(excluded.title,''), videos.title)",
+            (video_id, title, channel_name))
+        c.commit()
+
+
+def add_to_curriculum(goal_id, video_id, rationale, title="", channel_name=""):
+    ensure_video(video_id, title, channel_name)
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select 1 from curriculum where goal_id=%s and video_id=%s", (goal_id, video_id))
         if cur.fetchone():
@@ -85,6 +96,32 @@ def next_unprocessed(goal_id):
 def mark_curriculum(cid, state):
     with conn() as c, c.cursor() as cur:
         cur.execute("update curriculum set state=%s where id=%s", (state, cid))
+        c.commit()
+
+
+def add_channel(user_id, channel_id):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select id from monitored_channels where user_id=%s and channel_id=%s",
+                    (user_id, channel_id))
+        row = _one(cur)
+        if row:
+            return row["id"]
+        cur.execute("insert into monitored_channels(user_id,channel_id) values (%s,%s) returning id",
+                    (user_id, channel_id))
+        c.commit()
+        return _one(cur)["id"]
+
+
+def monitored_channels(user_id):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select * from monitored_channels where user_id=%s order by id", (user_id,))
+        return [dict(r) for r in cur.fetchall()]
+
+
+def mark_channel_checked(cid, last_video_id):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("update monitored_channels set last_checked=now(), last_video_id=%s where id=%s",
+                    (last_video_id, cid))
         c.commit()
 
 

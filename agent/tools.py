@@ -70,17 +70,59 @@ def process_video(video_id: str):
     return {"video_id": video_id, "source": "engine", "concepts": n}
 
 
-# ---------- MONITOR — new uploads on a channel (Apify: the live-data sponsor use) ----------
-def monitor_channel(channel_url: str, max_items: int = 3):
+# ---------- MONITOR — new uploads on a channel ----------
+def _channel_url(channel: str) -> str:
+    """Accept a handle (@karpathy), a channel id (UC…), or a full URL → uploads URL."""
+    if channel.startswith("http"):
+        return channel
+    if channel.startswith("@"):
+        return f"https://www.youtube.com/{channel}/videos"
+    if channel.startswith("UC"):
+        return f"https://www.youtube.com/channel/{channel}/videos"
+    return f"https://www.youtube.com/@{channel}/videos"
+
+
+def _monitor_apify(channel_url: str, max_items: int):
+    """Apify YouTube scraper — the live-data sponsor path."""
     token = os.environ.get("APIFY_API_TOKEN", "")
+    if not token:
+        raise RuntimeError("no APIFY_API_TOKEN")
     payload = json.dumps({"startUrls": [{"url": channel_url}], "maxResults": max_items,
                           "type": "video"}).encode()
     req = urllib.request.Request(
         f"https://api.apify.com/v2/acts/streamers~youtube-scraper/run-sync-get-dataset-items?token={token}",
         data=payload, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        items = json.loads(r.read())
+    return [{"id": it.get("id"), "title": it.get("title")} for it in items[:max_items] if it.get("id")]
+
+
+def _monitor_ytdlp(channel_url: str, max_items: int):
+    """yt-dlp fallback — fast, no token; keeps the live loop resilient."""
+    out = subprocess.run(
+        ["uv", "run", "yt-dlp", channel_url, "--flat-playlist", f"--playlist-end={max_items}",
+         "--print", "%(id)s\t%(title)s"],
+        cwd=ROOT, capture_output=True, text=True, timeout=90)
+    vids = []
+    for line in out.stdout.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 1 and parts[0]:
+            vids.append({"id": parts[0], "title": parts[1] if len(parts) > 1 else ""})
+    return vids
+
+
+def monitor_channel(channel: str, max_items: int = 3):
+    """Recent uploads for a channel. Apify first (sponsor live-data), yt-dlp fallback."""
+    url = _channel_url(channel)
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            items = json.loads(r.read())
-        return [{"id": it.get("id"), "title": it.get("title")} for it in items[:max_items]]
+        vids = _monitor_apify(url, max_items)
+        if vids:
+            return {"source": "apify", "videos": vids}
     except Exception as e:
-        return {"error": str(e)[:160]}
+        apify_err = str(e)[:120]
+        try:
+            vids = _monitor_ytdlp(url, max_items)
+            return {"source": "yt-dlp (apify fallback)", "videos": vids, "apify_error": apify_err}
+        except Exception as e2:
+            return {"error": f"apify: {apify_err} | yt-dlp: {str(e2)[:120]}", "videos": []}
+    return {"source": "apify", "videos": []}
