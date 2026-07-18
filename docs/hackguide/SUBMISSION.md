@@ -20,7 +20,7 @@ new uploads. It reasons with **Nemotron**, is contained by **NemoClaw + OpenShel
 | Trait | In 8kEdu |
 |---|---|
 | **Heartbeat-driven** | `agent/loop.py` wakes on an interval, reads state from Supabase, decides the single next action, acts. The trigger is time + state, never a human message. |
-| **Proactively autonomous** | Two jobs: **JOB1** builds the curriculum (find → process → sequence); **JOB2** monitors channels (Apify) → new upload auto-joins the course. Both unprompted. |
+| **Proactively autonomous** | Two agents, three jobs: the **learner loop** builds a curriculum (find → process → sequence) and monitors channels (Apify → new upload auto-joins the course); the **curator loop** grows the shared library on its own — picks the least-covered genre, finds + frames a new lecture, caches it for everyone. All unprompted. |
 | **Persistent with context** | Supabase *is* the agent's memory — learners, goals, curriculum, mastery, run log, and the shared cache. |
 
 Proven live: a real 3-tick run — `FIND_VIDEO` → `PROCESS_VIDEO` (55 widgets reused from cache) →
@@ -88,5 +88,7 @@ unreachable → heuristic fallback; tool failure → logged error run; it never 
 - Dynamic curriculum: `?view=learn` — subject → 2 real paths → Duolingo unit map, end to end.
 - Remix network: `?view=community` — hot/new feed, upvote, fork.
 - Breadth: `how_to` genre lens + a real How-To course (scrambled eggs) in the gallery.
+- Curator: a 2nd autonomous agent that grows the library per genre — visible on the dashboard
+  ("Library, growing itself"), compounding the cache moat with no human in the loop.
 
 *Companion docs:* [`DEMO.md`](DEMO.md) (runbook) · [`PLAN.md`](PLAN.md) (status) · [`STRATEGY.md`](STRATEGY.md) · [`ROADMAP.md`](ROADMAP.md) · [`../architecture.pdf`](../architecture.pdf).
