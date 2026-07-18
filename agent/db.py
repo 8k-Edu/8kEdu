@@ -63,6 +63,31 @@ def curriculum(goal_id):
         return [dict(r) for r in cur.fetchall()]
 
 
+def add_to_curriculum(goal_id, video_id, rationale):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select 1 from curriculum where goal_id=%s and video_id=%s", (goal_id, video_id))
+        if cur.fetchone():
+            return False
+        cur.execute("select coalesce(max(seq),0)+1 as n from curriculum where goal_id=%s", (goal_id,))
+        seq = _one(cur)["n"]
+        cur.execute("insert into curriculum(goal_id,seq,video_id,rationale,state) values (%s,%s,%s,%s,'planned')",
+                    (goal_id, seq, video_id, rationale))
+        c.commit()
+        return True
+
+
+def next_unprocessed(goal_id):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select * from curriculum where goal_id=%s and state='planned' order by seq limit 1", (goal_id,))
+        return _one(cur)
+
+
+def mark_curriculum(cid, state):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("update curriculum set state=%s where id=%s", (state, cid))
+        c.commit()
+
+
 def log_run(user_id, job, decided, actions, status):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
