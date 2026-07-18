@@ -4,7 +4,7 @@ Turn any YouTube lecture into an **interactive learning dashboard**. An AI pipel
 
 > Brilliant.org, auto-generated from any lecture — on any topic.
 
-Part of the **8kedu autonomous learning agent** (built for the AITX × NVIDIA Claw Agent Hackathon). This repo is the video→widget **engine + app**; the agent layer (heartbeat curriculum builder, NemoClaw/OpenShell containment, Nemotron omni brain, Supabase persistence) wraps it — see [`spec/spec.md`](spec/spec.md) and [`HACKATHON.md`](HACKATHON.md).
+Part of the **8kedu autonomous learning agent** (built for the AITX × NVIDIA Claw Agent Hackathon). This repo is the video→widget **engine + app**; the agent layer (heartbeat curriculum builder, NemoClaw/OpenShell containment, Nemotron omni brain, Supabase persistence) wraps it — see [`spec/spec.md`](spec/spec.md) and [`docs/hackguide/`](docs/hackguide/).
 
 ---
 
