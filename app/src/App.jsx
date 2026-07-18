@@ -1442,10 +1442,17 @@ function Landing({ onOpen }) {
       {/* top bar */}
       <div style={{ position: 'relative', zIndex: 2, maxWidth: 1040, margin: '0 auto', padding: '18px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Logo size={30} wordColor={T.text} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <a href="?view=agent"
+          style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: T.panel, border: `1px solid ${T.acc}55`, color: T.text, borderRadius: 999, padding: '7px 13px', fontSize: 13, cursor: 'pointer' }}>
+          <span className="edu-pulse" style={{ width: 8, height: 8, borderRadius: 4, background: T.acc, display: 'inline-block' }} />
+          agent live
+        </a>
         <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="toggle theme"
           style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>
           {theme === 'dark' ? '☀ light' : '☾ dark'}
         </button>
+        </div>
       </div>
       {/* HERO */}
       <div style={{ position: 'relative', overflow: 'hidden', borderBottom: `1px solid ${T.line}` }}>
@@ -1554,7 +1561,194 @@ function Landing({ onOpen }) {
   )
 }
 
+// ————— P3: the agent, live — judges SEE the autonomy —————
+const ACTION_STYLE = {
+  FIND_VIDEO: { c: '#79c0ff', label: 'find', glyph: '🔎' },
+  PROCESS_VIDEO: { c: '#56d364', label: 'process', glyph: '⚙' },
+  SEQUENCE: { c: '#b48eff', label: 'sequence', glyph: '✓' },
+  MONITOR: { c: '#ffab70', label: 'monitor', glyph: '📡' },
+  IDLE: { c: '#8b9682', label: 'idle', glyph: '·' },
+}
+const tclock = (iso) => { try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) } catch { return '' } }
+
+function StatTile({ T, label, value, sub, accent }) {
+  return (
+    <div style={{ flex: 1, minWidth: 150, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: T.faint }}>{label}</div>
+      <div style={{ fontFamily: mono, fontSize: 30, fontWeight: 800, letterSpacing: '-.03em', color: accent || T.acc, lineHeight: 1.15, marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: T.muted, marginTop: 2 }}>{sub}</div>
+    </div>
+  )
+}
+
+function AgentDashboard({ onExit }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  const [state, setState] = useState(null)
+  const [contain, setContain] = useState(null)
+  const [ticking, setTicking] = useState(false)
+  const [err, setErr] = useState(null)
+  useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
+
+  const load = async () => {
+    try {
+      const r = await fetch('/agent/state'); const d = await r.json()
+      if (d.ok) { setState(d); setErr(null) } else setErr(d.error || 'agent api down')
+    } catch (e) { setErr('agent api offline — start agent/api.py') }
+  }
+  useEffect(() => {
+    load(); fetch('/agent/containment').then(r => r.json()).then(setContain).catch(() => {})
+    const id = setInterval(load, 2500)
+    return () => clearInterval(id)
+  }, [])
+
+  const wake = async () => {
+    setTicking(true)
+    try { await fetch('/agent/tick', { method: 'POST' }); await load() }
+    catch (e) { setErr('tick failed') } finally { setTicking(false) }
+  }
+
+  const runs = state?.runs || []
+  const curriculum = state?.curriculum || []
+  const cache = state?.cache || { concepts_cached: 0, videos_cached: 0, reuses: 0, widgets_served_free: 0 }
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
+      <LandingStyles acc={T.acc} />
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px 60px' }}>
+        {/* top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
+            <Logo size={28} wordColor={T.text} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: mono, fontSize: 12, color: T.muted }}>
+              <motion.span animate={{ scale: [1, 1.5, 1], opacity: [1, .5, 1] }} transition={{ duration: 1.8, repeat: Infinity }}
+                style={{ width: 9, height: 9, borderRadius: 5, background: err ? '#e5484d' : T.acc, display: 'inline-block' }} />
+              {err ? 'offline' : 'heartbeat live'}
+            </span>
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>
+              {theme === 'dark' ? '☀' : '☾'}
+            </button>
+          </div>
+        </div>
+
+        {/* header */}
+        <div style={{ marginTop: 26 }}>
+          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>the agent, live</div>
+          <h1 style={{ fontSize: 'clamp(26px,4vw,40px)', letterSpacing: '-.03em', margin: '8px 0 0', textWrap: 'balance' }}>
+            8kEdu is working — on a heartbeat, on its own.
+          </h1>
+          <div style={{ color: T.sub, fontSize: 15, marginTop: 6 }}>
+            goal: <span style={{ color: T.text, fontWeight: 650 }}>{state?.goal || '…'}</span>
+          </div>
+        </div>
+
+        {/* stat tiles */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+          <StatTile T={T} label="cache moat" value={cache.concepts_cached} sub={`widgets cached · ${cache.videos_cached} video${cache.videos_cached === 1 ? '' : 's'} · reused by every learner`} />
+          <StatTile T={T} label="served free" value={cache.widgets_served_free} sub={`from ${cache.reuses} cache hit${cache.reuses === 1 ? '' : 's'} · marginal cost → $0`} accent="#56d364" />
+          <StatTile T={T} label="containment" value={contain?.active ? 'ON' : '—'}
+            sub={contain?.active ? `${contain.policy} policy · ${contain.denied_actions} exfil blocked` : 'scoutclaw sandbox'}
+            accent={contain?.active ? T.acc : T.muted} />
+          <StatTile T={T} label="heartbeats" value={runs.length} sub="autonomous decisions logged" accent="#79c0ff" />
+        </div>
+
+        {/* two columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.35fr) minmax(0,1fr)', gap: 16, marginTop: 20, alignItems: 'start' }}>
+          {/* runs feed */}
+          <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: '16px 16px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 15, fontWeight: 750 }}>Heartbeat feed</span>
+              <button onClick={wake} disabled={ticking}
+                style={{ background: T.acc, color: T.accText, border: 'none', borderRadius: 999, padding: '7px 16px', fontSize: 13, fontWeight: 800, cursor: ticking ? 'wait' : 'pointer', opacity: ticking ? .6 : 1 }}>
+                {ticking ? 'waking…' : '⏻ wake now'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 460, overflowY: 'auto' }}>
+              <AnimatePresence initial={false}>
+                {runs.map(run => {
+                  const st = ACTION_STYLE[run.decided?.action] || ACTION_STYLE.IDLE
+                  const a = run.actions || {}
+                  const detail = a.reused ? `⚡ ${a.concepts} widgets reused from cache (${a.source})`
+                    : a.added?.length ? `+ added "${a.added[0].title?.slice(0, 46)}"`
+                    : a.found?.length ? `scanned ${a.found.length} results`
+                    : a.note || ''
+                  return (
+                    <motion.div key={run.id} layout
+                      initial={{ opacity: 0, y: -12, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 240, damping: 24 }}
+                      style={{ border: `1px solid ${T.line}`, borderLeft: `3px solid ${st.c}`, borderRadius: 10, padding: '10px 12px', background: theme === 'dark' ? '#0b0f08' : '#fbfdf8' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontFamily: mono, fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: st.c, background: st.c + '1f', borderRadius: 5, padding: '2px 7px' }}>{st.glyph} {st.label}</span>
+                        <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, marginLeft: 'auto' }}>{tclock(run.woke_at)}</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: T.text, marginTop: 6, lineHeight: 1.4 }}>{run.decided?.why || '—'}</div>
+                      {detail && <div style={{ fontFamily: mono, fontSize: 11.5, color: a.reused ? '#56d364' : T.muted, marginTop: 5 }}>{detail}</div>}
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+              {!runs.length && <div style={{ color: T.faint, fontSize: 13, padding: '20px 0', textAlign: 'center' }}>{err || 'no heartbeats yet — press wake now'}</div>}
+            </div>
+          </div>
+
+          {/* curriculum + containment */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: '16px' }}>
+              <div style={{ fontSize: 15, fontWeight: 750, marginBottom: 4 }}>Curriculum, building itself</div>
+              <div style={{ fontSize: 11.5, color: T.muted, marginBottom: 12 }}>the agent sequences a course, no human in the loop</div>
+              {curriculum.map((c, i) => {
+                const ready = c.state === 'ready'
+                return (
+                  <motion.div key={c.seq} layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
+                    style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '9px 0', borderTop: i ? `1px solid ${T.line}` : 'none' }}>
+                    <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 700, color: T.faint, marginTop: 2 }}>{String(c.seq).padStart(2, '0')}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, color: T.text, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>
+                      {c.rationale && <div style={{ fontSize: 11, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{c.rationale}</div>}
+                    </div>
+                    <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: ready ? '#56d364' : '#ffab70', background: (ready ? '#56d364' : '#ffab70') + '1f', borderRadius: 5, padding: '2px 7px', flexShrink: 0 }}>
+                      {ready ? '✓ ready' : '◷ planned'}
+                    </span>
+                  </motion.div>
+                )
+              })}
+              {!curriculum.length && <div style={{ color: T.faint, fontSize: 13, padding: '10px 0' }}>empty — wake the agent to build it</div>}
+            </div>
+
+            {/* containment strip */}
+            <div style={{ background: T.panel, border: `1px solid ${contain?.active ? T.acc + '55' : T.line}`, borderRadius: 16, padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 750 }}>Contained by OpenShell</span>
+                <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: contain?.active ? T.acc : T.muted, background: (contain?.active ? T.acc : T.muted) + '1f', borderRadius: 5, padding: '2px 7px', marginLeft: 'auto' }}>
+                  {contain?.active ? 'shields ready' : 'checking…'}
+                </span>
+              </div>
+              <div style={{ fontSize: 11.5, color: T.muted, margin: '8px 0 10px' }}>egress allowlist — everything else is blocked + logged</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {(contain?.allow || ['youtube', 'apify', 'supabase', 'local-inference']).map(h => (
+                  <span key={h} style={{ fontFamily: mono, fontSize: 11, color: '#56d364', background: '#56d36418', border: '1px solid #56d36433', borderRadius: 6, padding: '3px 9px' }}>✓ {h}</span>
+                ))}
+                <span style={{ fontFamily: mono, fontSize: 11, color: '#e5484d', background: '#e5484d18', border: '1px solid #e5484d33', borderRadius: 6, padding: '3px 9px' }}>
+                  ⛔ exfil · {contain?.denied_actions ?? 0} blocked
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ color: T.faint, fontSize: 12, fontFamily: mono, marginTop: 20, textAlign: 'center' }}>
+          Nemotron Omni decides · yt-dlp / Apify act · Supabase persists + caches · OpenShell contains · every 60s, forever
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  const [view, setView] = useState(() => new URLSearchParams(location.search).get('view'))
   const [videoId, setVideoId] = useState(() => {
     const q = new URLSearchParams(location.search).get('v')
     if (q) return q
@@ -1571,9 +1765,12 @@ export default function App() {
       const p = new URLSearchParams(location.search)
       setVideoId(p.get('v'))
       setRole(p.get('role'))
+      setView(p.get('view'))
     }
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])
+  const exitAgent = () => { history.pushState({}, '', location.pathname); setView(null) }
+  if (view === 'agent') return <AgentDashboard onExit={exitAgent} />
   return videoId ? <Lecture key={`${videoId}-${role}`} videoId={videoId} role={role} /> : <Landing onOpen={open} />
 }
