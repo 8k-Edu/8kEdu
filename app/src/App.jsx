@@ -735,6 +735,70 @@ function Lecture({ videoId, role }) {
   )
 }
 
+// ambient attention-field — the app's own widget, alive, reacting to the cursor
+function AttentionField() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const cv = ref.current, ctx = cv.getContext('2d')
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let raf, t = 0, mx = -999, my = -999, w = 0, h = 0, cols = 0, rows = 0
+    const GAP = 6, CELL = 26
+    const resize = () => {
+      const r = cv.parentElement.getBoundingClientRect()
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      w = r.width; h = r.height
+      cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px'
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      cols = Math.ceil(w / (CELL + GAP)) + 1; rows = Math.ceil(h / (CELL + GAP)) + 1
+    }
+    resize(); window.addEventListener('resize', resize)
+    const onMove = e => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top }
+    const onLeave = () => { mx = -999; my = -999 }
+    cv.parentElement.addEventListener('pointermove', onMove)
+    cv.parentElement.addEventListener('pointerleave', onLeave)
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h)
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        const x = i * (CELL + GAP), y = j * (CELL + GAP)
+        // flowing softmax-like wave
+        let v = 0.5 + 0.5 * Math.sin(t * 0.9 + i * 0.55 + j * 0.4 + Math.sin(t * 0.3 + j))
+        v *= 0.35
+        // cursor glow
+        const dx = x + CELL / 2 - mx, dy = y + CELL / 2 - my
+        const d2 = dx * dx + dy * dy
+        const glow = Math.exp(-d2 / 9000)
+        const lit = Math.min(1, v + glow * 0.95)
+        const g = Math.round(90 + lit * 150), rr = Math.round(20 + lit * 40), b = Math.round(15 + lit * 40)
+        ctx.fillStyle = `rgba(${rr},${g},${b},${0.10 + lit * 0.82})`
+        const s = CELL * (0.62 + lit * 0.38)
+        const o = (CELL - s) / 2
+        ctx.beginPath(); ctx.roundRect(x + o, y + o, s, s, 5); ctx.fill()
+      }
+      t += 0.016
+      raf = requestAnimationFrame(draw)
+    }
+    if (reduced) { t = 2; draw(); cancelAnimationFrame(raf) } else draw()
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize)
+      cv.parentElement.removeEventListener('pointermove', onMove); cv.parentElement.removeEventListener('pointerleave', onLeave) }
+  }, [])
+  return <canvas ref={ref} style={{ position: 'absolute', inset: 0, display: 'block' }} aria-hidden="true" />
+}
+
+function LandingStyles() {
+  return <style>{`
+    @keyframes eduUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    @keyframes eduGlow{0%,100%{opacity:.55}50%{opacity:1}}
+    .edu-up{animation:eduUp .7s cubic-bezier(.2,.7,.2,1) both}
+    .edu-card{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+    .edu-card:hover{transform:translateY(-3px);border-color:#7bd33f88;box-shadow:0 10px 30px -12px #7bd33f55}
+    .edu-open{transition:transform .12s ease,filter .18s ease}
+    .edu-open:hover{filter:brightness(1.08)}.edu-open:active{transform:scale(.97)}
+    .edu-in:focus{outline:2px solid #7bd33f;outline-offset:1px}
+    .edu-pulse{animation:eduGlow 2.4s ease-in-out infinite}
+    @media (prefers-reduced-motion:reduce){.edu-up,.edu-pulse{animation:none}}
+  `}</style>
+}
+
 function Landing({ onOpen }) {
   const [url, setUrl] = useState(DEFAULT_URL)
   const [err, setErr] = useState(null)
@@ -743,53 +807,66 @@ function Landing({ onOpen }) {
     if (!id) { setErr('paste a YouTube link (or 11-char video id)'); return }
     onOpen(id)
   }
+  const d = (n) => ({ animationDelay: `${n}s` })
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: 640, maxWidth: '94vw', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div>
-          <h1 style={{ fontSize: 40, letterSpacing: -1 }}>8kEdu</h1>
-          <div style={{ color: '#e6edf3', fontSize: 18, marginTop: 8, fontWeight: 600 }}>
+    <div style={{ minHeight: '100vh', background: 'radial-gradient(1200px 600px at 50% -10%, #10160c 0%, #0a0d08 55%, #080a06 100%)' }}>
+      <LandingStyles />
+      {/* HERO */}
+      <div style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1c2416' }}>
+        <AttentionField />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(700px 340px at 50% 42%, transparent, #0a0d08cc 78%)' }} />
+        <div style={{ position: 'relative', maxWidth: 860, margin: '0 auto', padding: '96px 24px 72px', textAlign: 'center' }}>
+          <div className="edu-up" style={{ ...d(0), fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.22em', textTransform: 'uppercase', color: '#7bd33f' }}>
+            <span className="edu-pulse">●</span>&nbsp; autonomous learning agent
+          </div>
+          <h1 className="edu-up" style={{ ...d(.08), fontSize: 'clamp(40px,7vw,76px)', lineHeight: 1.02, letterSpacing: '-.03em', margin: '18px 0 0', textWrap: 'balance', color: '#f2f6ec' }}>
+            Lectures you can <span style={{ color: '#8ee23e', fontStyle: 'italic' }}>touch</span>.
+          </h1>
+          <p className="edu-up" style={{ ...d(.16), fontSize: 'clamp(17px,2.4vw,22px)', color: '#cbd6c0', margin: '18px auto 0', maxWidth: '30ch', fontWeight: 600 }}>
             YouTube video → interactive learning dashboard
+          </p>
+          <p className="edu-up" style={{ ...d(.24), fontSize: 16, color: '#8b9682', margin: '12px auto 0', maxWidth: '54ch', lineHeight: 1.6 }}>
+            Paste any lecture — every figure, equation and code block becomes a live widget you can tweak, run and remix. On any topic.
+          </p>
+          <div className="edu-up" style={{ ...d(.32), display: 'flex', gap: 10, maxWidth: 560, margin: '30px auto 0' }}>
+            <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
+              onKeyDown={e => e.key === 'Enter' && go()}
+              placeholder="paste a YouTube lecture link…"
+              style={{ flex: 1, background: '#0f140b', color: '#f2f6ec', border: '1px solid #2b3a1e', borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
+            <button className="edu-open" onClick={go} style={{
+              background: '#7bd33f', color: '#0a0d08', border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+              open →
+            </button>
           </div>
-          <div style={{ color: '#8b949e', fontSize: 15, marginTop: 6, lineHeight: 1.5 }}>
-            Paste any lecture. Every figure, equation, and code block becomes a live widget you can tweak, run, and remix — on any topic.
+          {err && <div style={{ color: '#ff8a7d', fontSize: 13, marginTop: 10 }}>{err}</div>}
+          <div className="edu-up" style={{ ...d(.4), display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 22, fontFamily: 'ui-monospace,monospace', fontSize: 11.5, color: '#66735b' }}>
+            <span>◱ vision + reasoning — one model</span><span>⟳ runs on a heartbeat</span><span>▶ python in your browser</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <input value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
-            onKeyDown={e => e.key === 'Enter' && go()}
-            placeholder="https://www.youtube.com/watch?v=…"
-            style={{
-              flex: 1, background: '#161b22', color: '#e6edf3', border: '1px solid #30363d',
-              borderRadius: 10, padding: '13px 14px', fontSize: 14, textAlign: 'left',
-            }} />
-          <button onClick={go} style={{
-            background: '#2f81f7', color: 'white', border: 'none', borderRadius: 10,
-            padding: '13px 22px', fontSize: 15, fontWeight: 700,
-          }}>open</button>
-        </div>
-        {err && <div style={{ color: '#f85149', fontSize: 13 }}>{err}</div>}
+      </div>
 
+      {/* BODY */}
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ color: '#8b949e', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <div style={{ fontFamily: 'ui-monospace,monospace', color: '#66735b', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.14em' }}>
             ready to touch — any topic, not just code
           </div>
           {CATEGORIES.map(cat => (
             <div key={cat.name}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 14.5, fontWeight: 700, color: '#e6edf3' }}>{cat.icon} {cat.name}</span>
-                <span style={{ fontSize: 11.5, color: '#484f58' }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: '#e8ede2' }}>{cat.icon} {cat.name}</span>
+                <span style={{ fontSize: 11.5, color: '#4d5946' }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
                 {cat.videos.map(v => (
-                  <button key={v.id} onClick={() => onOpen(v.id)} style={{
-                    textAlign: 'left', background: '#161b22', border: '1px solid #30363d', borderRadius: 12,
+                  <button key={v.id} className="edu-card" onClick={() => onOpen(v.id)} style={{
+                    textAlign: 'left', background: '#0f140b', border: '1px solid #2b3a1e', borderRadius: 12,
                     padding: 0, overflow: 'hidden', cursor: 'pointer',
                   }}>
                     <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
                       style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
                     <div style={{ padding: '8px 10px 10px' }}>
-                      <span style={{ fontSize: 12.5, color: '#e6edf3', lineHeight: 1.4 }}>{v.title}</span>
+                      <span style={{ fontSize: 12.5, color: '#e8ede2', lineHeight: 1.4 }}>{v.title}</span>
                     </div>
                   </button>
                 ))}
@@ -805,17 +882,17 @@ function Landing({ onOpen }) {
             ['creator', '✍️', 'Creator / Writer', 'Select a thread of moments → Markdown with keyframes, runnable code and remix links. Paste into Medium / Substack / your editor.'],
             ['researcher', '🔬', 'Researcher', 'Select any sentence, mint the widget you need. Coming soon: trace a concept across lectures, citation export.'],
           ].map(([key, icon, title, text]) => (
-            <button key={key} onClick={() => onOpen('kCc8FmEb1nY', key)} style={{
-              textAlign: 'left', background: '#161b22', border: '1px solid #30363d', borderRadius: 12,
+            <button key={key} className="edu-card" onClick={() => onOpen('kCc8FmEb1nY', key)} style={{
+              textAlign: 'left', background: '#0f140b', border: '1px solid #2b3a1e', borderRadius: 12,
               padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer',
             }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#e6edf3' }}>{icon} {title}</span>
-              <span style={{ fontSize: 12.5, color: '#8b949e', lineHeight: 1.55 }}>{text}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#e8ede2' }}>{icon} {title}</span>
+              <span style={{ fontSize: 12.5, color: '#8b9682', lineHeight: 1.55 }}>{text}</span>
             </button>
           ))}
         </div>
-        <div style={{ color: '#484f58', fontSize: 12 }}>
-          pipeline: yt-dlp → keyframes → open VLM (local MLX / vLLM / BYOK) → spec JSON → live widgets · python runs in-browser via pyodide · remix = a URL
+        <div style={{ color: '#4d5946', fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
+          yt-dlp → keyframes → Nemotron Omni → spec JSON → live widgets · python in-browser via pyodide · remix = a URL
         </div>
       </div>
     </div>
