@@ -37,6 +37,14 @@ const CATEGORIES = [
     ],
   },
   {
+    name: 'How-To', icon: '🍳',
+    videos: [
+      { id: '9-ODDKHRVkA', title: 'The Best Scrambled Eggs You\'ll Ever Make (Restaurant Technique)',
+        inside: { count: '1 live cook-controller · by Nemotron Omni', mix: [['#56d364', 1]],
+          peek: [['0:10', 'Butter & timing controls — drag it', '#56d364'], ['—', 'recipe scaler for your servings', '#79c0ff'], ['—', 'how_to genre lens', '#ffab70']] } },
+    ],
+  },
+  {
     name: 'Real estate', icon: '🏠',
     videos: [
       { id: 'BV6i8MNZ-BI', title: 'How to Buy your First House [Noob vs Pro] — $0 to Millionaire',
