@@ -121,6 +121,31 @@ def cache_put(prompt_hash, video_id, model, result):
         c.commit()
 
 
+# ---------- curator: grow the shared library per genre ----------
+def set_video_genre(video_id, genre, title="", channel_name=""):
+    ensure_video(video_id, title, channel_name)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("update videos set genre=%s where video_id=%s", (genre, video_id))
+        c.commit()
+
+
+def is_cached(video_id):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("select count(*) from concepts where video_id=%s", (video_id,))
+        return cur.fetchone()[0] > 0
+
+
+def library_stats():
+    """Per-genre: how many videos are cached, and how many widgets total."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "select coalesce(v.genre,'unknown') as genre, "
+            "count(distinct co.video_id) as videos, count(*) as widgets "
+            "from concepts co left join videos v on v.video_id=co.video_id "
+            "group by coalesce(v.genre,'unknown') order by videos")
+        return [dict(r) for r in cur.fetchall()]
+
+
 def add_channel(user_id, channel_id):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select id from monitored_channels where user_id=%s and channel_id=%s",
