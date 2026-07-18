@@ -1215,6 +1215,79 @@ function HeroDrop({ T, onOpen }) {
   )
 }
 
+// centered video coverflow — the "ready to touch" shelf, in flow
+function VideoCarousel({ T, onOpen }) {
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [idx, setIdx] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const vids = VIDEOS
+  const go = (n) => setIdx((n + vids.length) % vids.length)
+  useEffect(() => {
+    if (reduced || paused) return
+    const id = setInterval(() => go(idx + 1), 4200)
+    return () => clearInterval(id)
+  }, [idx, paused, reduced])
+  const arrow = { background: T.panel, border: `1px solid ${T.line}`, color: T.text, width: 44, height: 44, borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0, zIndex: 6 }
+  return (
+    <div style={{ textAlign: 'center' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px,2vw,20px)' }}>
+        <button aria-label="previous" onClick={() => go(idx - 1)} style={arrow}>‹</button>
+        <div style={{ position: 'relative', width: 'min(900px, 84vw)', height: 400, overflow: 'hidden', perspective: 1300 }}>
+          {[-1, 0, 1].map(off => {
+            const i = (idx + off + vids.length) % vids.length
+            const v = vids[i]
+            const center = off === 0
+            const xo = typeof window !== 'undefined' ? Math.min(300, window.innerWidth * 0.28) : 300
+            return (
+              <motion.div key={v.id}
+                animate={{ x: off * xo, rotateY: off * -24, scale: center ? 1.08 : .8, opacity: center ? 1 : .38, zIndex: center ? 5 : 1 }}
+                transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 150, damping: 22 }}
+                onClick={() => center ? onOpen(v.id) : go(idx + off)}
+                style={{ position: 'absolute', left: '50%', top: 16, marginLeft: -170, width: 340, cursor: 'pointer', transformStyle: 'preserve-3d' }}>
+                <div style={{ background: T.panel, border: `1px solid ${center ? T.acc + '66' : T.line}`, borderRadius: 16, overflow: 'hidden', textAlign: 'left', boxShadow: center ? '0 30px 70px -28px rgba(0,0,0,.6)' : 'none' }}>
+                  <div style={{ position: 'relative' }}>
+                    <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
+                      style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+                    <span style={{ position: 'absolute', left: 8, top: 8, fontFamily: mono, fontSize: 9, letterSpacing: '.08em', background: '#000c', color: '#8ee23e', borderRadius: 5, padding: '3px 8px', textTransform: 'uppercase' }}>{v.tag}</span>
+                  </div>
+                  <div style={{ padding: '10px 12px 12px' }}>
+                    <div style={{ fontSize: 13, color: T.text, fontWeight: 650, lineHeight: 1.35, minHeight: 35 }}>{v.title}</div>
+                    <div style={{ display: 'flex', gap: 2, height: 5, borderRadius: 3, overflow: 'hidden', marginTop: 8 }}>
+                      {v.inside.mix.map(([c, n], j) => <span key={j} style={{ flex: n, background: c, borderRadius: 2 }} />)}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7 }}>
+                      <span style={{ fontFamily: mono, fontSize: 10, color: T.acc }}>{v.inside.count}</span>
+                      <span style={{ fontFamily: mono, fontSize: 10, color: T.faint }}>{center ? 'open →' : ''}</span>
+                    </div>
+                    {center && (
+                      <div style={{ marginTop: 8, borderTop: `1px solid ${T.line}`, paddingTop: 7 }}>
+                        {v.inside.peek.map(([t, label, c]) => (
+                          <div key={t} style={{ display: 'flex', gap: 7, alignItems: 'center', marginTop: 3 }}>
+                            <span style={{ fontFamily: mono, fontSize: 9, color: '#79c0ff', background: '#1f6feb22', borderRadius: 3, padding: '1px 4px', flexShrink: 0 }}>{t}</span>
+                            <span style={{ width: 6, height: 6, borderRadius: 3, background: c, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, color: T.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+        <button aria-label="next" onClick={() => go(idx + 1)} style={arrow}>›</button>
+      </div>
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 4 }}>
+        {vids.map((v, i) => (
+          <button key={v.id} aria-label={v.title} onClick={() => go(i)}
+            style={{ width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer', background: i === idx ? T.acc : T.line, transition: 'all .25s', padding: 0 }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function Landing({ onOpen }) {
   const [url, setUrl] = useState('')
   const [err, setErr] = useState(null)
