@@ -299,11 +299,18 @@ def dashboard_state(limit=12):
         cur.execute("select channel_id, last_checked, last_video_id from monitored_channels order by id")
         channels = [dict(r) for r in cur.fetchall()]
 
+        cur.execute(
+            "select coalesce(v.genre,'unknown') as genre, count(distinct co.video_id) as videos "
+            "from concepts co left join videos v on v.video_id=co.video_id "
+            "group by coalesce(v.genre,'unknown') order by videos desc")
+        library = [dict(r) for r in cur.fetchall()]
+
     return {
         "goal": goal,
         "runs": runs,
         "curriculum": curriculum,
         "channels": channels,
+        "library": library,
         "cache": {
             "concepts_cached": concepts_cached,
             "videos_cached": videos_cached,
