@@ -1,0 +1,1327 @@
+[
+ {
+  "start": 6.32,
+  "end": 8.63,
+  "text": "Hi, welcome back to the channel."
+ },
+ {
+  "start": 8.64,
+  "end": 10.35,
+  "text": "In the last video, we talked about the"
+ },
+ {
+  "start": 10.36,
+  "end": 13.19,
+  "text": "self-attention mechanism, the query,"
+ },
+ {
+  "start": 13.2,
+  "end": 16.35,
+  "text": "key, and value. But before we go deeper,"
+ },
+ {
+  "start": 16.36,
+  "end": 18.39,
+  "text": "let's take a step back and look at how"
+ },
+ {
+  "start": 18.4,
+  "end": 20.51,
+  "text": "this fits into the full Transformer"
+ },
+ {
+  "start": 20.52,
+  "end": 22.59,
+  "text": "architecture. As you can see, the"
+ },
+ {
+  "start": 22.6,
+  "end": 24.71,
+  "text": "encoder is on the left side, and the"
+ },
+ {
+  "start": 24.72,
+  "end": 26.87,
+  "text": "decoder is on the right."
+ },
+ {
+  "start": 26.88,
+  "end": 29.19,
+  "text": "Now, you might be wondering, where is"
+ },
+ {
+  "start": 29.2,
+  "end": 31.39,
+  "text": "self-attention?"
+ },
+ {
+  "start": 31.4,
+  "end": 34.39,
+  "text": "Well, it lives inside these multi-head"
+ },
+ {
+  "start": 34.4,
+  "end": 37.75,
+  "text": "attention blocks."
+ },
+ {
+  "start": 37.76,
+  "end": 40.15,
+  "text": "Specifically, today we're focusing on"
+ },
+ {
+  "start": 40.16,
+  "end": 42.59,
+  "text": "this block in the encoder."
+ },
+ {
+  "start": 42.6,
+  "end": 44.47,
+  "text": "Multi-head attention is essentially"
+ },
+ {
+  "start": 44.48,
+  "end": 46.75,
+  "text": "self-attention running in parallel."
+ },
+ {
+  "start": 46.76,
+  "end": 49.07,
+  "text": "Instead of one attention pass, it runs"
+ },
+ {
+  "start": 49.08,
+  "end": 51.35,
+  "text": "several at once, each one looking at the"
+ },
+ {
+  "start": 51.36,
+  "end": 53.47,
+  "text": "input from a different angle."
+ },
+ {
+  "start": 53.48,
+  "end": 55.39,
+  "text": "But before we see how it works, let's"
+ },
+ {
+  "start": 55.4,
+  "end": 57.59,
+  "text": "first understand why we even need"
+ },
+ {
+  "start": 57.6,
+  "end": 61.83,
+  "text": "multi-head attention in the first place."
+ },
+ {
+  "start": 61.84,
+  "end": 63.91,
+  "text": "Consider this sentence."
+ },
+ {
+  "start": 63.92,
+  "end": 65.71,
+  "text": "The detective followed the spy with"
+ },
+ {
+  "start": 65.72,
+  "end": 68.39,
+  "text": "binoculars. Simple enough,"
+ },
+ {
+  "start": 68.4,
+  "end": 70.75,
+  "text": "but there is a hidden ambiguity."
+ },
+ {
+  "start": 70.76,
+  "end": 73.43,
+  "text": "Who actually has the binoculars?"
+ },
+ {
+  "start": 73.44,
+  "end": 75.03,
+  "text": "There are actually two valid"
+ },
+ {
+  "start": 75.04,
+  "end": 76.67,
+  "text": "interpretations."
+ },
+ {
+  "start": 76.68,
+  "end": 78.35,
+  "text": "Let me show you both."
+ },
+ {
+  "start": 78.36,
+  "end": 80.35,
+  "text": "First interpretation."
+ },
+ {
+  "start": 80.36,
+  "end": 82.71,
+  "text": "The detective has the binoculars and is"
+ },
+ {
+  "start": 82.72,
+  "end": 85.07,
+  "text": "using them to follow the spy."
+ },
+ {
+  "start": 85.08,
+  "end": 87.83,
+  "text": "Second interpretation. The spy has the"
+ },
+ {
+  "start": 87.84,
+  "end": 90.91,
+  "text": "binoculars and was simply carrying them."
+ },
+ {
+  "start": 90.92,
+  "end": 93.27,
+  "text": "Same sentence, completely different"
+ },
+ {
+  "start": 93.28,
+  "end": 94.59,
+  "text": "meaning."
+ },
+ {
+  "start": 94.6,
+  "end": 95.71,
+  "text": "Now,"
+ },
+ {
+  "start": 95.72,
+  "end": 97.47,
+  "text": "we already know how self-attention"
+ },
+ {
+  "start": 97.48,
+  "end": 98.59,
+  "text": "works."
+ },
+ {
+  "start": 98.6,
+  "end": 100.59,
+  "text": "Every word computes attention scores"
+ },
+ {
+  "start": 100.6,
+  "end": 103.39,
+  "text": "with every other word. So, let's apply"
+ },
+ {
+  "start": 103.4,
+  "end": 105.75,
+  "text": "self-attention to the word binoculars"
+ },
+ {
+  "start": 105.76,
+  "end": 107.47,
+  "text": "and see what scores it gives to each"
+ },
+ {
+  "start": 107.48,
+  "end": 109.55,
+  "text": "word in this sentence."
+ },
+ {
+  "start": 109.56,
+  "end": 112.07,
+  "text": "Here are the attention scores. The"
+ },
+ {
+  "start": 112.08,
+  "end": 114.71,
+  "text": "thickness of each line shows how much"
+ },
+ {
+  "start": 114.72,
+  "end": 117.59,
+  "text": "attention binoculars pays to that word."
+ },
+ {
+  "start": 117.6,
+  "end": 120.19,
+  "text": "A thick line means high attention."
+ },
+ {
+  "start": 120.2,
+  "end": 123.07,
+  "text": "A thin line means low attention."
+ },
+ {
+  "start": 123.08,
+  "end": 124.59,
+  "text": "Look at what happens."
+ },
+ {
+  "start": 124.6,
+  "end": 128.07,
+  "text": "Detective gets 90%, by far the strongest"
+ },
+ {
+  "start": 128.08,
+  "end": 129.99,
+  "text": "connection. So, the self-attention"
+ },
+ {
+  "start": 130.0,
+  "end": 133.03,
+  "text": "strongly concludes binoculars belongs to"
+ },
+ {
+  "start": 133.04,
+  "end": 134.43,
+  "text": "the detective."
+ },
+ {
+  "start": 134.44,
+  "end": 136.11,
+  "text": "But look at spy."
+ },
+ {
+  "start": 136.12,
+  "end": 138.23,
+  "text": "It only gets 20%."
+ },
+ {
+  "start": 138.24,
+  "end": 141.07,
+  "text": "The line is thin, almost invisible."
+ },
+ {
+  "start": 141.08,
+  "end": 143.47,
+  "text": "Self-attention barely notices the spy at"
+ },
+ {
+  "start": 143.48,
+  "end": 145.63,
+  "text": "all. The second interpretation is"
+ },
+ {
+  "start": 145.64,
+  "end": 147.79,
+  "text": "effectively ignored."
+ },
+ {
+  "start": 147.8,
+  "end": 149.87,
+  "text": "This is the fundamental limitation of a"
+ },
+ {
+  "start": 149.88,
+  "end": 152.83,
+  "text": "single self-attention head. It produces"
+ },
+ {
+  "start": 152.84,
+  "end": 155.55,
+  "text": "just one attention map, which means it"
+ },
+ {
+  "start": 155.56,
+  "end": 158.15,
+  "text": "captures just one relationship, one"
+ },
+ {
+  "start": 158.16,
+  "end": 159.59,
+  "text": "perspective,"
+ },
+ {
+  "start": 159.6,
+  "end": 164.51,
+  "text": "and completely misses the other."
+ },
+ {
+  "start": 164.52,
+  "end": 166.59,
+  "text": "Now that we know why we need it, let's"
+ },
+ {
+  "start": 166.6,
+  "end": 168.87,
+  "text": "now understand what exactly is"
+ },
+ {
+  "start": 168.88,
+  "end": 170.87,
+  "text": "multi-head attention."
+ },
+ {
+  "start": 170.88,
+  "end": 172.99,
+  "text": "For better understanding, let's assume"
+ },
+ {
+  "start": 173.0,
+  "end": 175.47,
+  "text": "we have a simple sentence with just"
+ },
+ {
+  "start": 175.48,
+  "end": 177.07,
+  "text": "three tokens."
+ },
+ {
+  "start": 177.08,
+  "end": 179.39,
+  "text": "Just like in standard self-attention, we"
+ },
+ {
+  "start": 179.4,
+  "end": 181.31,
+  "text": "first convert each token into a"
+ },
+ {
+  "start": 181.32,
+  "end": 184.03,
+  "text": "numerical vector called an embedding."
+ },
+ {
+  "start": 184.04,
+  "end": 186.51,
+  "text": "Let us assume that our embedding size is"
+ },
+ {
+  "start": 186.52,
+  "end": 188.19,
+  "text": "512"
+ },
+ {
+  "start": 188.2,
+  "end": 190.55,
+  "text": "dimensions, the standard size that was"
+ },
+ {
+  "start": 190.56,
+  "end": 192.35,
+  "text": "used in the original Transformer's"
+ },
+ {
+  "start": 192.36,
+  "end": 193.39,
+  "text": "paper."
+ },
+ {
+  "start": 193.4,
+  "end": 195.83,
+  "text": "If we stack our three tokens together,"
+ },
+ {
+  "start": 195.84,
+  "end": 198.63,
+  "text": "we get an input matrix of shape 3 by"
+ },
+ {
+  "start": 198.64,
+  "end": 200.35,
+  "text": "512,"
+ },
+ {
+  "start": 200.36,
+  "end": 204.47,
+  "text": "three tokens and 512 dimensions each."
+ },
+ {
+  "start": 204.48,
+  "end": 207.83,
+  "text": "Now, this is something interesting. A"
+ },
+ {
+  "start": 207.84,
+  "end": 210.47,
+  "text": "standard self-attention block uses only"
+ },
+ {
+  "start": 210.48,
+  "end": 212.75,
+  "text": "one set of weight matrices to look at"
+ },
+ {
+  "start": 212.76,
+  "end": 214.07,
+  "text": "this data."
+ },
+ {
+  "start": 214.08,
+  "end": 216.43,
+  "text": "But multi-head attention says, what if"
+ },
+ {
+  "start": 216.44,
+  "end": 219.11,
+  "text": "we use multiple self-attention modules"
+ },
+ {
+  "start": 219.12,
+  "end": 220.95,
+  "text": "in parallel?"
+ },
+ {
+  "start": 220.96,
+  "end": 223.39,
+  "text": "We call each of these parallel attention"
+ },
+ {
+  "start": 223.4,
+  "end": 225.43,
+  "text": "modules a head."
+ },
+ {
+  "start": 225.44,
+  "end": 227.71,
+  "text": "Instead of doing one massive heavy"
+ },
+ {
+  "start": 227.72,
+  "end": 230.63,
+  "text": "calculation on all 512 dimensions at"
+ },
+ {
+  "start": 230.64,
+  "end": 234.07,
+  "text": "once, we actually split the workload up."
+ },
+ {
+  "start": 234.08,
+  "end": 236.91,
+  "text": "For example, we might divide our 512"
+ },
+ {
+  "start": 236.92,
+  "end": 239.55,
+  "text": "dimensions across four smaller heads,"
+ },
+ {
+  "start": 239.56,
+  "end": 242.63,
+  "text": "giving each head just 128 dimensions to"
+ },
+ {
+  "start": 242.64,
+  "end": 243.99,
+  "text": "work with."
+ },
+ {
+  "start": 244.0,
+  "end": 246.35,
+  "text": "Now, you might be wondering, why do we"
+ },
+ {
+  "start": 246.36,
+  "end": 248.35,
+  "text": "shrink the dimensions?"
+ },
+ {
+  "start": 248.36,
+  "end": 250.71,
+  "text": "The reason is purely for computational"
+ },
+ {
+  "start": 250.72,
+  "end": 254.19,
+  "text": "efficiency. By shrinking down to 128"
+ },
+ {
+  "start": 254.2,
+  "end": 256.71,
+  "text": "dimensions, we can run four completely"
+ },
+ {
+  "start": 256.72,
+  "end": 258.95,
+  "text": "independent heads for the exact same"
+ },
+ {
+  "start": 258.96,
+  "end": 261.67,
+  "text": "computational cost as running one large"
+ },
+ {
+  "start": 261.68,
+  "end": 264.07,
+  "text": "one. So, how do they learn different"
+ },
+ {
+  "start": 264.08,
+  "end": 265.31,
+  "text": "things?"
+ },
+ {
+  "start": 265.32,
+  "end": 267.83,
+  "text": "Well, because each head has its own"
+ },
+ {
+  "start": 267.84,
+  "end": 270.19,
+  "text": "independent weights, they just naturally"
+ },
+ {
+  "start": 270.2,
+  "end": 271.71,
+  "text": "pick up on different patterns on their"
+ },
+ {
+  "start": 271.72,
+  "end": 272.67,
+  "text": "own."
+ },
+ {
+  "start": 272.68,
+  "end": 274.23,
+  "text": "This means instead of looking at our"
+ },
+ {
+  "start": 274.24,
+  "end": 276.95,
+  "text": "sentence in just one limited way, our"
+ },
+ {
+  "start": 276.96,
+  "end": 279.39,
+  "text": "model can capture multiple rich"
+ },
+ {
+  "start": 279.4,
+  "end": 282.79,
+  "text": "perspectives all at the exact same time."
+ },
+ {
+  "start": 282.8,
+  "end": 284.71,
+  "text": "Each head looks at the exact same"
+ },
+ {
+  "start": 284.72,
+  "end": 286.83,
+  "text": "sentence, but because they operate"
+ },
+ {
+  "start": 286.84,
+  "end": 288.35,
+  "text": "independently,"
+ },
+ {
+  "start": 288.36,
+  "end": 290.87,
+  "text": "they act like unique lenses, capturing"
+ },
+ {
+  "start": 290.88,
+  "end": 293.43,
+  "text": "completely different perspectives. Think"
+ },
+ {
+  "start": 293.44,
+  "end": 296.19,
+  "text": "of it like a team of detectives"
+ },
+ {
+  "start": 296.2,
+  "end": 298.67,
+  "text": "working on the exact same case. Instead"
+ },
+ {
+  "start": 298.68,
+  "end": 300.19,
+  "text": "of one detective trying to do"
+ },
+ {
+  "start": 300.2,
+  "end": 303.07,
+  "text": "everything, you split the work. One head"
+ },
+ {
+  "start": 303.08,
+  "end": 305.83,
+  "text": "focuses purely on grammar. Another hunts"
+ },
+ {
+  "start": 305.84,
+  "end": 308.39,
+  "text": "for long-distance relationships between"
+ },
+ {
+  "start": 308.4,
+  "end": 310.71,
+  "text": "words far apart."
+ },
+ {
+  "start": 310.72,
+  "end": 314.23,
+  "text": "A third focuses strictly on subject-verb"
+ },
+ {
+  "start": 314.24,
+  "end": 315.63,
+  "text": "connections."
+ },
+ {
+  "start": 315.64,
+  "end": 318.11,
+  "text": "And the last looks at positional"
+ },
+ {
+  "start": 318.12,
+  "end": 321.07,
+  "text": "patterns, where words sit relative to"
+ },
+ {
+  "start": 321.08,
+  "end": 323.51,
+  "text": "each other. By running all of these"
+ },
+ {
+  "start": 323.52,
+  "end": 326.31,
+  "text": "heads at the exact same time, our model"
+ },
+ {
+  "start": 326.32,
+  "end": 329.23,
+  "text": "does not just get one limited view. It"
+ },
+ {
+  "start": 329.24,
+  "end": 331.59,
+  "text": "captures multiple rich perspectives"
+ },
+ {
+  "start": 331.6,
+  "end": 335.11,
+  "text": "simultaneously. That is the core idea of"
+ },
+ {
+  "start": 335.12,
+  "end": 339.91,
+  "text": "multi-head attention."
+ },
+ {
+  "start": 339.92,
+  "end": 342.39,
+  "text": "Now that we know what exactly multi-head"
+ },
+ {
+  "start": 342.4,
+  "end": 345.19,
+  "text": "attention is, let's see how exactly it"
+ },
+ {
+  "start": 345.2,
+  "end": 346.59,
+  "text": "works."
+ },
+ {
+  "start": 346.6,
+  "end": 348.23,
+  "text": "First, we start with our input"
+ },
+ {
+  "start": 348.24,
+  "end": 349.47,
+  "text": "embeddings."
+ },
+ {
+  "start": 349.48,
+  "end": 351.95,
+  "text": "Just like in standard self-attention, we"
+ },
+ {
+  "start": 351.96,
+  "end": 354.27,
+  "text": "multiply our input by three different"
+ },
+ {
+  "start": 354.28,
+  "end": 356.71,
+  "text": "learned weight matrices to produce our"
+ },
+ {
+  "start": 356.72,
+  "end": 360.15,
+  "text": "query, key, and value matrices. But here"
+ },
+ {
+  "start": 360.16,
+  "end": 362.55,
+  "text": "comes the major difference. In standard"
+ },
+ {
+  "start": 362.56,
+  "end": 364.39,
+  "text": "self-attention, we would use these"
+ },
+ {
+  "start": 364.4,
+  "end": 368.39,
+  "text": "massive 512 dimension matrices directly."
+ },
+ {
+  "start": 368.4,
+  "end": 370.75,
+  "text": "But in multi-head attention, we slice"
+ },
+ {
+  "start": 370.76,
+  "end": 373.31,
+  "text": "them up. If we want four heads, we"
+ },
+ {
+  "start": 373.32,
+  "end": 377.35,
+  "text": "divide 512 by four, giving each head its"
+ },
+ {
+  "start": 377.36,
+  "end": 380.35,
+  "text": "own smaller 128-dimensional"
+ },
+ {
+  "start": 380.36,
+  "end": 384.31,
+  "text": "slice of Q, K, and V. But why do we"
+ },
+ {
+  "start": 384.32,
+  "end": 387.63,
+  "text": "shrink the dimensions down to 128"
+ },
+ {
+  "start": 387.64,
+  "end": 390.03,
+  "text": "per head? It is strictly for"
+ },
+ {
+  "start": 390.04,
+  "end": 392.39,
+  "text": "computational efficiency."
+ },
+ {
+  "start": 392.4,
+  "end": 394.39,
+  "text": "If we ran four attention heads at the"
+ },
+ {
+  "start": 394.4,
+  "end": 397.83,
+  "text": "full 512 dimensions, it would cost four"
+ },
+ {
+  "start": 397.84,
+  "end": 400.03,
+  "text": "times the computing power."
+ },
+ {
+  "start": 400.04,
+  "end": 402.83,
+  "text": "By slicing them into 128,"
+ },
+ {
+  "start": 402.84,
+  "end": 405.11,
+  "text": "we get four unique perspectives for the"
+ },
+ {
+  "start": 405.12,
+  "end": 408.07,
+  "text": "exact same computational price as one"
+ },
+ {
+  "start": 408.08,
+  "end": 409.47,
+  "text": "large head."
+ },
+ {
+  "start": 409.48,
+  "end": 411.99,
+  "text": "Now, every single head takes its smaller"
+ },
+ {
+  "start": 412.0,
+  "end": 414.51,
+  "text": "matrices and runs the standard scaled"
+ },
+ {
+  "start": 414.52,
+  "end": 416.75,
+  "text": "dot product attention completely"
+ },
+ {
+  "start": 416.76,
+  "end": 418.15,
+  "text": "independently."
+ },
+ {
+  "start": 418.16,
+  "end": 420.23,
+  "text": "Think of it like sending four detectives"
+ },
+ {
+  "start": 420.24,
+  "end": 422.43,
+  "text": "into four separate rooms to analyze the"
+ },
+ {
+  "start": 422.44,
+  "end": 423.63,
+  "text": "clues."
+ },
+ {
+  "start": 423.64,
+  "end": 425.75,
+  "text": "Each head produces its own unique"
+ },
+ {
+  "start": 425.76,
+  "end": 428.39,
+  "text": "attention output matrix. We now have"
+ },
+ {
+  "start": 428.4,
+  "end": 430.43,
+  "text": "four different contextual perspectives"
+ },
+ {
+  "start": 430.44,
+  "end": 433.03,
+  "text": "of our sentence. So, what do we do with"
+ },
+ {
+  "start": 433.04,
+  "end": 435.59,
+  "text": "these four different outputs? We simply"
+ },
+ {
+  "start": 435.6,
+  "end": 438.31,
+  "text": "glue them back together. We concatenate"
+ },
+ {
+  "start": 438.32,
+  "end": 441.07,
+  "text": "them side by side. Because each of the"
+ },
+ {
+  "start": 441.08,
+  "end": 444.47,
+  "text": "four heads output 128 dimensions,"
+ },
+ {
+  "start": 444.48,
+  "end": 446.87,
+  "text": "combining them perfectly restores our"
+ },
+ {
+  "start": 446.88,
+  "end": 449.51,
+  "text": "original 512-dimensional"
+ },
+ {
+  "start": 449.52,
+  "end": 450.95,
+  "text": "shape."
+ },
+ {
+  "start": 450.96,
+  "end": 453.79,
+  "text": "Finally, we have one last step. Right"
+ },
+ {
+  "start": 453.8,
+  "end": 456.35,
+  "text": "now, our concatenated matrix is just"
+ },
+ {
+  "start": 456.36,
+  "end": 458.43,
+  "text": "four separate perspectives stacked next"
+ },
+ {
+  "start": 458.44,
+  "end": 459.67,
+  "text": "to each other."
+ },
+ {
+  "start": 459.68,
+  "end": 462.11,
+  "text": "To perfectly blend these perspectives,"
+ },
+ {
+  "start": 462.12,
+  "end": 464.59,
+  "text": "we pass this block through one final"
+ },
+ {
+  "start": 464.6,
+  "end": 466.07,
+  "text": "linear layer."
+ },
+ {
+  "start": 466.08,
+  "end": 470.75,
+  "text": "This layer has a shape of 512 by 512."
+ },
+ {
+  "start": 470.76,
+  "end": 473.19,
+  "text": "It acts like a judge. It mixes the"
+ },
+ {
+  "start": 473.2,
+  "end": 475.75,
+  "text": "information, balances which perspectives"
+ },
+ {
+  "start": 475.76,
+  "end": 478.51,
+  "text": "matter most, and produces our final"
+ },
+ {
+  "start": 478.52,
+  "end": 482.31,
+  "text": "unified output, keeping the same 512"
+ },
+ {
+  "start": 482.32,
+  "end": 486.07,
+  "text": "dimensions."
+ },
+ {
+  "start": 486.08,
+  "end": 488.27,
+  "text": "And that is it."
+ },
+ {
+  "start": 488.28,
+  "end": 490.11,
+  "text": "Our model has not just looked at one"
+ },
+ {
+  "start": 490.12,
+  "end": 492.31,
+  "text": "meaning. It has now analyzed the"
+ },
+ {
+  "start": 492.32,
+  "end": 495.19,
+  "text": "sentence from multiple perspectives at"
+ },
+ {
+  "start": 495.2,
+  "end": 498.43,
+  "text": "the exact same time, in parallel."
+ },
+ {
+  "start": 498.44,
+  "end": 501.03,
+  "text": "That is the true power of multi-head"
+ },
+ {
+  "start": 501.04,
+  "end": 503.59,
+  "text": "attention. Here is the full picture in"
+ },
+ {
+  "start": 503.6,
+  "end": 504.83,
+  "text": "one view."
+ },
+ {
+  "start": 504.84,
+  "end": 507.11,
+  "text": "Input to QKV,"
+ },
+ {
+  "start": 507.12,
+  "end": 510.11,
+  "text": "sliced into heads, each runs independent"
+ },
+ {
+  "start": 510.12,
+  "end": 513.31,
+  "text": "attention, concatenated, and blended"
+ },
+ {
+  "start": 513.32,
+  "end": 515.63,
+  "text": "through the final linear layer. Let's"
+ },
+ {
+  "start": 515.64,
+  "end": 517.67,
+  "text": "take a moment to really appreciate what"
+ },
+ {
+  "start": 517.68,
+  "end": 518.99,
+  "text": "just happened."
+ },
+ {
+  "start": 519.0,
+  "end": 520.75,
+  "text": "Our model didn't look at the sentence"
+ },
+ {
+  "start": 520.76,
+  "end": 523.67,
+  "text": "once. It looked at it four times"
+ },
+ {
+  "start": 523.68,
+  "end": 525.23,
+  "text": "simultaneously,"
+ },
+ {
+  "start": 525.24,
+  "end": 528.35,
+  "text": "each from a completely different angle."
+ },
+ {
+  "start": 528.36,
+  "end": 531.31,
+  "text": "One head focuses purely on grammar, the"
+ },
+ {
+  "start": 531.32,
+  "end": 533.43,
+  "text": "core structure of the sentence."
+ },
+ {
+  "start": 533.44,
+  "end": 534.75,
+  "text": "Another looks for long-range"
+ },
+ {
+  "start": 534.76,
+  "end": 536.95,
+  "text": "relationships, connecting words that are"
+ },
+ {
+  "start": 536.96,
+  "end": 538.59,
+  "text": "far apart."
+ },
+ {
+  "start": 538.6,
+  "end": 541.51,
+  "text": "A third zeros in on subject focus,"
+ },
+ {
+  "start": 541.52,
+  "end": 543.59,
+  "text": "figuring out exactly who is doing the"
+ },
+ {
+  "start": 543.6,
+  "end": 546.43,
+  "text": "action. And the fourth captures position"
+ },
+ {
+  "start": 546.44,
+  "end": 548.87,
+  "text": "patterns, noticing where words sit"
+ },
+ {
+  "start": 548.88,
+  "end": 550.55,
+  "text": "relative to each other."
+ },
+ {
+  "start": 550.56,
+  "end": 553.07,
+  "text": "Four specialists, each an expert in"
+ },
+ {
+  "start": 553.08,
+  "end": 555.47,
+  "text": "their own dimension of language. And"
+ },
+ {
+  "start": 555.48,
+  "end": 558.27,
+  "text": "here is the genius of the design."
+ },
+ {
+  "start": 558.28,
+  "end": 560.63,
+  "text": "You might think four separate attention"
+ },
+ {
+  "start": 560.64,
+  "end": 563.87,
+  "text": "heads must be four times more expensive."
+ },
+ {
+  "start": 563.88,
+  "end": 565.11,
+  "text": "But no."
+ },
+ {
+  "start": 565.12,
+  "end": 568.83,
+  "text": "Each head works in a smaller space, 128"
+ },
+ {
+  "start": 568.84,
+  "end": 571.87,
+  "text": "dimensions instead of 512."
+ },
+ {
+  "start": 571.88,
+  "end": 574.43,
+  "text": "Running all four in parallel costs the"
+ },
+ {
+  "start": 574.44,
+  "end": 577.19,
+  "text": "exact same as running just one full"
+ },
+ {
+  "start": 577.2,
+  "end": 579.67,
+  "text": "head. We get multiple perspectives"
+ },
+ {
+  "start": 579.68,
+  "end": 583.83,
+  "text": "completely for free. Now, watch this."
+ },
+ {
+  "start": 583.84,
+  "end": 585.75,
+  "text": "After each head has seen what it needs"
+ },
+ {
+  "start": 585.76,
+  "end": 588.15,
+  "text": "to see, all four perspectives are"
+ },
+ {
+  "start": 588.16,
+  "end": 590.11,
+  "text": "gathered back together."
+ },
+ {
+  "start": 590.12,
+  "end": 592.63,
+  "text": "They flow through the final linear layer"
+ },
+ {
+  "start": 592.64,
+  "end": 595.67,
+  "text": "and merge into one single rich unified"
+ },
+ {
+  "start": 595.68,
+  "end": 596.87,
+  "text": "embedding."
+ },
+ {
+  "start": 596.88,
+  "end": 599.99,
+  "text": "Four voices, one answer."
+ },
+ {
+  "start": 600.0,
+  "end": 601.99,
+  "text": "Remember our ambiguous sentence from the"
+ },
+ {
+  "start": 602.0,
+  "end": 603.19,
+  "text": "beginning?"
+ },
+ {
+  "start": 603.2,
+  "end": 605.59,
+  "text": "While one head might strongly link the"
+ },
+ {
+  "start": 605.6,
+  "end": 608.11,
+  "text": "binoculars to the detective, another"
+ },
+ {
+  "start": 608.12,
+  "end": 610.31,
+  "text": "head simultaneously links them to the"
+ },
+ {
+  "start": 610.32,
+  "end": 611.55,
+  "text": "spy."
+ },
+ {
+  "start": 611.56,
+  "end": 614.07,
+  "text": "When they merge, both meanings are"
+ },
+ {
+  "start": 614.08,
+  "end": 617.27,
+  "text": "perfectly preserved. And that is"
+ },
+ {
+  "start": 617.28,
+  "end": 619.35,
+  "text": "multi-head attention. It solves the"
+ },
+ {
+  "start": 619.36,
+  "end": 621.47,
+  "text": "ambiguity of human language not by"
+ },
+ {
+  "start": 621.48,
+  "end": 623.59,
+  "text": "looking harder, but by looking from"
+ },
+ {
+  "start": 623.6,
+  "end": 626.31,
+  "text": "multiple angles at the same time."
+ },
+ {
+  "start": 626.32,
+  "end": 628.27,
+  "text": "Multiple perspectives, the same"
+ },
+ {
+  "start": 628.28,
+  "end": 630.75,
+  "text": "computation cost, and a far richer"
+ },
+ {
+  "start": 630.76,
+  "end": 633.19,
+  "text": "understanding."
+ },
+ {
+  "start": 633.2,
+  "end": 635.23,
+  "text": "Thank you so much for watching. If this"
+ },
+ {
+  "start": 635.24,
+  "end": 637.27,
+  "text": "video helped you understand multi-head"
+ },
+ {
+  "start": 637.28,
+  "end": 639.75,
+  "text": "attention, please hit like and subscribe"
+ },
+ {
+  "start": 639.76,
+  "end": 642.24,
+  "text": "button."
+ }
+]
