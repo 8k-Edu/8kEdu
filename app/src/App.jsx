@@ -1561,6 +1561,91 @@ function Landing({ onOpen }) {
   )
 }
 
+// ————— R2: Community — the remix network —————
+const WIDGET_TINT = { softmax: '#ff9bce', attention: '#ffab70', matrix_mul: '#79c0ff', function_plot: '#56d364', notebook: '#b48eff', composite: '#79c0ff', none: '#8b9682' }
+
+function CommunityView({ onExit, onOpen }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
+  const [sort, setSort] = useState('hot')
+  const [items, setItems] = useState([])
+  const [err, setErr] = useState(null)
+  const load = async (s) => {
+    try {
+      const r = await fetch(`/pub/feed?sort=${s ?? sort}`); const d = await r.json()
+      if (d.ok) { setItems(d.items); setErr(null) } else setErr(d.error)
+    } catch (e) { setErr('agent api offline — start agent/api.py') }
+  }
+  useEffect(() => { load() }, [sort])
+  const upvote = async (id) => {
+    try { const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: `me-${Math.floor(Date.now() / 1)}` }) }); const d = await r.json(); if (d.ok) setItems(x => x.map(a => a.id === id ? { ...a, votes: d.votes } : a)) } catch (e) {}
+  }
+  const remix = async (id) => {
+    try { await fetch('/pub/fork', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id }) }); load() } catch (e) {}
+  }
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
+      <LandingStyles acc={T.acc} />
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '18px 24px 70px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
+            <Logo size={28} wordColor={T.text} />
+          </div>
+          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>{theme === 'dark' ? '☀' : '☾'}</button>
+        </div>
+
+        <div style={{ marginTop: 26, textAlign: 'center' }}>
+          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>the remix network</div>
+          <h1 style={{ fontSize: 'clamp(26px,4vw,42px)', letterSpacing: '-.03em', margin: '8px 0 0', textWrap: 'balance' }}>Every artifact is a remix waiting to happen.</h1>
+          <p style={{ color: T.sub, fontSize: 15, marginTop: 8 }}>learners publish what the agent made · upvote the best · fork any of it into your own</p>
+          <div style={{ display: 'inline-flex', gap: 4, marginTop: 16, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: 4 }}>
+            {['hot', 'new'].map(s => (
+              <button key={s} onClick={() => setSort(s)} style={{ background: sort === s ? T.acc : 'transparent', color: sort === s ? T.accText : T.muted, border: 'none', borderRadius: 999, padding: '6px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', textTransform: 'capitalize' }}>{s === 'hot' ? '🔥 hot' : '🆕 new'}</button>
+            ))}
+          </div>
+        </div>
+
+        {err && <div style={{ color: '#e5484d', fontSize: 13, marginTop: 16, textAlign: 'center' }}>{err}</div>}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14, marginTop: 26 }}>
+          {items.map((a, i) => {
+            const tint = WIDGET_TINT[a.widget] || T.acc
+            return (
+              <motion.div key={a.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * .04, .4) }}
+                className="edu-card" style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {/* thumbnail band tinted by widget type */}
+                <div style={{ position: 'relative', height: 96, background: `linear-gradient(135deg, ${tint}22, ${tint}05)`, borderBottom: `1px solid ${T.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={`https://i.ytimg.com/vi/${a.video_id}/mqdefault.jpg`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .28 }} />
+                  <span style={{ position: 'relative', fontFamily: mono, fontSize: 11, fontWeight: 700, color: tint, background: '#0009', border: `1px solid ${tint}55`, borderRadius: 6, padding: '4px 10px', textTransform: 'uppercase', letterSpacing: '.06em' }}>{a.widget}</span>
+                  {a.remixed_from && <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: mono, fontSize: 9, color: T.text, background: '#0009', borderRadius: 5, padding: '2px 7px' }}>⑃ remix</span>}
+                </div>
+                <div style={{ padding: '12px 13px 13px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 650, color: T.text, lineHeight: 1.35, minHeight: 36 }}>{a.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: mono, fontSize: 11, color: T.faint }}>
+                    <span style={{ width: 18, height: 18, borderRadius: 9, background: tint, color: '#0a0d08', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800 }}>{a.owner[0].toUpperCase()}</span>
+                    by {a.owner}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 'auto' }}>
+                    <button onClick={() => upvote(a.id)} style={{ display: 'flex', alignItems: 'center', gap: 5, background: T.bg, border: `1px solid ${T.line}`, color: T.text, borderRadius: 8, padding: '7px 11px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>▲ {a.votes}</button>
+                    <button onClick={() => remix(a.id)} style={{ flex: 1, background: T.bg, border: `1px solid ${T.line}`, color: T.text, borderRadius: 8, padding: '7px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>⑃ remix</button>
+                    <button onClick={() => onOpen(a.video_id)} style={{ background: tint, border: 'none', color: '#0a0d08', borderRadius: 8, padding: '7px 12px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>open</button>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+        {!items.length && !err && <div style={{ color: T.faint, textAlign: 'center', marginTop: 40 }}>no public artifacts yet</div>}
+        <div style={{ textAlign: 'center', marginTop: 26, fontFamily: mono, fontSize: 12, color: T.faint }}>
+          a remix is just a URL · publish is one tap · <span style={{ color: T.muted }}>identity + profiles land with Supabase Auth (next)</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ————— R1: Learn — dynamic curriculum, Duolingo-style —————
 function LearnView({ onExit, onOpen }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
@@ -1960,5 +2045,6 @@ export default function App() {
   const exitView = () => { history.pushState({}, '', location.pathname); setView(null) }
   if (view === 'agent') return <AgentDashboard onExit={exitView} />
   if (view === 'learn') return <LearnView onExit={exitView} onOpen={open} />
+  if (view === 'community') return <CommunityView onExit={exitView} onOpen={open} />
   return videoId ? <Lecture key={`${videoId}-${role}`} videoId={videoId} role={role} /> : <Landing onOpen={open} />
 }

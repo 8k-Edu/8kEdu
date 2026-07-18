@@ -34,6 +34,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:8756',             // ask endpoint (serve.py)
       '/agent': 'http://127.0.0.1:8787',           // agent dashboard API (agent/api.py)
+      '/pub': 'http://127.0.0.1:8787',             // community remix feed (agent/api.py)
     },
   },
 })

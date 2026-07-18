@@ -147,6 +147,46 @@ def mark_channel_checked(cid, last_video_id):
         c.commit()
 
 
+# ---------- R2: social remix network — public artifacts + votes ----------
+def publish_artifact(owner, video_id, t_s, widget, title, spec, remixed_from=None):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "insert into artifacts_pub(owner,video_id,t_s,widget,title,spec,remixed_from) "
+            "values (%s,%s,%s,%s,%s,%s,%s) returning id",
+            (owner, video_id, t_s, widget, title, json.dumps(spec), remixed_from))
+        c.commit()
+        return _one(cur)["id"]
+
+
+def feed(sort="hot", limit=30):
+    order = ("(votes) desc, a.created_at desc" if sort == "hot" else "a.created_at desc")
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            f"select a.*, (select count(*) from votes v where v.artifact_id=a.id) as votes "
+            f"from artifacts_pub a order by {order} limit %s", (limit,))
+        return [dict(r) for r in cur.fetchall()]
+
+
+def vote(artifact_id, voter="demo"):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("insert into votes(artifact_id,voter) values (%s,%s) on conflict do nothing",
+                    (artifact_id, voter))
+        c.commit()
+        cur.execute("select count(*) from votes where artifact_id=%s", (artifact_id,))
+        return cur.fetchone()[0]
+
+
+def fork_artifact(artifact_id, owner="demo"):
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select * from artifacts_pub where id=%s", (artifact_id,))
+        src = _one(cur)
+    if not src:
+        return None
+    spec = src["spec"] if isinstance(src["spec"], dict) else json.loads(src["spec"])
+    return publish_artifact(owner, src["video_id"], src["t_s"], src["widget"],
+                            f"{src['title']} (remix)", spec, remixed_from=artifact_id)
+
+
 # ---------- R1: dynamic curriculum — course paths ----------
 def create_path(goal_id, label, rationale, video_ids, est_minutes, auto=False):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
