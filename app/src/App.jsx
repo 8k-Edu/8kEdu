@@ -1215,41 +1215,41 @@ function HeroDrop({ T, onOpen }) {
   )
 }
 
-// centered video coverflow — the "ready to touch" shelf, in flow
-function VideoCarousel({ T, onOpen }) {
+// centered video coverflow — one shelf per genre, in flow
+function VideoCarousel({ T, onOpen, vids }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
-  const vids = VIDEOS
+  const many = vids.length > 1
   const go = (n) => setIdx((n + vids.length) % vids.length)
   useEffect(() => {
-    if (reduced || paused) return
+    if (reduced || paused || !many) return
     const id = setInterval(() => go(idx + 1), 4200)
     return () => clearInterval(id)
-  }, [idx, paused, reduced])
-  const arrow = { background: T.panel, border: `1px solid ${T.line}`, color: T.text, width: 44, height: 44, borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0, zIndex: 6 }
+  }, [idx, paused, reduced, many])
+  const arrow = { background: T.panel, border: `1px solid ${T.line}`, color: T.text, width: 44, height: 44, borderRadius: 999, fontSize: 18, cursor: 'pointer', flexShrink: 0, zIndex: 6, visibility: many ? 'visible' : 'hidden' }
+  // 3+ videos: full coverflow; 2: center + right wing; 1: lone centered card
+  const offs = vids.length >= 3 ? [-1, 0, 1] : vids.length === 2 ? [0, 1] : [0]
   return (
     <div style={{ textAlign: 'center' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px,2vw,20px)' }}>
         <button aria-label="previous" onClick={() => go(idx - 1)} style={arrow}>‹</button>
         <div style={{ position: 'relative', width: 'min(900px, 84vw)', height: 400, overflow: 'hidden', perspective: 1300 }}>
-          {[-1, 0, 1].map(off => {
+          {offs.map(off => {
             const i = (idx + off + vids.length) % vids.length
             const v = vids[i]
             const center = off === 0
             const xo = typeof window !== 'undefined' ? Math.min(300, window.innerWidth * 0.28) : 300
+            const xShift = vids.length === 2 ? -xo / 2 : 0 // balance the pair around the middle
             return (
               <motion.div key={v.id}
-                animate={{ x: off * xo, rotateY: off * -24, scale: center ? 1.08 : .8, opacity: center ? 1 : .38, zIndex: center ? 5 : 1 }}
+                animate={{ x: off * xo + xShift, rotateY: off * -24, scale: center ? 1.08 : .8, opacity: center ? 1 : .38, zIndex: center ? 5 : 1 }}
                 transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 150, damping: 22 }}
                 onClick={() => center ? onOpen(v.id) : go(idx + off)}
                 style={{ position: 'absolute', left: '50%', top: 16, marginLeft: -170, width: 340, cursor: 'pointer', transformStyle: 'preserve-3d' }}>
                 <div style={{ background: T.panel, border: `1px solid ${center ? T.acc + '66' : T.line}`, borderRadius: 16, overflow: 'hidden', textAlign: 'left', boxShadow: center ? '0 30px 70px -28px rgba(0,0,0,.6)' : 'none' }}>
-                  <div style={{ position: 'relative' }}>
-                    <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
-                      style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
-                    <span style={{ position: 'absolute', left: 8, top: 8, fontFamily: mono, fontSize: 9, letterSpacing: '.08em', background: '#000c', color: '#8ee23e', borderRadius: 5, padding: '3px 8px', textTransform: 'uppercase' }}>{v.tag}</span>
-                  </div>
+                  <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt=""
+                    style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
                   <div style={{ padding: '10px 12px 12px' }}>
                     <div style={{ fontSize: 13, color: T.text, fontWeight: 650, lineHeight: 1.35, minHeight: 35 }}>{v.title}</div>
                     <div style={{ display: 'flex', gap: 2, height: 5, borderRadius: 3, overflow: 'hidden', marginTop: 8 }}>
@@ -1278,12 +1278,14 @@ function VideoCarousel({ T, onOpen }) {
         </div>
         <button aria-label="next" onClick={() => go(idx + 1)} style={arrow}>›</button>
       </div>
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 4 }}>
-        {vids.map((v, i) => (
-          <button key={v.id} aria-label={v.title} onClick={() => go(i)}
-            style={{ width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer', background: i === idx ? T.acc : T.line, transition: 'all .25s', padding: 0 }} />
-        ))}
-      </div>
+      {many && (
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 4 }}>
+          {vids.map((v, i) => (
+            <button key={v.id} aria-label={v.title} onClick={() => go(i)}
+              style={{ width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer', background: i === idx ? T.acc : T.line, transition: 'all .25s', padding: 0 }} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -1394,16 +1396,23 @@ function Landing({ onOpen }) {
 
       {/* BODY */}
       <div style={{ maxWidth: 940, margin: '0 auto', padding: '44px 24px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ fontFamily: 'ui-monospace,monospace', color: T.faint, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.14em', textAlign: 'center' }}>
             ready to touch — any topic, not just code
           </div>
-          <VideoCarousel T={T} onOpen={onOpen} />
-        </motion.div>
+          {CATEGORIES.map((cat, ci) => (
+            <motion.div key={cat.name}
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ type: 'spring', stiffness: 120, damping: 20, delay: ci * .06 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8, marginBottom: 2 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{cat.icon} {cat.name}</span>
+                <span style={{ fontSize: 11.5, color: T.faint }}>{cat.videos.length} lecture{cat.videos.length > 1 ? 's' : ''}</span>
+              </div>
+              <VideoCarousel T={T} onOpen={onOpen} vids={cat.videos.map(v => ({ ...v, tag: cat.name }))} />
+            </motion.div>
+          ))}
+        </div>
 
         <div style={{ color: T.faint, fontSize: 12, fontFamily: 'ui-monospace,monospace' }}>
           yt-dlp → keyframes → Nemotron Omni → spec JSON → live widgets · python in-browser via pyodide · remix = a URL
