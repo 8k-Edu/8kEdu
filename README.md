@@ -42,7 +42,7 @@ Under the hood, the pipeline: `ingest.py` (yt-dlp video + subs + chapters → ff
 
 **The product is the concept-spec schema:** the model emits data (`{widget, title, params, time, frame}`), a deterministic widget kit renders it. No live codegen for the parametric widgets; the one sandboxed exception is the Python notebook widget (pyodide, in-browser).
 
-> Full architecture + agent design: [`docs/architecture.html`](docs/architecture.html)
+> Full architecture + agent design: [`docs/architecture.pdf`](docs/architecture.pdf) (previewable) · [`docs/architecture.html`](docs/architecture.html) (with bounty/judging strategy)
 
 Widget tiers: parametric kit (`matrix_mul`/`attention`/`softmax`/`function_plot`) → `composite` grammar → `notebook` (real numpy/matplotlib/scipy/sympy). Persistence/caching (transcripts, frames, concept specs, inference results — shared across users) is backed by **Supabase** in the agent build.
 
