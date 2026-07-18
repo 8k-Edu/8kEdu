@@ -148,6 +148,60 @@ def learn_course(goal_id: int):
     return {"goal_id": goal_id, "units": units}
 
 
+# ---------- R2: social remix network ----------
+class Publish(BaseModel):
+    video_id: str
+    t_s: float = 0
+    widget: str = ""
+    title: str = ""
+    spec: dict
+    owner: str = "demo"
+
+
+@app.post("/pub/artifact")
+def pub_publish(req: Publish):
+    try:
+        aid = db.publish_artifact(req.owner, req.video_id, req.t_s, req.widget, req.title, req.spec)
+        return {"ok": True, "id": aid}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+@app.get("/pub/feed")
+def pub_feed(sort: str = "hot"):
+    try:
+        return {"ok": True, "items": db.feed(sort)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200], "items": []}
+
+
+class Vote(BaseModel):
+    artifact_id: int
+    voter: str = "demo"
+
+
+@app.post("/pub/vote")
+def pub_vote(req: Vote):
+    try:
+        return {"ok": True, "votes": db.vote(req.artifact_id, req.voter)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+class Fork(BaseModel):
+    artifact_id: int
+    owner: str = "demo"
+
+
+@app.post("/pub/fork")
+def pub_fork(req: Fork):
+    try:
+        nid = db.fork_artifact(req.artifact_id, req.owner)
+        return {"ok": bool(nid), "id": nid}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8787)

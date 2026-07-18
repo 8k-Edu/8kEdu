@@ -1,0 +1,17 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Scrambled Eggs \u2013 Butter & Timing Controls",
+  "explanation": "Adjusting butter amount and cooking time lets you control how creamy the eggs become.",
+  "params": {
+   "expr": "creaminess = butter_tbsp * 0.5 + cook_minutes * 0.2",
+   "sliders": [
+    "butter_tbsp",
+    "cook_minutes"
+   ]
+  },
+  "time": 10,
+  "frame": "f_000010.jpg"
+ }
+]
