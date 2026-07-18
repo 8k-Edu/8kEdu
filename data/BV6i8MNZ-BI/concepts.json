@@ -1,0 +1,232 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Real Estate Wealth Builder",
+  "explanation": "Simulate how owning a home builds equity and net worth over time through property appreciation and loan paydown.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Calculate loan details\ndown_payment = home_price * (down_payment_percent / 100)\nloan_amount = home_price - down_payment\nmonthly_rate = (interest_rate / 100) / 12\nnum_payments = int(years) * 12\n\n# Calculate monthly mortgage payment\nif monthly_rate > 0:\n    monthly_payment = loan_amount * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)\nelse:\n    monthly_payment = loan_amount / num_payments\n\n# Generate amortization schedule\nbalances = [loan_amount]\nfor _ in range(num_payments):\n    interest = balances[-1] * monthly_rate\n    principal = monthly_payment - interest\n    balances.append(max(0, balances[-1] - principal))\n\n# Extract yearly balances\nyearly_balances = np.array(balances[::12])\n\n# Calculate home value appreciation over time\nyears_arr = np.arange(int(years) + 1)\nhome_values = home_price * (1 + appreciation_rate / 100)**years_arr\n\n# Equity is Home Value minus Remaining Loan Balance\nequity = home_values - yearly_balances\n\n# Plotting\nplt.figure(figsize=(10, 6))\nplt.plot(years_arr, home_values, label='Home Value', color='blue', linestyle='--')\nplt.plot(years_arr, yearly_balances, label='Loan Balance', color='red', linestyle=':')\nplt.plot(years_arr, equity, label='Homeowner Equity (Net Worth)', color='green', linewidth=3)\nplt.fill_between(years_arr, equity, alpha=0.2, color='green')\n\nplt.title(f'Wealth Building via Real Estate (Starting Price: ${home_price:,.0f})')\nplt.xlabel('Years Owned')\nplt.ylabel('Dollars ($)')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.show()\n\nprint(f\"Initial Investment (Down Payment): ${down_payment:,.0f}\")\nprint(f\"Monthly Principal & Interest Payment: ${monthly_payment:,.0f}\")\nprint(f\"Final Equity after {int(years)} years: ${equity[-1]:,.0f}\")\nif down_payment > 0:\n    print(f\"Return on Initial Investment: {((equity[-1] - down_payment) / down_payment) * 100:,.0f}%\")"
+   ],
+   "sliders": [
+    {
+     "name": "home_price",
+     "min": 100000,
+     "max": 1000000,
+     "value": 400000
+    },
+    {
+     "name": "down_payment_percent",
+     "min": 3,
+     "max": 50,
+     "value": 20
+    },
+    {
+     "name": "interest_rate",
+     "min": 2,
+     "max": 12,
+     "value": 7
+    },
+    {
+     "name": "appreciation_rate",
+     "min": 0,
+     "max": 10,
+     "value": 4
+    },
+    {
+     "name": "years",
+     "min": 5,
+     "max": 30,
+     "value": 30
+    }
+   ]
+  },
+  "time": 20,
+  "frame": "f_000020.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Real Estate: Good Debt & Appreciation",
+  "explanation": "See how controlling a large appreciating asset with a small down payment (leverage) builds wealth over time, illustrating why the 'pro' sees real estate debt as good debt.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nyears_arr = np.arange(0, int(years) + 1)\nproperty_values = home_price * (1 + appreciation_rate / 100) ** years_arr\ninitial_investment = home_price * (down_payment_percent / 100)\nloan_amount = home_price - initial_investment\n\nplt.figure(figsize=(10, 5))\nplt.plot(years_arr, property_values, label='Property Value', color='#2563eb', linewidth=2)\nplt.axhline(y=home_price, color='#64748b', linestyle='--', label='Initial Purchase Price')\nplt.fill_between(years_arr, home_price, property_values, color='#22c55e', alpha=0.2, label='Appreciation (Wealth Gained)')\n\nplt.title(f'Power of Leverage\\nInitial Investment: ${initial_investment:,.0f} | Loan: ${loan_amount:,.0f}')\nplt.xlabel('Years')\nplt.ylabel('Value ($)')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()\n\nfinal_value = property_values[-1]\ntotal_appreciation = final_value - home_price\nroi = (total_appreciation / initial_investment) * 100 if initial_investment > 0 else 0\n\nprint(f\"After {int(years)} years:\")\nprint(f\"Property Value: ${final_value:,.0f}\")\nprint(f\"Wealth Gained (Appreciation): ${total_appreciation:,.0f}\")\nprint(f\"Return on Initial Investment (from appreciation): {roi:,.0f}%\")"
+   ],
+   "sliders": [
+    {
+     "name": "home_price",
+     "min": 100000,
+     "max": 1000000,
+     "value": 400000
+    },
+    {
+     "name": "down_payment_percent",
+     "min": 3,
+     "max": 30,
+     "value": 5
+    },
+    {
+     "name": "appreciation_rate",
+     "min": 1,
+     "max": 10,
+     "value": 4
+    },
+    {
+     "name": "years",
+     "min": 1,
+     "max": 30,
+     "value": 10
+    }
+   ]
+  },
+  "time": 140,
+  "frame": "f_000140.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Credit Score Mortgage Calculator",
+  "explanation": "See how different credit score tiers impact your estimated mortgage interest rate and monthly payment.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Determine interest rate based on credit score tiers mentioned\nif credit_score >= 760:\n    rate = 6.5\nelif credit_score >= 740:\n    rate = 6.75\nelif credit_score >= 640:\n    rate = 7.25\nelif credit_score >= 600:\n    rate = 8.0\nelse:\n    rate = 9.5\n\nloan_amount = home_price * (1 - down_payment_pct / 100)\nr = (rate / 100) / 12\nn = 30 * 12\npayment = loan_amount * (r * (1 + r)**n) / ((1 + r)**n - 1)\n\nprint(f\"Credit Score: {int(credit_score)}\")\nprint(f\"Estimated Rate: {rate}%\")\nprint(f\"Monthly Payment: ${payment:,.2f}\")",
+    "# Plot payment vs score\nscores = np.arange(550, 850, 10)\nrates = np.select(\n    [scores >= 760, scores >= 740, scores >= 640, scores >= 600],\n    [6.5, 6.75, 7.25, 8.0],\n    default=9.5\n)\nr_arr = (rates / 100) / 12\npayments = loan_amount * (r_arr * (1 + r_arr)**n) / ((1 + r_arr)**n - 1)\n\nplt.figure(figsize=(8, 4))\nplt.plot(scores, payments, lw=2)\nplt.axvline(credit_score, color='r', ls='--', label='Your Score')\nplt.xlabel('Credit Score')\nplt.ylabel('Monthly Payment ($)')\nplt.title(f'Monthly Payment for ${loan_amount:,.0f} Loan')\nplt.grid(True, alpha=0.3)\nplt.legend()\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "credit_score",
+     "min": 500,
+     "max": 850,
+     "value": 740
+    },
+    {
+     "name": "home_price",
+     "min": 100000,
+     "max": 1000000,
+     "value": 400000
+    },
+    {
+     "name": "down_payment_pct",
+     "min": 3,
+     "max": 20,
+     "value": 5
+    }
+   ]
+  },
+  "time": 330,
+  "frame": "f_000330.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Debt Impact on Buying Power",
+  "explanation": "Calculate how monthly payments on consumer debt reduce your mortgage purchasing power using the 'rule of 2.34'.",
+  "params": {
+   "cells": [
+    "import matplotlib.pyplot as plt\nimport numpy as np\n\n# Calculate lost purchasing power for a house payment\nlost_purchasing_power = monthly_debt_payment * rule_multiplier\n\nprint(f\"Monthly Debt Payment: ${monthly_debt_payment:,.2f}\")\nprint(f\"Rule Multiplier: {rule_multiplier}\")\nprint(f\"Lost House Payment Purchasing Power: ${lost_purchasing_power:,.2f}\")\n\n# Visualize the impact\nlabels = ['Monthly Debt Payment', 'Lost House Payment Power']\nvalues = [monthly_debt_payment, lost_purchasing_power]\n\nplt.figure(figsize=(8, 5))\nplt.bar(labels, values, color=['#e74c3c', '#f39c12'])\nplt.ylabel('Amount ($)')\nplt.title('Impact of Bad Debt on House Purchasing Power')\nfor i, v in enumerate(values):\n    plt.text(i, v + max(values)*0.02, f\"${v:,.0f}\", ha='center', fontweight='bold')\nplt.ylim(0, max(values) * 1.15)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "monthly_debt_payment",
+     "min": 0,
+     "max": 3000,
+     "value": 1000
+    },
+    {
+     "name": "rule_multiplier",
+     "min": 2.0,
+     "max": 3.0,
+     "value": 2.34
+    }
+   ]
+  },
+  "time": 460,
+  "frame": "f_000460.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "The Cost of Selling vs Holding Real Estate",
+  "explanation": "Selling real estate incurs significant friction costs (commissions, repairs, taxes) that erode your total wealth compared to holding and refinancing.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nyears = np.arange(0, int(holding_period) + 1)\ngross_value = initial_value * (1 + appreciation_rate)**years\n\n# Calculate costs if sold at each year\nselling_fees = gross_value * selling_fee_pct\ncapital_gains = np.maximum(0, gross_value - initial_value)\ntaxes = capital_gains * tax_rate\nnet_proceeds = gross_value - selling_fees - taxes\n\nplt.figure(figsize=(10, 5))\nplt.plot(years, gross_value, label='Gross Value (Hold & Refi)', color='green', lw=2)\nplt.plot(years, net_proceeds, label='Net Proceeds (Sell)', color='red', lw=2, ls='--')\nplt.fill_between(years, net_proceeds, gross_value, color='orange', alpha=0.3, label='Lost to Taxes & Fees')\n\nplt.xlabel('Years Held')\nplt.ylabel('Dollars ($)')\nplt.title('Wealth Erosion from Selling Real Estate')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.show()\n\nlost = gross_value[-1] - net_proceeds[-1]\nprint(f\"After {int(holding_period)} years:\")\nprint(f\"Property Value: ${gross_value[-1]:,.0f}\")\nprint(f\"Net if Sold:    ${net_proceeds[-1]:,.0f}\")\nprint(f\"Wealth Lost:    ${lost:,.0f} ({(lost/gross_value[-1])*100:.1f}% of gross value)\")"
+   ],
+   "sliders": [
+    {
+     "name": "initial_value",
+     "min": 100000,
+     "max": 1000000,
+     "value": 500000
+    },
+    {
+     "name": "appreciation_rate",
+     "min": 0.02,
+     "max": 0.12,
+     "value": 0.05
+    },
+    {
+     "name": "holding_period",
+     "min": 5,
+     "max": 40,
+     "value": 20
+    },
+    {
+     "name": "selling_fee_pct",
+     "min": 0.05,
+     "max": 0.12,
+     "value": 0.08
+    },
+    {
+     "name": "tax_rate",
+     "min": 0.1,
+     "max": 0.35,
+     "value": 0.2
+    }
+   ]
+  },
+  "time": 550,
+  "frame": "f_000550.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Real Estate Cash Flow & PMI Calculator",
+  "explanation": "See how your down payment percentage affects monthly cash flow and mortgage insurance (PMI).",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Inputs from sliders\nprice = home_price\ndp_pct = down_payment_pct / 100\nrate = interest_rate / 100\nrent = monthly_rent\n\ndown_payment = price * dp_pct\nloan_amount = price - down_payment\n\n# Monthly mortgage payment (Principal + Interest)\nmonthly_rate = rate / 12\nnum_payments = 30 * 12\nif monthly_rate > 0:\n    mortgage_payment = loan_amount * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)\nelse:\n    mortgage_payment = loan_amount / num_payments\n\n# PMI estimation (roughly 0.75% of loan amount annually if down payment < 20%)\npmi_monthly = (loan_amount * 0.0075 / 12) if dp_pct < 0.20 else 0\n\n# Property tax and insurance (rough estimates)\ntax_monthly = price * 0.012 / 12\nins_monthly = price * 0.005 / 12\n\ntotal_monthly_cost = mortgage_payment + pmi_monthly + tax_monthly + ins_monthly\ncash_flow = rent - total_monthly_cost\n\nprint(f\"Home Price: ${price:,.0f}\")\nprint(f\"Down Payment: ${down_payment:,.0f} ({down_payment_pct}%)\")\nprint(f\"Loan Amount: ${loan_amount:,.0f}\")\nprint(\"-\" * 30)\nprint(f\"Mortgage (P&I): ${mortgage_payment:,.2f}\")\nprint(f\"PMI: ${pmi_monthly:,.2f}\")\nprint(f\"Taxes & Ins: ${tax_monthly + ins_monthly:,.2f}\")\nprint(f\"Total Monthly Cost: ${total_monthly_cost:,.2f}\")\nprint(\"-\" * 30)\nprint(f\"Monthly Rent: ${rent:,.2f}\")\nprint(f\"Monthly Cash Flow: ${cash_flow:,.2f}\")",
+    "# Plotting cash flow vs down payment %\ndp_range = np.arange(3, 36, 1)\ncf_list = []\nfor dp in dp_range:\n    dp_amt = price * (dp / 100)\n    loan = price - dp_amt\n    pmt = loan * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1) if monthly_rate > 0 else loan / num_payments\n    pmi = (loan * 0.0075 / 12) if dp < 20 else 0\n    cost = pmt + pmi + tax_monthly + ins_monthly\n    cf_list.append(rent - cost)\n\nplt.figure(figsize=(8, 4))\nplt.plot(dp_range, cf_list, label='Cash Flow', color='blue', linewidth=2)\nplt.axhline(0, color='red', linestyle='--')\nplt.axvline(down_payment_pct, color='green', linestyle=':', label='Current DP%')\nplt.axvline(20, color='orange', linestyle=':', label='20% (No PMI)')\nplt.title('Monthly Cash Flow vs Down Payment %')\nplt.xlabel('Down Payment (%)')\nplt.ylabel('Cash Flow ($)')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "home_price",
+     "min": 100000,
+     "max": 1000000,
+     "value": 400000
+    },
+    {
+     "name": "down_payment_pct",
+     "min": 3,
+     "max": 35,
+     "value": 5
+    },
+    {
+     "name": "interest_rate",
+     "min": 2,
+     "max": 10,
+     "value": 6.5
+    },
+    {
+     "name": "monthly_rent",
+     "min": 1000,
+     "max": 5000,
+     "value": 2500
+    }
+   ]
+  },
+  "time": 670,
+  "frame": "f_000670.jpg"
+ }
+]

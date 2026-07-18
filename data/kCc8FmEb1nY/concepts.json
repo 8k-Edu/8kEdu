@@ -1,0 +1,1837 @@
+[
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Probabilistic Text Generation via Softmax",
+  "explanation": "Adjusting the temperature of the softmax function changes how deterministic or creative the model's next-token predictions are.",
+  "params": {
+   "logits": [
+    2.5,
+    1.8,
+    0.2,
+    -1.0,
+    0.5
+   ],
+   "temperature": 1.0
+  },
+  "time": 58.2,
+  "frame": "f_000058.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Mechanism",
+  "explanation": "Visualize how query and key vectors interact via dot products to determine attention weights between tokens.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.2,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.1,
+     1.0
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     0.1,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.5,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  "time": 116.3,
+  "frame": "f_000116.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Character Prediction Softmax",
+  "explanation": "The model outputs logits for each possible next character, which are converted into probabilities using the softmax function to predict the next character in the sequence.",
+  "params": {
+   "logits": [
+    3.5,
+    2.0,
+    1.5,
+    0.5,
+    -1.0
+   ],
+   "temperature": 1.0
+  },
+  "time": 290.8,
+  "frame": "f_000290.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Loss Curve Decay Model",
+  "explanation": "Visualize how the loss curve decays over training iterations based on the starting loss, decay rate, and final convergence limit.",
+  "params": {
+   "expr": "a * Math.exp(-b * x) + c",
+   "sliders": [
+    {
+     "name": "a",
+     "min": 0.5,
+     "max": 3.0,
+     "value": 1.5
+    },
+    {
+     "name": "b",
+     "min": 0.01,
+     "max": 0.2,
+     "value": 0.05
+    },
+    {
+     "name": "c",
+     "min": 1.0,
+     "max": 3.5,
+     "value": 2.2
+    }
+   ]
+  },
+  "time": 349.0,
+  "frame": "f_000348.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Logits to Probabilities via Softmax",
+  "explanation": "In a bigram language model, the lookup table outputs raw logits for each token in the vocabulary, which are then converted into a probability distribution using the softmax function.",
+  "params": {
+   "logits": [
+    2.4,
+    1.5,
+    -0.8,
+    0.3,
+    -1.2
+   ],
+   "temperature": 1.0
+  },
+  "time": 1337.8,
+  "frame": "f_001337.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Embedding Lookup as Matrix Multiplication",
+  "explanation": "An embedding lookup of a token index is mathematically equivalent to multiplying a one-hot encoded vector by the embedding weight matrix.",
+  "params": {
+   "a": [
+    [
+     0,
+     1,
+     0,
+     0
+    ]
+   ],
+   "b": [
+    [
+     -1.2,
+     0.5,
+     1.1,
+     -0.3
+    ],
+    [
+     0.8,
+     -1.5,
+     0.2,
+     0.7
+    ],
+    [
+     -0.1,
+     0.9,
+     -0.8,
+     1.2
+    ],
+    [
+     0.4,
+     0.3,
+     0.5,
+     -1.0
+    ]
+   ]
+  },
+  "time": 1396.0,
+  "frame": "f_001395.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Logits to Probabilities via Softmax",
+  "explanation": "In a bigram language model, the model outputs raw scores (logits) for each possible next token, which are then converted into probabilities using the softmax function.",
+  "params": {
+   "logits": [
+    2.5,
+    1.2,
+    -0.5,
+    3.8,
+    0.1
+   ],
+   "temperature": 1.0
+  },
+  "time": 1454.1,
+  "frame": "f_001454.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax and Cross-Entropy Loss",
+  "explanation": "Visualize how raw model outputs (logits) are converted into probabilities using the softmax function, which is the core component of Cross-Entropy Loss.",
+  "params": {
+   "logits": [
+    2.0,
+    1.0,
+    0.1,
+    3.0
+   ],
+   "temperature": 1.0
+  },
+  "time": 1570.5,
+  "frame": "f_001570.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax and Cross-Entropy Loss",
+  "explanation": "The softmax function converts raw model outputs (logits) into probabilities. When logits are uniform, the probability distribution is flat, resulting in an expected negative log likelihood of -ln(1/N).",
+  "params": {
+   "logits": [
+    1.5,
+    1.5,
+    1.5,
+    1.5
+   ],
+   "temperature": 1.0
+  },
+  "time": 1686.8,
+  "frame": "f_001686.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax Probability Distribution",
+  "explanation": "The model outputs raw scores (logits) for each token, which are converted into a probability distribution using the softmax function.",
+  "params": {
+   "logits": [
+    2.0,
+    1.0,
+    0.1,
+    -1.0,
+    0.5
+   ],
+   "temperature": 1.0
+  },
+  "time": 1803.1,
+  "frame": "f_001803.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax Probability Distribution",
+  "explanation": "Convert raw model outputs (logits) into a probability distribution for sampling the next token.",
+  "params": {
+   "logits": [
+    2.3,
+    1.1,
+    -0.5,
+    0.2,
+    3.1
+   ],
+   "temperature": 1.0
+  },
+  "time": 1919.5,
+  "frame": "f_001919.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax and Temperature in Token Generation",
+  "explanation": "Softmax converts raw model outputs (logits) into a probability distribution, where temperature controls the randomness of the generated text.",
+  "params": {
+   "logits": [
+    2.3,
+    1.1,
+    -0.5,
+    0.2,
+    -1.8
+   ],
+   "temperature": 1.0
+  },
+  "time": 2035.8,
+  "frame": "f_002035.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Learning Rate and Loss Decay",
+  "explanation": "Visualize how the learning rate controls the speed of convergence and loss reduction over training steps.",
+  "params": {
+   "expr": "Math.exp(-lr * x)",
+   "sliders": [
+    {
+     "name": "lr",
+     "min": 0.01,
+     "max": 0.1,
+     "value": 0.03
+    }
+   ]
+  },
+  "time": 2152.1,
+  "frame": "f_002152.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Logits to Probabilities via Softmax",
+  "explanation": "The model outputs raw scores (logits) for each possible next character, which are converted into a probability distribution using the softmax function.",
+  "params": {
+   "logits": [
+    2.5,
+    1.2,
+    -0.5,
+    0.8,
+    -2.1
+   ],
+   "temperature": 1.0
+  },
+  "time": 2210.3,
+  "frame": "f_002210.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax Probability Distribution",
+  "explanation": "The softmax function converts raw model outputs (logits) into a probability distribution over vocabulary tokens, which can be scaled by temperature to control generation randomness.",
+  "params": {
+   "logits": [
+    2.0,
+    1.0,
+    0.1,
+    -1.0,
+    0.5
+   ],
+   "temperature": 1.0
+  },
+  "time": 2326.6,
+  "frame": "f_002326.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax and Temperature in Text Generation",
+  "explanation": "Adjusting the temperature scales the logits before softmax, controlling the randomness of the next-token sampling during generation.",
+  "params": {
+   "logits": [
+    2.3,
+    1.5,
+    0.8,
+    -0.5,
+    3.1,
+    0.2
+   ],
+   "temperature": 1.0
+  },
+  "time": 2501.1,
+  "frame": "f_002501.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Causal Aggregation via Matrix Multiplication",
+  "explanation": "Multiplying by a lower triangular matrix allows us to efficiently compute a running average of past tokens in a sequence.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0
+    ],
+    [
+     0.33,
+     0.33,
+     0.33
+    ]
+   ],
+   "b": [
+    [
+     1.5,
+     2.0
+    ],
+    [
+     3.0,
+     1.0
+    ],
+    [
+     4.5,
+     3.0
+    ]
+   ]
+  },
+  "time": 2559.3,
+  "frame": "f_002559.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Historical Averaging via Matrix Multiplication",
+  "explanation": "Multiplying by a normalized lower-triangular matrix computes a running average of token features up to the current time step, representing a simple form of causal attention.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    [
+     0.33,
+     0.33,
+     0.33,
+     0.0
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "b": [
+    [
+     1.0,
+     2.0
+    ],
+    [
+     3.0,
+     1.5
+    ],
+    [
+     2.0,
+     4.0
+    ],
+    [
+     4.0,
+     2.5
+    ]
+   ]
+  },
+  "time": 2675.6,
+  "frame": "f_002675.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Causal Mean as Matrix Multiplication",
+  "explanation": "Multiplying by a lower-triangular averaging matrix computes a running average of token features up to the current time step.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    [
+     0.333,
+     0.333,
+     0.333,
+     0.0
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "b": [
+    [
+     0.18,
+     -0.07
+    ],
+    [
+     -0.36,
+     -0.92
+    ],
+    [
+     0.63,
+     0.03
+    ],
+    [
+     0.95,
+     0.06
+    ]
+   ]
+  },
+  "time": 2792.0,
+  "frame": "f_002791.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Matrix Multiplication with Uniform Weights",
+  "explanation": "Multiplying a matrix of ones by another matrix computes the sum of each column for every row.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     1.0,
+     1.0
+    ],
+    [
+     1.0,
+     1.0,
+     1.0
+    ],
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   "b": [
+    [
+     2.0,
+     7.0
+    ],
+    [
+     6.0,
+     4.0
+    ],
+    [
+     6.0,
+     5.0
+    ]
+   ]
+  },
+  "time": 2908.3,
+  "frame": "f_002908.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Matrix Multiplication for Cumulative Sums",
+  "explanation": "Multiplying by a lower-triangular matrix of ones performs a cumulative sum over the rows of the target matrix, which is a foundational step towards causal attention masking.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     1.0,
+     1.0,
+     0.0
+    ],
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   "b": [
+    [
+     2.0,
+     7.0
+    ],
+    [
+     6.0,
+     4.0
+    ],
+    [
+     6.0,
+     5.0
+    ]
+   ]
+  },
+  "time": 3024.6,
+  "frame": "f_003024.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Vectorized Cumulative Average via Matrix Multiplication",
+  "explanation": "Multiplying by a lower-triangular, row-normalized matrix computes a running average of the rows of the input matrix.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    [
+     0.3333,
+     0.3333,
+     0.3333,
+     0.0
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "b": [
+    [
+     1.0,
+     2.0
+    ],
+    [
+     3.0,
+     4.0
+    ],
+    [
+     5.0,
+     6.0
+    ],
+    [
+     7.0,
+     8.0
+    ]
+   ]
+  },
+  "time": 3141.0,
+  "frame": "f_003140.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Causal Aggregation via Matrix Multiplication",
+  "explanation": "Multiplying by a normalized lower-triangular matrix computes a running average of past tokens, preventing future information leakage in autoregressive models.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0
+    ],
+    [
+     0.3333,
+     0.3333,
+     0.3333
+    ]
+   ],
+   "b": [
+    [
+     4.0,
+     2.0
+    ],
+    [
+     8.0,
+     5.0
+    ],
+    [
+     1.0,
+     9.0
+    ]
+   ]
+  },
+  "time": 3257.3,
+  "frame": "f_003257.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax with Attention Masking",
+  "explanation": "Applying softmax to logits where future tokens are masked with negative values (representing -inf) ensures they receive zero attention probability.",
+  "params": {
+   "logits": [
+    0.0,
+    0.0,
+    0.0,
+    -100.0,
+    -100.0
+   ],
+   "temperature": 1.0
+  },
+  "time": 3315.5,
+  "frame": "f_003315.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Causal Attention Masking and Aggregation",
+  "explanation": "Multiplying a normalized lower-triangular attention weight matrix with token features aggregates information only from past and current tokens.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0
+    ],
+    [
+     0.33,
+     0.33,
+     0.33
+    ]
+   ],
+   "b": [
+    [
+     4.0,
+     2.0
+    ],
+    [
+     8.0,
+     6.0
+    ],
+    [
+     3.0,
+     9.0
+    ]
+   ]
+  },
+  "time": 3431.8,
+  "frame": "f_003431.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "The tril trick \u2014 live numpy from the video",
+  "explanation": "Karpathy's masked-averaging cell, running as real numpy in your browser. Drag T, edit the code.",
+  "params": {
+   "sliders": [
+    {
+     "name": "T",
+     "min": 2,
+     "max": 12,
+     "value": 8,
+     "step": 1
+    }
+   ],
+   "cells": [
+    "import numpy as np\nT = int(T)\ntril = np.tril(np.ones((T, T)))\nwei = tril / tril.sum(1, keepdims=True)\nprint(np.round(wei, 3))",
+    "import matplotlib.pyplot as plt\nplt.figure(figsize=(4,3))\nplt.imshow(wei, cmap='Greens')\nplt.title('attention weights (uniform over past)')\nplt.colorbar()\nplt.show()"
+   ]
+  },
+  "time": 3540.0,
+  "frame": "f_003548.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Language Model Head Projection",
+  "explanation": "The language model head projects token embeddings of size n_embd back to the vocabulary size to produce logits for each token.",
+  "params": {
+   "a": [
+    [
+     0.5,
+     -1.2,
+     0.8,
+     -0.1
+    ],
+    [
+     0.1,
+     2.0,
+     -0.5,
+     0.3
+    ]
+   ],
+   "b": [
+    [
+     1.2,
+     -0.5,
+     0.1
+    ],
+    [
+     0.3,
+     0.8,
+     -1.1
+    ],
+    [
+     -0.7,
+     0.2,
+     0.9
+    ],
+    [
+     0.5,
+     -0.4,
+     0.2
+    ]
+   ]
+  },
+  "time": 3548.1,
+  "frame": "f_003548.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Logits to Probabilities via Softmax",
+  "explanation": "The language model outputs raw scores (logits) for each token in the vocabulary, which are converted into a probability distribution using the softmax function.",
+  "params": {
+   "logits": [
+    2.5,
+    1.0,
+    -0.5,
+    0.2,
+    -1.2
+   ],
+   "temperature": 1.0
+  },
+  "time": 3606.3,
+  "frame": "f_003606.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Causal Masking via Matrix Multiplication",
+  "explanation": "Multiplying the lower-triangular attention weight matrix with the input features computes a running average of past tokens, preventing future information leakage.",
+  "params": {
+   "a": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    [
+     0.33,
+     0.33,
+     0.33,
+     0.0
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "b": [
+    [
+     0.5,
+     -0.2,
+     0.1
+    ],
+    [
+     0.9,
+     1.2,
+     -0.3
+    ],
+    [
+     -0.4,
+     0.8,
+     0.7
+    ],
+    [
+     0.1,
+     -0.5,
+     0.2
+    ]
+   ]
+  },
+  "time": 3722.6,
+  "frame": "f_003722.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Query-Key Affinity",
+  "explanation": "Self-attention calculates affinities between tokens by computing the dot product of queries (what a token is looking for) and keys (what a token contains).",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.1,
+     -0.2
+    ],
+    [
+     0.2,
+     0.9,
+     0.4
+    ],
+    [
+     0.5,
+     -0.1,
+     0.8
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     0.2,
+     -0.1
+    ],
+    [
+     0.1,
+     0.7,
+     0.3
+    ],
+    [
+     0.4,
+     0.0,
+     0.9
+    ]
+   ]
+  },
+  "time": 3838.9,
+  "frame": "f_003838.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Query-Key Dot Product Attention",
+  "explanation": "Affinities are computed by taking the dot product of query vectors with key vectors, determining how much attention each token pays to others.",
+  "params": {
+   "q": [
+    [
+     0.5,
+     -0.2,
+     0.1,
+     0.8
+    ],
+    [
+     0.1,
+     0.9,
+     -0.4,
+     0.2
+    ],
+    [
+     -0.3,
+     0.1,
+     0.7,
+     -0.5
+    ]
+   ],
+   "k": [
+    [
+     0.4,
+     -0.1,
+     0.3,
+     0.7
+    ],
+    [
+     0.2,
+     0.8,
+     -0.3,
+     0.1
+    ],
+    [
+     -0.5,
+     0.2,
+     0.6,
+     -0.4
+    ]
+   ]
+  },
+  "time": 3955.3,
+  "frame": "f_003955.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention: Query-Key Interaction",
+  "explanation": "See how query vectors dot-product with key vectors to produce attention weights, which are then masked and normalized via softmax.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5
+    ],
+    [
+     0.0,
+     1.5,
+     1.0
+    ],
+    [
+     2.0,
+     -1.0,
+     0.0
+    ],
+    [
+     -0.5,
+     1.0,
+     2.0
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0,
+     2.0
+    ],
+    [
+     1.5,
+     0.0,
+     -0.5
+    ],
+    [
+     0.0,
+     2.0,
+     1.0
+    ]
+   ]
+  },
+  "time": 4071.6,
+  "frame": "f_004071.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention: Query-Key Affinity",
+  "explanation": "Compute the raw attention weights (affinities) by taking the dot product of query vectors with key vectors, followed by masking and softmax normalization.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5
+    ],
+    [
+     0.0,
+     1.5,
+     1.0
+    ],
+    [
+     2.0,
+     -1.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     -1.0
+    ],
+    [
+     1.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  "time": 4187.9,
+  "frame": "f_004187.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Query-Key Interaction",
+  "explanation": "Compute attention weights by taking the dot product of queries (Q) and keys (K), showing how nodes in a sequence determine how much information to aggregate from each other.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5,
+     0.2
+    ],
+    [
+     0.0,
+     1.5,
+     0.5,
+     -0.8
+    ],
+    [
+     0.5,
+     -0.5,
+     1.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     -0.2,
+     0.5,
+     0.1
+    ],
+    [
+     -0.1,
+     1.0,
+     -0.5,
+     0.8
+    ],
+    [
+     0.3,
+     0.3,
+     0.9,
+     -0.2
+    ]
+   ]
+  },
+  "time": 4304.3,
+  "frame": "f_004304.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Query-Key Interaction",
+  "explanation": "Compute attention weights by taking the dot product of query vectors (Q) and key vectors (K), showing how tokens focus on each other.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5,
+     0.2
+    ],
+    [
+     0.1,
+     0.8,
+     0.0,
+     -0.4
+    ],
+    [
+     -0.2,
+     0.1,
+     0.9,
+     0.5
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     -0.2,
+     0.1,
+     0.4
+    ],
+    [
+     -0.1,
+     0.9,
+     0.3,
+     -0.2
+    ],
+    [
+     0.4,
+     0.2,
+     0.8,
+     0.1
+    ]
+   ]
+  },
+  "time": 4420.6,
+  "frame": "f_004420.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention with Causal Masking",
+  "explanation": "Self-attention computes attention weights by taking the dot product of queries and keys, which are then masked to prevent looking at future tokens.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5
+    ],
+    [
+     0.0,
+     1.0,
+     0.5
+    ],
+    [
+     0.5,
+     -0.5,
+     1.0
+    ]
+   ],
+   "k": [
+    [
+     0.5,
+     0.5,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     -0.5
+    ],
+    [
+     1.0,
+     0.0,
+     0.5
+    ]
+   ]
+  },
+  "time": 4536.9,
+  "frame": "f_004536.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Effect of Scaling on Softmax (Scaled Dot-Product Attention)",
+  "explanation": "Scaling logits by dividing by sqrt(d_k) (modeled here as temperature) reduces their variance, preventing the softmax from saturating into a one-hot distribution at initialization.",
+  "params": {
+   "logits": [
+    4.0,
+    -2.0,
+    5.5,
+    -1.0,
+    3.0,
+    -4.5
+   ],
+   "temperature": 4.0
+  },
+  "time": 4653.3,
+  "frame": "f_004653.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Score Computation",
+  "explanation": "Compute attention weights by taking the dot product of queries (Q) and keys (K), scaling by the square root of the head dimension, and applying softmax.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.1,
+     -0.5
+    ],
+    [
+     0.2,
+     0.9,
+     0.4
+    ],
+    [
+     -0.3,
+     0.3,
+     0.8
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     -0.2,
+     0.3
+    ],
+    [
+     0.1,
+     0.7,
+     -0.5
+    ],
+    [
+     -0.4,
+     0.4,
+     0.9
+    ]
+   ]
+  },
+  "time": 4769.6,
+  "frame": "f_004769.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Query-Key Interaction",
+  "explanation": "Self-attention computes similarity scores between queries (Q) and keys (K) to determine how much focus each token should place on other tokens in the sequence.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ]
+  },
+  "time": 4885.9,
+  "frame": "f_004885.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-Head Self-Attention: Single Head Query-Key Matching",
+  "explanation": "In multi-head attention, each head operates on a lower-dimensional subspace to compute attention weights by taking the dot product of queries (Q) and keys (K).",
+  "params": {
+   "q": [
+    [
+     0.1,
+     0.8,
+     -0.5,
+     0.2
+    ],
+    [
+     0.5,
+     -0.3,
+     0.9,
+     0.1
+    ],
+    [
+     -0.2,
+     0.4,
+     0.1,
+     0.7
+    ]
+   ],
+   "k": [
+    [
+     0.3,
+     0.6,
+     0.1,
+     -0.4
+    ],
+    [
+     0.2,
+     -0.1,
+     0.8,
+     0.5
+    ],
+    [
+     0.9,
+     0.3,
+     -0.2,
+     0.1
+    ]
+   ]
+  },
+  "time": 5002.3,
+  "frame": "f_005002.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Linear Layer with ReLU Activation",
+  "explanation": "Visualize how the weight (w) and bias (b) affect the output of a single neuron with a ReLU activation function, which introduces non-linearity to the network.",
+  "params": {
+   "expr": "Math.max(0, w * x + b)",
+   "sliders": [
+    {
+     "name": "w",
+     "min": -3.0,
+     "max": 3.0,
+     "value": 1.5
+    },
+    {
+     "name": "b",
+     "min": -3.0,
+     "max": 3.0,
+     "value": -0.5
+    }
+   ]
+  },
+  "time": 5118.6,
+  "frame": "f_005118.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-Attention Mechanism",
+  "explanation": "Self-attention allows tokens to communicate by computing attention weights from the dot product of queries (Q) and keys (K).",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.2
+    ],
+    [
+     0.1,
+     0.9
+    ],
+    [
+     0.5,
+     0.5
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     0.1
+    ],
+    [
+     0.2,
+     0.7
+    ],
+    [
+     0.6,
+     0.6
+    ]
+   ]
+  },
+  "time": 5176.8,
+  "frame": "f_005176.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Residual Connections and Identity Mapping",
+  "explanation": "Visualize how adding a residual connection (F(x) + residual * x) preserves the identity mapping, ensuring stable gradient flow even when the learned transformation F(x) is highly non-linear or saturated.",
+  "params": {
+   "expr": "a * Math.sin(b * x) + residual * x",
+   "sliders": [
+    {
+     "name": "a",
+     "min": 0,
+     "max": 2,
+     "value": 0.8
+    },
+    {
+     "name": "b",
+     "min": 1,
+     "max": 5,
+     "value": 3
+    },
+    {
+     "name": "residual",
+     "min": 0,
+     "max": 1,
+     "value": 1
+    }
+   ]
+  },
+  "time": 5293.1,
+  "frame": "f_005293.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Residual Connection Gradient Highway",
+  "explanation": "Visualize how residual connections preserve the identity path (y = x) at initialization when block contribution (a) is near zero, ensuring unimpeded gradient flow.",
+  "params": {
+   "expr": "x + a * Math.sin(x)",
+   "sliders": [
+    {
+     "name": "a",
+     "min": 0,
+     "max": 2,
+     "value": 0.1
+    }
+   ]
+  },
+  "time": 5409.4,
+  "frame": "f_005409.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Linear Layer with ReLU Activation",
+  "explanation": "Visualize how a single neuron with a weight, bias, and ReLU non-linearity transforms its input.",
+  "params": {
+   "expr": "Math.max(0, w * x + b)",
+   "sliders": [
+    {
+     "name": "w",
+     "min": -3.0,
+     "max": 3.0,
+     "value": 1.5
+    },
+    {
+     "name": "b",
+     "min": -3.0,
+     "max": 3.0,
+     "value": -0.5
+    }
+   ]
+  },
+  "time": 5525.8,
+  "frame": "f_005525.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-Head Attention: Query-Key Matching",
+  "explanation": "In the Transformer architecture, attention weights are computed by taking the dot product of Query (Q) and Key (K) vectors to determine how much focus to place on other parts of the input sequence.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     -0.5
+    ],
+    [
+     0.5,
+     0.5,
+     1.0
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     -0.5
+    ],
+    [
+     0.5,
+     0.5,
+     1.0
+    ]
+   ]
+  },
+  "time": 5700.3,
+  "frame": "f_005700.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Layer Normalization Transform",
+  "explanation": "LayerNorm normalizes features to have a zero mean and unit variance, then scales and shifts them using learnable parameters gamma and beta.",
+  "params": {
+   "expr": "gamma * (x - mean) / (std + 1e-5) + beta",
+   "sliders": [
+    {
+     "name": "mean",
+     "min": -5.0,
+     "max": 5.0,
+     "value": 1.5
+    },
+    {
+     "name": "std",
+     "min": 0.1,
+     "max": 5.0,
+     "value": 2.0
+    },
+    {
+     "name": "gamma",
+     "min": 0.1,
+     "max": 3.0,
+     "value": 1.0
+    },
+    {
+     "name": "beta",
+     "min": -2.0,
+     "max": 2.0,
+     "value": 0.0
+    }
+   ]
+  },
+  "time": 5816.6,
+  "frame": "f_005816.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax and Temperature in Text Generation",
+  "explanation": "Adjust the temperature to see how it scales the logits before softmax, controlling the randomness of the model's next-character predictions.",
+  "params": {
+   "logits": [
+    2.5,
+    1.2,
+    3.1,
+    0.5,
+    2.0
+   ],
+   "temperature": 1.0
+  },
+  "time": 6107.4,
+  "frame": "f_006107.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Visualizing Attention Weights",
+  "explanation": "Interactive calculation of attention weights by computing the dot product of query and key vectors.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.1,
+     -0.2
+    ],
+    [
+     0.0,
+     0.9,
+     0.3
+    ],
+    [
+     0.5,
+     -0.5,
+     1.0
+    ]
+   ],
+   "k": [
+    [
+     0.8,
+     0.2,
+     0.0
+    ],
+    [
+     -0.1,
+     0.7,
+     0.4
+    ],
+    [
+     0.3,
+     -0.3,
+     0.9
+    ]
+   ]
+  },
+  "time": 6165.6,
+  "frame": "f_006165.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Bidirectional Self-Attention in the Encoder",
+  "explanation": "In the Transformer encoder, all tokens can freely attend to each other without a mask, computing attention weights via query-key dot products.",
+  "params": {
+   "q": [
+    [
+     0.1,
+     0.8,
+     -0.2
+    ],
+    [
+     0.9,
+     0.1,
+     0.3
+    ],
+    [
+     -0.4,
+     0.5,
+     0.7
+    ]
+   ],
+   "k": [
+    [
+     0.2,
+     0.7,
+     -0.1
+    ],
+    [
+     0.8,
+     0.2,
+     0.4
+    ],
+    [
+     -0.3,
+     0.6,
+     0.6
+    ]
+   ]
+  },
+  "time": 6281.9,
+  "frame": "f_006281.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "GELU Activation Function Approximation",
+  "explanation": "The Gaussian Error Linear Unit (GELU) scales inputs by their cumulative distribution function, providing a smooth, non-monotonic alternative to ReLU.",
+  "params": {
+   "expr": "0.5 * x * (1.0 + Math.tanh(Math.sqrt(2.0 / Math.PI) * (x + a * Math.pow(x, 3.0))))",
+   "sliders": [
+    {
+     "name": "a",
+     "min": 0,
+     "max": 0.1,
+     "value": 0.044715
+    }
+   ]
+  },
+  "time": 6398.2,
+  "frame": "f_006398.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-Head Attention: Query-Key Dot Product",
+  "explanation": "Visualize how query and key vectors interact via dot products to produce attention weights before softmax is applied.",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.0,
+     -0.5,
+     0.2
+    ],
+    [
+     0.2,
+     1.5,
+     0.0,
+     -1.0
+    ],
+    [
+     -0.1,
+     0.5,
+     1.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.5,
+     -0.2,
+     1.0,
+     0.0
+    ],
+    [
+     1.0,
+     1.0,
+     -0.5,
+     0.5
+    ],
+    [
+     0.0,
+     0.8,
+     0.2,
+     -1.0
+    ]
+   ]
+  },
+  "time": 6456.4,
+  "frame": "f_006456.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "GELU Activation Function",
+  "explanation": "GELU weights inputs by their value under a cumulative Gaussian distribution, smoothing the hard threshold of ReLU.",
+  "params": {
+   "expr": "0.5 * x * (1 + Math.tanh(0.797884 * (x + 0.044715 * Math.pow(x, 3) * s)))",
+   "sliders": [
+    {
+     "name": "s",
+     "min": 0,
+     "max": 2,
+     "value": 1
+    }
+   ]
+  },
+  "time": 6514.6,
+  "frame": "f_006514.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax Probability Distribution",
+  "explanation": "Converting raw model outputs (logits) into a probability distribution allows us to sample the next token.",
+  "params": {
+   "logits": [
+    2.0,
+    1.0,
+    0.1,
+    -1.5
+   ],
+   "temperature": 1.0
+  },
+  "time": 6572.7,
+  "frame": "f_006572.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Transformer Parameter Scaling",
+  "explanation": "Visualize how the total parameter count (in millions) scales quadratically with the model dimension (d_model, on the x-axis) and linearly with the number of layers (L).",
+  "params": {
+   "expr": "(12 * L * x * x + 50257 * x) / 1000000",
+   "sliders": [
+    {
+     "name": "L",
+     "min": 1,
+     "max": 100,
+     "value": 24
+    }
+   ]
+  },
+  "time": 6689.1,
+  "frame": "f_006689.jpg"
+ }
+]

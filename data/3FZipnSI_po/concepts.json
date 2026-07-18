@@ -1,0 +1,310 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Yen Carry Trade Simulator",
+  "explanation": "Simulate how borrowing in a low-interest currency (Yen) to invest in a higher-yielding one (USD) can lead to massive losses if the borrowed currency suddenly strengthens.",
+  "params": {
+   "cells": [
+    "import matplotlib.pyplot as plt\nimport numpy as np\n\n# 1. Borrow JPY and convert to USD\nborrowed_jpy = borrow_amount_usd * initial_usd_jpy\nprint(f\"1. Borrow {borrowed_jpy:,.0f} JPY at {jpy_borrow_rate}%\")\nprint(f\"2. Convert to ${borrow_amount_usd:,.2f} USD and invest at {usd_invest_rate}%\")\n\n# 2. Calculate returns and debt after 1 year\nowed_jpy = borrowed_jpy * (1 + jpy_borrow_rate / 100)\nearned_usd = borrow_amount_usd * (1 + usd_invest_rate / 100)\n\n# 3. Repay loan at the new exchange rate\ncost_to_repay_usd = owed_jpy / final_usd_jpy\nprofit_usd = earned_usd - cost_to_repay_usd\n\nprint(f\"\\nAfter 1 year:\")\nprint(f\"- Investment grew to: ${earned_usd:,.2f} USD\")\nprint(f\"- Debt grew to: {owed_jpy:,.0f} JPY\")\nprint(f\"- Cost to buy back JPY to repay debt: ${cost_to_repay_usd:,.2f} USD\")\nprint(f\"\\nNet Profit: ${profit_usd:,.2f} USD\")",
+    "# Plot profitability across different final exchange rates\nrates = np.linspace(100, 200, 100)\nprofits = earned_usd - (owed_jpy / rates)\n\nplt.figure(figsize=(10, 5))\nplt.plot(rates, profits, label='Net Profit (USD)', color='blue')\nplt.axvline(x=initial_usd_jpy, color='gray', linestyle='--', label=f'Initial Rate ({initial_usd_jpy})')\nplt.axvline(x=final_usd_jpy, color='red', linestyle=':', label=f'Final Rate ({final_usd_jpy})')\nplt.axhline(y=0, color='black', linewidth=1)\n\nplt.fill_between(rates, profits, 0, where=(profits < 0), color='red', alpha=0.3, label='Loss Zone (Yen Strengthens)')\nplt.fill_between(rates, profits, 0, where=(profits >= 0), color='green', alpha=0.3, label='Profit Zone')\n\nplt.xlabel('Final USD/JPY Exchange Rate (Lower = Stronger Yen)')\nplt.ylabel('Profit / Loss (USD)')\nplt.title('Carry Trade Vulnerability to Exchange Rate Shocks')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "borrow_amount_usd",
+     "min": 10000,
+     "max": 1000000,
+     "value": 100000
+    },
+    {
+     "name": "jpy_borrow_rate",
+     "min": 0,
+     "max": 5,
+     "value": 0.1
+    },
+    {
+     "name": "usd_invest_rate",
+     "min": 1,
+     "max": 15,
+     "value": 5.5
+    },
+    {
+     "name": "initial_usd_jpy",
+     "min": 100,
+     "max": 200,
+     "value": 150
+    },
+    {
+     "name": "final_usd_jpy",
+     "min": 100,
+     "max": 200,
+     "value": 135
+    }
+   ]
+  },
+  "time": 60,
+  "frame": "f_000060.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Demographic Economic Balance",
+  "explanation": "Simulate how an aging demographic (more retirees per worker) impacts a country's economic balance between tax revenue and social costs.",
+  "params": {
+   "cells": [
+    "import matplotlib.pyplot as plt\nimport numpy as np\n\nworkers = 100\nretirees = retirees_per_100_workers\n\ntotal_tax_revenue = workers * worker_income * (tax_rate_pct / 100)\ntotal_retiree_cost = retirees * retiree_cost\n\nbalance = total_tax_revenue - total_retiree_cost\n\nlabels = ['Tax Revenue (from Workers)', 'Social Cost (for Retirees)']\nvalues = [total_tax_revenue, total_retiree_cost]\n\nplt.figure(figsize=(8, 5))\nplt.bar(labels, values, color=['#2ca02c', '#d62728'])\nplt.axhline(y=total_tax_revenue, color='gray', linestyle='--', alpha=0.7)\nplt.title(f\"Demographic Economic Balance\\nNet Surplus/Deficit: ${balance:,.0f}\")\nplt.ylabel(\"Total Amount ($)\")\nplt.ylim(0, max(total_tax_revenue, total_retiree_cost) * 1.2)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "retirees_per_100_workers",
+     "min": 10,
+     "max": 100,
+     "value": 40
+    },
+    {
+     "name": "tax_rate_pct",
+     "min": 10,
+     "max": 50,
+     "value": 20
+    },
+    {
+     "name": "worker_income",
+     "min": 30000,
+     "max": 100000,
+     "value": 50000
+    },
+    {
+     "name": "retiree_cost",
+     "min": 10000,
+     "max": 60000,
+     "value": 30000
+    }
+   ]
+  },
+  "time": 200,
+  "frame": "f_000200.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Debt Servicing Cost Calculator",
+  "explanation": "Explore how rising interest rates impact a highly indebted country's budget by calculating the percentage of tax revenue consumed by interest payments.",
+  "params": {
+   "cells": [
+    "import matplotlib.pyplot as plt\n\ndebt_ratio = debt_to_gdp / 100\nrate = interest_rate / 100\ntax_ratio = tax_to_gdp / 100\n\ninterest_cost_gdp = debt_ratio * rate\npercent_of_taxes = (interest_cost_gdp / tax_ratio) * 100\n\nprint(f\"With a Debt-to-GDP of {debt_to_gdp}% and Interest Rate of {interest_rate}%:\")\nprint(f\"Annual interest costs equal {interest_cost_gdp*100:.1f}% of total GDP.\")\nprint(f\"This consumes {percent_of_taxes:.1f}% of all tax revenue.\")\n\nfig, ax = plt.subplots(figsize=(8, 2))\nax.barh(['Tax Revenue'], [100], color='lightgray', label='Total Taxes')\nax.barh(['Tax Revenue'], [min(100, percent_of_taxes)], color='red', label='Interest Payments')\nax.set_xlim(0, 100)\nax.set_xlabel('% of Tax Revenue')\nax.legend()\nplt.title('Impact of Interest Rates on Government Budget')\nplt.tight_layout()\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "debt_to_gdp",
+     "min": 50,
+     "max": 350,
+     "value": 260
+    },
+    {
+     "name": "interest_rate",
+     "min": 0,
+     "max": 10,
+     "value": 0.1
+    },
+    {
+     "name": "tax_to_gdp",
+     "min": 10,
+     "max": 50,
+     "value": 33
+    }
+   ]
+  },
+  "time": 300,
+  "frame": "f_000300.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Yen Carry Trade Calculator",
+  "explanation": "Calculate the potential profit and risks of borrowing in a low-interest currency to invest in a higher-yielding one, including the impact of exchange rate fluctuations.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Sliders injected: borrow_amount, borrow_rate, invest_rate, fx_change\nborrow_usd = borrow_amount * 1_000_000\n\n# End of year investment value\ninvest_value = borrow_usd * (1 + invest_rate / 100)\n\n# End of year debt value in USD (adjusted for FX change)\n# If FX change is positive, Yen appreciated, debt in USD increases\ndebt_value = borrow_usd * (1 + borrow_rate / 100) * (1 + fx_change / 100)\n\nprofit = invest_value - debt_value\nroi = (profit / borrow_usd) * 100\n\nprint(f\"Borrowed Equivalent: ${borrow_usd:,.2f}\")\nprint(f\"Investment Value (1 yr): ${invest_value:,.2f}\")\nprint(f\"Debt Value (1 yr): ${debt_value:,.2f}\")\nprint(f\"Net Profit: ${profit:,.2f}\")\nprint(f\"Return on Borrowed Capital: {roi:.2f}%\")\n\n# Plotting the breakdown\nlabels = ['Investment Value', 'Debt Owed', 'Net Profit']\nvalues = [invest_value, debt_value, profit]\ncolors = ['#2ca02c', '#d62728', '#1f77b4' if profit > 0 else '#ff7f0e']\n\nplt.figure(figsize=(8, 5))\nplt.bar(labels, values, color=colors)\nplt.axhline(0, color='black', linewidth=1)\nplt.ylabel('USD ($)')\nplt.title('Yen Carry Trade: 1-Year Outcome')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "borrow_amount",
+     "min": 1,
+     "max": 1000,
+     "value": 100
+    },
+    {
+     "name": "borrow_rate",
+     "min": -1.0,
+     "max": 5.0,
+     "value": 0.0
+    },
+    {
+     "name": "invest_rate",
+     "min": 0.0,
+     "max": 15.0,
+     "value": 5.0
+    },
+    {
+     "name": "fx_change",
+     "min": -20.0,
+     "max": 20.0,
+     "value": 0.0
+    }
+   ]
+  },
+  "time": 410,
+  "frame": "f_000410.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "National Debt Servicing Cost",
+  "explanation": "Explore how rising interest rates exponentially increase a country's budget burden when debt-to-GDP is extremely high.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nrates = np.linspace(0, 5, 100)\nexpense_pct = debt_to_gdp * rates / 100\n\nplt.figure(figsize=(8, 4))\nplt.plot(rates, expense_pct, color='red', linewidth=2)\nplt.axvline(x=interest_rate, color='black', linestyle='--', label=f'Current Rate: {interest_rate}%')\nplt.plot(interest_rate, debt_to_gdp * interest_rate / 100, 'ko')\n\nplt.title(f'Debt Servicing Cost (Debt/GDP = {debt_to_gdp}%)')\nplt.xlabel('Interest Rate (%)')\nplt.ylabel('Interest Expense (% of GDP)')\nplt.grid(True, alpha=0.3)\nplt.legend()\nplt.show()\n\nprint(f\"At {interest_rate}% interest, debt servicing costs {debt_to_gdp * interest_rate / 100:.1f}% of total GDP.\")"
+   ],
+   "sliders": [
+    {
+     "name": "debt_to_gdp",
+     "min": 50,
+     "max": 300,
+     "value": 250
+    },
+    {
+     "name": "interest_rate",
+     "min": 0.1,
+     "max": 5.0,
+     "value": 1.0
+    }
+   ]
+  },
+  "time": 590,
+  "frame": "f_000590.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Yen Carry Trade Calculator",
+  "explanation": "Simulate the Yen carry trade to see how rising Japanese interest rates and a strengthening Yen can turn a profitable investment into a loss.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Simulate borrowing 100 million Yen\namount_jpy = 100_000_000\n\n# 1. Convert borrowed JPY to USD\namount_usd = amount_jpy / initial_fx\n\n# 2. Invest in US Treasuries\nfinal_usd = amount_usd * (1 + rate_usd / 100)\n\n# 3. Calculate JPY repayment amount\nrepay_jpy = amount_jpy * (1 + rate_jpy / 100)\n\n# 4. Convert JPY repayment back to USD at the new exchange rate\nrepay_usd = repay_jpy / final_fx\n\n# 5. Calculate Profit\nprofit_usd = final_usd - repay_usd\nroi = (profit_usd / amount_usd) * 100\n\nprint(f\"Borrowed: \u00a5{amount_jpy:,.0f} (${amount_usd:,.2f} at {initial_fx} \u00a5/$)\")\nprint(f\"Owe after 1 year: \u00a5{repay_jpy:,.0f} (${repay_usd:,.2f} at {final_fx} \u00a5/$)\")\nprint(f\"Investment grew to: ${final_usd:,.2f}\")\nprint(f\"Net Profit: ${profit_usd:,.2f} ({roi:.2f}%)\")",
+    "# Plotting the effect of the final exchange rate on profit\nfx_range = np.linspace(100, 200, 100)\nprofits = []\nfor fx in fx_range:\n    r_usd = repay_jpy / fx\n    profits.append(final_usd - r_usd)\n\nplt.figure(figsize=(8, 4))\nplt.plot(fx_range, profits, label='Profit (USD)', color='green')\nplt.axvline(x=final_fx, color='red', linestyle='--', label=f'Selected Final FX ({final_fx})')\nplt.axhline(y=0, color='black', linestyle='-')\nplt.fill_between(fx_range, profits, 0, where=(np.array(profits) < 0), color='red', alpha=0.3, label='Loss Zone')\nplt.xlabel('Final Exchange Rate (Yen/USD)')\nplt.ylabel('Profit (USD)')\nplt.title('Yen Carry Trade Profit vs. Exchange Rate')\nplt.legend()\nplt.grid(True)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "rate_jpy",
+     "min": 0,
+     "max": 5,
+     "value": 0.1
+    },
+    {
+     "name": "rate_usd",
+     "min": 0,
+     "max": 10,
+     "value": 5.0
+    },
+    {
+     "name": "initial_fx",
+     "min": 100,
+     "max": 200,
+     "value": 150
+    },
+    {
+     "name": "final_fx",
+     "min": 100,
+     "max": 200,
+     "value": 130
+    }
+   ]
+  },
+  "time": 820,
+  "frame": "f_000820.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Debt Sustainability & Exploding Interest",
+  "explanation": "Simulate how rising interest rates on a growing national debt can cause interest payments to eventually consume all tax revenue, illustrating the speaker's point about unsustainable debt systems.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nyears_arr = np.arange(int(years) + 1)\ndebt = np.zeros(len(years_arr))\ninterest = np.zeros(len(years_arr))\n\ndebt[0] = initial_debt\n\nfor i in range(1, len(years_arr)):\n    interest[i] = debt[i-1] * (interest_rate / 100)\n    debt[i] = debt[i-1] + interest[i] + primary_deficit\n\nplt.figure(figsize=(8, 4))\nplt.plot(years_arr, debt, label='Total Debt', color='red', linewidth=2)\nplt.plot(years_arr, interest, label='Annual Interest', color='orange', linewidth=2)\nplt.axhline(y=tax_revenue, color='green', linestyle='--', label='Annual Tax Revenue')\nplt.title('Exploding Interest Payments Simulation')\nplt.xlabel('Years from now')\nplt.ylabel('Trillions')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.show()\n\nprint(f\"Final Debt: {debt[-1]:.1f}T | Final Interest: {interest[-1]:.1f}T\")\nif interest[-1] > tax_revenue:\n    print(\"WARNING: Interest payments have exceeded total tax revenue!\")"
+   ],
+   "sliders": [
+    {
+     "name": "initial_debt",
+     "min": 10,
+     "max": 100,
+     "value": 35
+    },
+    {
+     "name": "interest_rate",
+     "min": 0,
+     "max": 15,
+     "value": 5
+    },
+    {
+     "name": "primary_deficit",
+     "min": 0,
+     "max": 5,
+     "value": 1.5
+    },
+    {
+     "name": "tax_revenue",
+     "min": 1,
+     "max": 10,
+     "value": 5
+    },
+    {
+     "name": "years",
+     "min": 5,
+     "max": 50,
+     "value": 20
+    }
+   ]
+  },
+  "time": 1020,
+  "frame": "f_001020.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Dollar Cost Averaging (DCA) Simulator",
+  "explanation": "Simulate how consistently investing a fixed amount over time (DCA) can grow your wealth, factoring in the expected returns and high volatility of assets like Bitcoin.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nmonths = int(years * 12)\n# Convert annual expectations to monthly\nmonthly_rate = (1 + annual_return_pct / 100) ** (1/12) - 1\nmonthly_vol = (volatility_pct / 100) / np.sqrt(12)\n\n# Simulate random market returns\nnp.random.seed(42) # Fixed seed for consistent widget behavior\nreturns = np.random.normal(monthly_rate, monthly_vol, months)\n\nportfolio_value = np.zeros(months)\ntotal_invested = np.zeros(months)\n\ncurrent_value = 0\ninvested = 0\n\nfor i in range(months):\n    invested += monthly_investment\n    # Apply return to previous balance + new investment\n    current_value = (current_value + monthly_investment) * (1 + returns[i])\n    total_invested[i] = invested\n    portfolio_value[i] = current_value\n\n# Plotting to match the dark theme in the video\nplt.style.use('dark_background')\nplt.figure(figsize=(9, 5))\nplt.plot(total_invested, label='Total Invested', linestyle='--', color='white', alpha=0.7)\nplt.plot(portfolio_value, label='Portfolio Value', color='#00ff00') # Robinhood green\nplt.title(f'DCA Simulation: ${monthly_investment}/mo for {years} years')\nplt.xlabel('Months')\nplt.ylabel('Value ($)')\nplt.legend()\nplt.grid(True, alpha=0.2)\nplt.tight_layout()\nplt.show()\n\nprint(f\"Total Invested: ${invested:,.0f}\")\nprint(f\"Final Portfolio Value: ${current_value:,.0f}\")\nif invested > 0:\n    roi = ((current_value / invested) - 1) * 100\n    print(f\"Total Return: {roi:,.1f}%\")"
+   ],
+   "sliders": [
+    {
+     "name": "monthly_investment",
+     "min": 50,
+     "max": 2000,
+     "value": 500
+    },
+    {
+     "name": "years",
+     "min": 1,
+     "max": 20,
+     "value": 5
+    },
+    {
+     "name": "annual_return_pct",
+     "min": 0,
+     "max": 100,
+     "value": 30
+    },
+    {
+     "name": "volatility_pct",
+     "min": 10,
+     "max": 120,
+     "value": 70
+    }
+   ]
+  },
+  "time": 1120,
+  "frame": "f_001120.jpg"
+ }
+]
