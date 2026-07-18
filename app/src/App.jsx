@@ -1649,7 +1649,9 @@ function AgentDashboard({ onExit }) {
         {/* stat tiles */}
         <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
           <StatTile T={T} label="cache moat" value={cache.concepts_cached} sub={`widgets cached · ${cache.videos_cached} video${cache.videos_cached === 1 ? '' : 's'} · reused by every learner`} />
-          <StatTile T={T} label="served free" value={cache.widgets_served_free} sub={`from ${cache.reuses} cache hit${cache.reuses === 1 ? '' : 's'} · marginal cost → $0`} accent="#56d364" />
+          <StatTile T={T} label="cache hit-rate" value={cache.infer_entries ? `${Math.round(cache.hit_rate * 100)}%` : '—'}
+            sub={cache.infer_entries ? `${cache.infer_hits} of ${cache.infer_hits + cache.infer_entries} asks served without a model call` : 'frame-level ask cache'} accent="#56d364" />
+          <StatTile T={T} label="cost saved" value={`$${(cache.usd_saved || 0).toFixed(2)}`} sub="vs recomputing on a cloud VLM · marginal cost → $0" accent="#56d364" />
           <StatTile T={T} label="containment" value={contain?.active ? 'ON' : '—'}
             sub={contain?.active ? `${contain.policy} policy · ${contain.denied_actions} exfil blocked` : 'scoutclaw sandbox'}
             accent={contain?.active ? T.acc : T.muted} />

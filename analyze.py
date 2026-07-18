@@ -116,11 +116,32 @@ GENRE_PROMPTS = {
         "down-payment %, rent-vs-buy, appreciation vs opportunity cost, sell-vs-hold. Emit "
         "notebook calculators with sliders for those inputs, defaults from the speaker's numbers."
     ),
+    "how_to": (
+        "This is a how-to / tutorial video. The manipulable concept is the PROCEDURE and the "
+        "numbers behind it — quantities, ratios, times, settings, costs. Emit notebook widgets "
+        "that let the viewer plug in THEIR situation: a scaling calculator (scale a recipe / "
+        "materials to a different batch size or budget), a step checklist with the actual steps, "
+        "or a plan that recomputes times/amounts as sliders change. Use the exact quantities the "
+        "presenter states as defaults."
+    ),
+    "cooking": (
+        "This is a cooking video. Emit a recipe scaler: sliders for servings and key ingredients, "
+        "cells that recompute every ingredient amount and the total time/cost, defaults from the "
+        "recipe as stated. Convert units faithfully (cups↔grams where shown)."
+    ),
+    "fitness": (
+        "This is a fitness / health video. Emit calculators for the numbers stated — sets×reps×"
+        "load volume, calorie/macro targets, pace or progression over weeks — with sliders for the "
+        "viewer's bodyweight, goal, and schedule; defaults from the presenter's programming."
+    ),
 }
 GENRE_KEYWORDS = {
     "ai_stem": ["matrix", "neural", "gradient", "attention", "token", "tensor", "model", "training"],
     "finance": ["invest", "stock", "market", "portfolio", "dollar", "inflation", "interest rate", "economy"],
     "real_estate": ["house", "mortgage", "down payment", "rent", "property", "real estate", "closing"],
+    "how_to": ["how to", "step", "tutorial", "guide", "first", "then", "next", "make sure", "you'll need"],
+    "cooking": ["recipe", "cup", "tablespoon", "oven", "bake", "ingredient", "dough", "minutes", "heat"],
+    "fitness": ["workout", "reps", "sets", "muscle", "protein", "calorie", "exercise", "training"],
 }
 
 
