@@ -404,13 +404,27 @@ export function Composite({ params, onState }) {
 
 // ---------- tier 3: pyodide notebook — real numpy/scipy/sympy/matplotlib ----------
 
+// Primary: jsDelivr CDN (matches installed pyodide npm version). Fallback: local
+// vendor under data/pyodide-dist/ (served by Vite's publicDir) — keeps the demo alive
+// if the CDN is unreachable. Populate the local dir with scripts/vendor-pyodide.sh.
+const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/'
+const PYODIDE_LOCAL = '/pyodide-dist/'
+
+async function pickIndexURL() {
+  try {
+    const r = await fetch(PYODIDE_CDN + 'pyodide-lock.json', { method: 'HEAD', cache: 'no-store' })
+    if (r.ok) return PYODIDE_CDN
+  } catch { /* offline or blocked — fall through to local vendor */ }
+  return PYODIDE_LOCAL
+}
+
 let pyodidePromise = null
 function getPyodide() {
   if (!pyodidePromise) {
     pyodidePromise = (async () => {
       const { loadPyodide } = await import('pyodide')
-      // vendored dist (core + numpy/matplotlib/scipy/sympy closure) — offline-safe
-      const py = await loadPyodide({ indexURL: '/pyodide-dist/' })
+      const indexURL = await pickIndexURL()
+      const py = await loadPyodide({ indexURL })
       await py.loadPackage(['numpy', 'matplotlib'])
       await py.runPythonAsync(`
 import sys, io, base64
