@@ -41,7 +41,7 @@ const CATEGORIES = [
     videos: [
       { id: '9-ODDKHRVkA', title: 'The Best Scrambled Eggs You\'ll Ever Make (Restaurant Technique)',
         inside: { count: '1 live cook-controller · by Nemotron Omni', mix: [['#56d364', 1]],
-          peek: [['0:10', 'Butter & timing controls — drag it', '#56d364'], ['—', 'recipe scaler for your servings', '#79c0ff'], ['—', 'how_to genre lens', '#ffab70']] } },
+          peek: [['0:10', 'Butter & timing controls — drag it', '#56d364'], ['scale', 'recipe scaler for your servings', '#79c0ff'], ['lens', 'how_to genre lens', '#ffab70']] } },
     ],
   },
   {
@@ -1451,6 +1451,8 @@ function Landing({ onOpen }) {
       <div style={{ position: 'relative', zIndex: 2, maxWidth: 1040, margin: '0 auto', padding: '18px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Logo size={30} wordColor={T.text} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <a href="?view=learn" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>learn</a>
+        <a href="?view=community" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>community</a>
         <a href="?view=agent"
           style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: T.panel, border: `1px solid ${T.acc}55`, color: T.text, borderRadius: 999, padding: '7px 13px', fontSize: 13, cursor: 'pointer' }}>
           <span className="edu-pulse" style={{ width: 8, height: 8, borderRadius: 4, background: T.acc, display: 'inline-block' }} />
