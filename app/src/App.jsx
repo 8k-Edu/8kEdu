@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import QRCode from 'qrcode'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
@@ -799,6 +800,33 @@ function LandingStyles() {
   `}</style>
 }
 
+// 8kEdu mark — a pixel grid that "upscales": dim/sparse corner → bright/dense corner (720p → 8K)
+function Logo({ size = 40 }) {
+  const N = 4, gap = size * 0.14, cell = (size - gap * (N - 1)) / N
+  const cells = []
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const lit = (r + c) / (2 * (N - 1)) // 0 (top-left, low-res) → 1 (bottom-right, 8K)
+    cells.push({ r, c, lit, i: r * N + c })
+  }
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.32 }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="8kEdu logo">
+        {cells.map(({ r, c, lit, i }) => (
+          <motion.rect key={i}
+            x={c * (cell + gap)} y={r * (cell + gap)} width={cell} height={cell} rx={cell * 0.28}
+            fill={`rgb(${Math.round(30 + lit * 90)},${Math.round(60 + lit * 150)},${Math.round(25 + lit * 50)})`}
+            initial={{ opacity: 0, scale: 0.3 }}
+            animate={{ opacity: 0.35 + lit * 0.65, scale: 1 }}
+            transition={{ delay: 0.15 + lit * 0.5, type: 'spring', stiffness: 260, damping: 18 }} />
+        ))}
+      </svg>
+      <span style={{ fontSize: size * 0.7, fontWeight: 800, letterSpacing: '-.03em', color: '#f2f6ec' }}>
+        <span style={{ color: '#8ee23e' }}>8k</span>Edu
+      </span>
+    </span>
+  )
+}
+
 function Landing({ onOpen }) {
   const [url, setUrl] = useState(DEFAULT_URL)
   const [err, setErr] = useState(null)
@@ -815,34 +843,42 @@ function Landing({ onOpen }) {
       <div style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1c2416' }}>
         <AttentionField />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(700px 340px at 50% 42%, transparent, #0a0d08cc 78%)' }} />
-        <div style={{ position: 'relative', maxWidth: 860, margin: '0 auto', padding: '96px 24px 72px', textAlign: 'center' }}>
-          <div className="edu-up" style={{ ...d(0), fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.22em', textTransform: 'uppercase', color: '#7bd33f' }}>
-            <span className="edu-pulse">●</span>&nbsp; autonomous learning agent
-          </div>
-          <h1 className="edu-up" style={{ ...d(.08), fontSize: 'clamp(40px,7vw,76px)', lineHeight: 1.02, letterSpacing: '-.03em', margin: '18px 0 0', textWrap: 'balance', color: '#f2f6ec' }}>
-            Lectures you can <span style={{ color: '#8ee23e', fontStyle: 'italic' }}>touch</span>.
-          </h1>
-          <p className="edu-up" style={{ ...d(.16), fontSize: 'clamp(17px,2.4vw,22px)', color: '#cbd6c0', margin: '18px auto 0', maxWidth: '30ch', fontWeight: 600 }}>
-            YouTube video → interactive learning dashboard
-          </p>
-          <p className="edu-up" style={{ ...d(.24), fontSize: 16, color: '#8b9682', margin: '12px auto 0', maxWidth: '54ch', lineHeight: 1.6 }}>
-            Paste any lecture — every figure, equation and code block becomes a live widget you can tweak, run and remix. On any topic.
-          </p>
-          <div className="edu-up" style={{ ...d(.32), display: 'flex', gap: 10, maxWidth: 560, margin: '30px auto 0' }}>
-            <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
-              onKeyDown={e => e.key === 'Enter' && go()}
-              placeholder="paste a YouTube lecture link…"
-              style={{ flex: 1, background: '#0f140b', color: '#f2f6ec', border: '1px solid #2b3a1e', borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
-            <button className="edu-open" onClick={go} style={{
-              background: '#7bd33f', color: '#0a0d08', border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
-              open →
-            </button>
-          </div>
-          {err && <div style={{ color: '#ff8a7d', fontSize: 13, marginTop: 10 }}>{err}</div>}
-          <div className="edu-up" style={{ ...d(.4), display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 22, fontFamily: 'ui-monospace,monospace', fontSize: 11.5, color: '#66735b' }}>
-            <span>◱ vision + reasoning — one model</span><span>⟳ runs on a heartbeat</span><span>▶ python in your browser</span>
-          </div>
-        </div>
+        <motion.div style={{ position: 'relative', maxWidth: 880, margin: '0 auto', padding: '80px 24px 72px', textAlign: 'center' }}
+          initial="hide" animate="show"
+          variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}>
+          {(() => {
+            const rise = { hide: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } } }
+            return <>
+              <motion.div variants={rise} style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}><Logo size={44} /></motion.div>
+              <motion.div variants={rise} style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, letterSpacing: '.24em', textTransform: 'uppercase', color: '#7bd33f' }}>
+                <span className="edu-pulse">●</span>&nbsp; the resolution of understanding
+              </motion.div>
+              <motion.h1 variants={rise} style={{ fontSize: 'clamp(42px,7.5vw,82px)', lineHeight: 1.0, letterSpacing: '-.035em', margin: '16px 0 0', textWrap: 'balance', color: '#f2f6ec' }}>
+                Watch in <span style={{ color: '#5a6a4e' }}>720p</span>.<br />Learn in <span style={{ color: '#8ee23e' }}>8K</span>.
+              </motion.h1>
+              <motion.p variants={rise} style={{ fontSize: 'clamp(17px,2.4vw,22px)', color: '#cbd6c0', margin: '20px auto 0', maxWidth: '40ch', fontWeight: 600, lineHeight: 1.4 }}>
+                8kEdu turns any YouTube lecture into an interactive dashboard — touch, run and remix every idea.
+              </motion.p>
+              <motion.p variants={rise} style={{ fontSize: 15, color: '#8b9682', margin: '10px auto 0', maxWidth: '52ch', lineHeight: 1.6 }}>
+                An autonomous agent watches the video, builds the widgets, and upscales passive watching into the highest-resolution way to understand. On any topic.
+              </motion.p>
+              <motion.div variants={rise} style={{ display: 'flex', gap: 10, maxWidth: 560, margin: '30px auto 0' }}>
+                <input className="edu-in" value={url} onChange={e => { setUrl(e.target.value); setErr(null) }}
+                  onKeyDown={e => e.key === 'Enter' && go()}
+                  placeholder="paste a YouTube lecture link…"
+                  style={{ flex: 1, background: '#0f140b', color: '#f2f6ec', border: '1px solid #2b3a1e', borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
+                <motion.button className="edu-open" onClick={go} whileTap={{ scale: 0.96 }}
+                  style={{ background: '#7bd33f', color: '#0a0d08', border: 'none', borderRadius: 12, padding: '15px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+                  upscale →
+                </motion.button>
+              </motion.div>
+              {err && <div style={{ color: '#ff8a7d', fontSize: 13, marginTop: 10 }}>{err}</div>}
+              <motion.div variants={rise} style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 22, fontFamily: 'ui-monospace,monospace', fontSize: 11.5, color: '#66735b' }}>
+                <span>◱ vision + reasoning — one model</span><span>⟳ runs on a heartbeat</span><span>▶ python in your browser</span>
+              </motion.div>
+            </>
+          })()}
+        </motion.div>
       </div>
 
       {/* BODY */}
