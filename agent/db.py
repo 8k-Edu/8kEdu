@@ -272,11 +272,17 @@ def dashboard_state(limit=12):
             (limit,))
         runs = [dict(r) for r in cur.fetchall()]
 
+        # scope the course to the demo learner's active goal (avoids mixing multiple goals)
+        cur.execute(
+            "select g.id from goals g join learners l on l.user_id=g.user_id "
+            "where l.handle='demo' and g.status='active' order by g.created_at limit 1")
+        grow = cur.fetchone()
+        active_goal_id = grow["id"] if grow else None
         cur.execute(
             "select c.seq, c.video_id, c.rationale, c.state, "
             "coalesce(v.title, c.video_id) as title "
             "from curriculum c left join videos v on v.video_id = c.video_id "
-            "order by c.seq")
+            "where c.goal_id = %s order by c.seq", (active_goal_id,))
         curriculum = [dict(r) for r in cur.fetchall()]
 
         # the moat: concepts cached once, reusable by every learner at ~0 marginal cost
