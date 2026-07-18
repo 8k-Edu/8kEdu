@@ -1561,6 +1561,169 @@ function Landing({ onOpen }) {
   )
 }
 
+// ————— R1: Learn — dynamic curriculum, Duolingo-style —————
+function LearnView({ onExit, onOpen }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
+  const [stage, setStage] = useState('intake')      // intake → paths → course
+  const [subject, setSubject] = useState('')
+  const [kind, setKind] = useState('subject')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const [proposal, setProposal] = useState(null)    // {goal_id, paths, titles}
+  const [course, setCourse] = useState(null)        // {units}
+
+  const SUGGEST = ['Reinforcement Learning', 'Deep Learning', 'How to buy my first house', 'How to make sourdough']
+
+  const propose = async (subj) => {
+    const s = (subj ?? subject).trim()
+    if (!s) { setErr('type a subject'); return }
+    setSubject(s); setBusy(true); setErr(null)
+    try {
+      const r = await fetch('/agent/learn/propose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: s, kind }) })
+      const d = await r.json()
+      if (!d.ok) { setErr(d.error || 'propose failed'); setBusy(false); return }
+      setProposal(d); setStage('paths')
+    } catch (e) { setErr('agent api offline — start agent/api.py') }
+    setBusy(false)
+  }
+  const choose = async (path_id) => {
+    setBusy(true)
+    try {
+      const r = await fetch('/agent/learn/choose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal_id: proposal.goal_id, path_id, titles: proposal.titles }) })
+      const d = await r.json()
+      if (!d.ok) { setErr(d.error || 'choose failed'); setBusy(false); return }
+      setCourse(d); setStage('course')
+    } catch (e) { setErr('choose failed') }
+    setBusy(false)
+  }
+
+  const topbar = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
+        <Logo size={28} wordColor={T.text} />
+      </div>
+      <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>{theme === 'dark' ? '☀' : '☾'}</button>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
+      <LandingStyles acc={T.acc} />
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '18px 24px 70px' }}>
+        {topbar}
+
+        {stage === 'intake' && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 64, textAlign: 'center' }}>
+            <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>learn anything</div>
+            <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', letterSpacing: '-.03em', margin: '12px auto 0', textWrap: 'balance', maxWidth: '18ch' }}>What do you want to learn?</h1>
+            <p style={{ color: T.sub, fontSize: 16, marginTop: 10 }}>the agent finds the videos, sequences a course, makes every step touchable.</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20, flexWrap: 'wrap' }}>
+              {[['subject', 'a subject'], ['concept', 'a concept'], ['how-to', 'a how-to']].map(([k, lbl]) => (
+                <button key={k} onClick={() => setKind(k)} style={{ background: kind === k ? T.acc : T.panel, color: kind === k ? T.accText : T.text, border: `1px solid ${kind === k ? T.acc : T.line}`, borderRadius: 999, padding: '7px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{lbl}</button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 10, maxWidth: 560, margin: '16px auto 0' }}>
+              <input className="edu-in" value={subject} onChange={e => { setSubject(e.target.value); setErr(null) }} onKeyDown={e => e.key === 'Enter' && propose()}
+                placeholder="e.g. Reinforcement Learning" autoFocus
+                style={{ flex: 1, background: T.panel, color: T.text, border: `1px solid ${T.line}`, borderRadius: 12, padding: '15px 16px', fontSize: 15 }} />
+              <motion.button onClick={() => propose()} whileTap={{ scale: .96 }} disabled={busy}
+                style={{ background: T.acc, color: T.accText, border: 'none', borderRadius: 12, padding: '15px 26px', fontSize: 15, fontWeight: 800, cursor: busy ? 'wait' : 'pointer', whiteSpace: 'nowrap', opacity: busy ? .6 : 1 }}>
+                {busy ? 'finding…' : 'build my course →'}
+              </motion.button>
+            </div>
+            {err && <div style={{ color: '#e5484d', fontSize: 13, marginTop: 10 }}>{err}</div>}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 22, flexWrap: 'wrap' }}>
+              {SUGGEST.map(s => (
+                <button key={s} onClick={() => propose(s)} style={{ background: 'transparent', color: T.muted, border: `1px dashed ${T.line}`, borderRadius: 999, padding: '6px 14px', fontSize: 12.5, cursor: 'pointer' }}>{s}</button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {stage === 'paths' && proposal && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 40 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>the agent found {proposal.paths.reduce((m, p) => Math.max(m, p.video_ids.length), 0)} videos · pick a path</div>
+              <h1 style={{ fontSize: 'clamp(24px,3.6vw,36px)', letterSpacing: '-.03em', margin: '10px 0 0', textWrap: 'balance' }}>Your course for “{proposal.subject}”</h1>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 14, marginTop: 24 }}>
+              {proposal.paths.map((p, i) => (
+                <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * .1 }}
+                  className="edu-card" style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 18, fontWeight: 750 }}>{p.label}</span>
+                    <span style={{ fontFamily: mono, fontSize: 11, color: T.faint }}>{p.video_ids.length} videos · ~{Math.round(p.est_minutes / 60 * 10) / 10}h</span>
+                  </div>
+                  <div style={{ color: T.muted, fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>{p.rationale}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                    {p.videos.map((v, j) => (
+                      <div key={v.id} style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+                        <span style={{ fontFamily: mono, fontSize: 10, color: T.faint, width: 16 }}>{String(j + 1).padStart(2, '0')}</span>
+                        <img src={`https://i.ytimg.com/vi/${v.id}/default.jpg`} alt="" style={{ width: 44, height: 26, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <motion.button onClick={() => choose(p.id)} whileTap={{ scale: .97 }} disabled={busy}
+                    style={{ marginTop: 16, background: T.acc, color: T.accText, border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: busy ? 'wait' : 'pointer', opacity: busy ? .6 : 1 }}>
+                    start this path →
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button onClick={() => setStage('intake')} style={{ background: 'none', border: 'none', color: T.muted, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>← different subject</button>
+            </div>
+          </motion.div>
+        )}
+
+        {stage === 'course' && course && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 40 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>your course · {course.units.length} units</div>
+              <h1 style={{ fontSize: 'clamp(24px,3.6vw,36px)', letterSpacing: '-.03em', margin: '10px 0 4px', textWrap: 'balance' }}>“{proposal.subject}” — built for you</h1>
+              <p style={{ color: T.muted, fontSize: 13.5 }}>the agent processes each unit into touchable widgets · complete one to unlock the next</p>
+            </div>
+            {/* Duolingo-style unit spine */}
+            <div style={{ maxWidth: 560, margin: '30px auto 0', position: 'relative' }}>
+              {course.units.map((u, i) => {
+                const unlocked = i === 0 || course.units[i - 1]?.widgets > 0
+                const ready = u.widgets > 0
+                return (
+                  <motion.div key={u.video_id} initial={{ opacity: 0, x: i % 2 ? 30 : -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * .12, type: 'spring', stiffness: 140, damping: 18 }}
+                    style={{ display: 'flex', justifyContent: i % 2 ? 'flex-end' : 'flex-start', marginBottom: 14 }}>
+                    <button onClick={() => ready && onOpen(u.video_id)} disabled={!ready}
+                      style={{ display: 'flex', gap: 12, alignItems: 'center', width: 'min(420px,86%)', textAlign: 'left',
+                        background: T.panel, border: `1px solid ${ready ? T.acc + '66' : T.line}`, borderRadius: 16, padding: 12,
+                        cursor: ready ? 'pointer' : 'default', opacity: unlocked ? 1 : .5 }}>
+                      <span style={{ width: 42, height: 42, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, fontWeight: 800, background: ready ? T.acc : T.line, color: ready ? T.accText : T.faint }}>
+                        {ready ? '▶' : (unlocked ? i + 1 : '🔒')}
+                      </span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 650, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.title}</div>
+                        <div style={{ fontFamily: mono, fontSize: 10.5, color: ready ? '#56d364' : T.faint, marginTop: 2 }}>
+                          {ready ? `✓ ${u.widgets} widgets ready — tap to learn` : (unlocked ? 'agent will process this next' : 'locked')}
+                        </div>
+                      </div>
+                    </button>
+                  </motion.div>
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 20, fontFamily: mono, fontSize: 12, color: T.faint }}>
+              processing runs on the agent's heartbeat · <a href="?view=agent" style={{ color: T.acc }}>watch it live →</a>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ————— P3: the agent, live — judges SEE the autonomy —————
 const ACTION_STYLE = {
   FIND_VIDEO: { c: '#79c0ff', label: 'find', glyph: '🔎' },
@@ -1794,7 +1957,8 @@ export default function App() {
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])
-  const exitAgent = () => { history.pushState({}, '', location.pathname); setView(null) }
-  if (view === 'agent') return <AgentDashboard onExit={exitAgent} />
+  const exitView = () => { history.pushState({}, '', location.pathname); setView(null) }
+  if (view === 'agent') return <AgentDashboard onExit={exitView} />
+  if (view === 'learn') return <LearnView onExit={exitView} onOpen={open} />
   return videoId ? <Lecture key={`${videoId}-${role}`} videoId={videoId} role={role} /> : <Landing onOpen={open} />
 }
