@@ -1,0 +1,106 @@
+# 8kEdu learning-agent egress policy.
+#
+# The agent is capable: it searches YouTube, calls Apify, writes learner state to
+# Supabase, and reasons on a local model. This preset allowlists EXACTLY those four
+# sinks and nothing else — every other destination is denied by OpenShell's egress
+# proxy. This is the "contain the capable agent" half of the NemoClaw bounty:
+# an exfil to any host not listed here is blocked at L4/L7 and logged.
+#
+# Apply:   nemoclaw scoutclaw policy-add 8kedu --from-file claw-agent/policies/8kedu.yaml --yes
+# Lock:    nemoclaw scoutclaw shields up
+# Inspect: nemoclaw scoutclaw policy-explain
+
+preset:
+  name: 8kedu
+  description: "8kEdu learning agent — YouTube + Apify + Supabase + local inference only"
+
+network_policies:
+  # --- FIND_VIDEO: yt-dlp searching + fetching YouTube metadata/subs ---
+  youtube:
+    name: youtube
+    endpoints:
+      - host: www.youtube.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
+      - host: i.ytimg.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/**" }
+      - host: www.googleapis.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/youtube/**" }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /usr/bin/python3* }
+      - { path: /sandbox/.venv/bin/python* }
+      - { path: /sandbox/.local/bin/yt-dlp }
+      - { path: /usr/local/bin/uv }
+
+  # --- MONITOR: Apify actor runs (new-upload watch) ---
+  apify:
+    name: apify
+    endpoints:
+      - host: api.apify.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/v2/**" }
+          - allow: { method: POST, path: "/v2/acts/**" }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /usr/bin/python3* }
+      - { path: /sandbox/.venv/bin/python* }
+
+  # --- PERSIST: Supabase REST + Postgres pooler (learner/curriculum/runs + cache) ---
+  supabase:
+    name: supabase
+    endpoints:
+      - host: cfyelmzuuwqadnwxcxkv.supabase.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+          - allow: { method: PATCH, path: "/**" }
+      # transaction pooler (psycopg2) — raw TCP, no L7 rules
+      - host: cfyelmzuuwqadnwxcxkv.supabase.co
+        port: 6543
+        access: full
+      - host: cfyelmzuuwqadnwxcxkv.supabase.co
+        port: 5432
+        access: full
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /usr/bin/python3* }
+      - { path: /sandbox/.venv/bin/python* }
+
+  # --- REASON: Nemotron Omni via the host inference gateway ---
+  local_inference:
+    name: local_inference
+    endpoints:
+      - host: host.openshell.internal
+        port: 1234
+        protocol: rest
+        enforcement: enforce
+        allowed_ips:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/v1/**" }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /usr/bin/python3* }
+      - { path: /sandbox/.venv/bin/python* }
