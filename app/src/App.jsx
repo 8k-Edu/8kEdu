@@ -1064,19 +1064,27 @@ function ArtifactCarousel({ T }) {
       </h2>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px,2vw,20px)', marginTop: 6 }}>
         <button aria-label="previous" onClick={() => go(idx - 1, -1)} style={{ ...arrow, zIndex: 6 }}>‹</button>
-        {/* circular coverflow — center big, neighbors peeking */}
-        <div style={{ position: 'relative', width: 'min(880px, 82vw)', height: 486, overflow: 'hidden' }}>
-          {[-1, 0, 1].map(off => {
+        {/* curved coverflow — center big, neighbors arcing away in 3D */}
+        <div style={{ position: 'relative', width: 'min(880px, 82vw)', height: 486, overflow: 'hidden', perspective: 1300 }}>
+          {[-2, -1, 0, 1, 2].map(off => {
             const i = (idx + off + SCENES.length) % SCENES.length
             const Sc = SCENES[i]
             const center = off === 0
-            const xOff = typeof window !== 'undefined' ? Math.min(316, window.innerWidth * 0.3) : 316
+            const a = Math.abs(off)
+            const xo = typeof window !== 'undefined' ? Math.min(255, window.innerWidth * 0.24) : 255
             return (
               <motion.div key={Sc.key}
-                animate={{ x: off * xOff, scale: center ? 2.1 : .92, opacity: center ? 1 : .38, zIndex: center ? 5 : 1 }}
+                animate={{
+                  x: off * xo * (a === 2 ? 1.32 : 1),
+                  y: a * 26,
+                  rotateY: off * -28,
+                  scale: center ? 2.08 : a === 1 ? .92 : .78,
+                  opacity: center ? 1 : a === 1 ? .42 : .16,
+                  zIndex: center ? 5 : 3 - a,
+                }}
                 transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 150, damping: 22 }}
-                onClick={() => !center && go(idx + off, off)}
-                style={{ position: 'absolute', left: '50%', top: 118, marginLeft: -98, cursor: center ? 'default' : 'pointer' }}>
+                onClick={() => !center && go(idx + off, off > 0 ? 1 : -1)}
+                style={{ position: 'absolute', left: '50%', top: 112, marginLeft: -98, cursor: center ? 'default' : 'pointer', transformStyle: 'preserve-3d' }}>
                 <Sc.C />
               </motion.div>
             )
@@ -1152,15 +1160,34 @@ function HowItWorks({ T }) {
 function HeroDrop({ T, onOpen }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 30, perspective: 900 }}>
+    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginTop: 26, paddingBottom: 118 }}>
+      {/* the funnel — behind the card */}
+      <svg width="640" height="330" viewBox="0 0 640 330" aria-hidden="true"
+        style={{ position: 'absolute', top: 130, left: '50%', transform: 'translateX(-50%)', zIndex: 0, maxWidth: '96vw' }}>
+        <path d="M40,6 L600,6 L370,168 L370,252 L270,252 L270,168 Z"
+          fill={T.panel} stroke={T.line} strokeWidth="1.6" opacity=".85" />
+        <path d="M40,6 L600,6" stroke={T.acc} strokeWidth="2" opacity=".5" />
+      </svg>
+      {/* pixels dripping from the funnel stem — the 8K distillate */}
+      {!reduced && [0, 1, 2].map(i => (
+        <motion.span key={i}
+          initial={{ opacity: 0, y: 0 }}
+          animate={{ opacity: [0, 1, 0], y: [0, 46] }}
+          transition={{ delay: 1.7 + i * .5, duration: 1.4, repeat: Infinity, repeatDelay: .6, ease: 'easeIn' }}
+          style={{ position: 'absolute', top: 388, left: `calc(50% + ${(i - 1) * 14}px)`, width: 9, height: 9, borderRadius: 2.5, background: T.acc, zIndex: 0 }} />
+      ))}
       <motion.button onClick={() => onOpen('kCc8FmEb1nY')}
-        initial={reduced ? false : { y: -320, opacity: 0, rotate: -9, scaleY: 1 }}
+        initial={reduced ? false : { x: -380, y: -300, opacity: 0, rotate: -18 }}
         animate={reduced ? { opacity: 1 } : {
-          y: [-320, 0, -22, 0], opacity: [0, 1, 1, 1], rotate: [-9, 0, 1.2, 0], scaleY: [1, .94, 1.03, 1],
+          x: [-380, -250, -115, -18, 0],
+          y: [-300, -272, -172, -20, 0],
+          rotate: [-18, -12, -5, 2, 0],
+          scaleY: [1, 1, 1, .95, 1],
+          opacity: [0, 1, 1, 1, 1],
         }}
-        transition={{ delay: .25, duration: 1.05, times: [0, .55, .78, 1], ease: ['easeIn', 'easeOut', 'easeIn', 'easeOut'] }}
+        transition={{ delay: .3, duration: 1.15, times: [0, .3, .62, .88, 1], ease: 'easeIn' }}
         whileHover={{ scale: 1.025, rotate: -0.5 }}
-        style={{ position: 'relative', width: 'min(500px, 88vw)', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 12, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 42px 90px -30px rgba(0,0,0,.65)' }}>
+        style={{ position: 'relative', zIndex: 1, width: 'min(500px, 88vw)', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 12, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', boxShadow: '0 42px 90px -30px rgba(0,0,0,.65)' }}>
         <div style={{ position: 'relative' }}>
           <img src="https://i.ytimg.com/vi/kCc8FmEb1nY/hqdefault.jpg" alt=""
             style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 12, display: 'block' }} />
@@ -1274,18 +1301,28 @@ function Landing({ onOpen }) {
           ))}
         </div>
 
+        <div style={{ textAlign: 'center', marginTop: 34 }}>
+          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>who it's for</div>
+          <h2 style={{ fontSize: 'clamp(24px,3.4vw,34px)', color: T.text, letterSpacing: '-.02em', margin: '10px auto 4px', textWrap: 'balance' }}>
+            Four markets. One engine.
+          </h2>
+          <div style={{ color: T.muted, fontSize: 13.5 }}>every video analyzed once is cached for all — marginal cost per learner → 0</div>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 10 }}>
           {[
-            ['student', '🎓', 'Student', 'Watch — widgets appear beside the video. Check the best ones → export a Jupyter notebook. Tonight\'s lab, from tonight\'s lecture.'],
-            ['teacher', '👩‍🏫', 'Teacher', 'Opens on ☰ moments — pick the arc of the lesson → one-click deck (⌘P → PDF). Every slide links to its live widget for in-class play.'],
-            ['creator', '✍️', 'Creator / Writer', 'Select a thread of moments → Markdown with keyframes, runnable code and remix links. Paste into Medium / Substack / your editor.'],
-            ['researcher', '🔬', 'Researcher', 'Select any sentence, mint the widget you need. Coming soon: trace a concept across lectures, citation export.'],
-          ].map(([key, icon, title, text]) => (
+            ['student', '🎓', 'Students', 'Watch — widgets appear beside the video. Check the best ones → export a Jupyter notebook. Tonight\'s lab, from tonight\'s lecture.', '1.5B learners · $400B e-learning'],
+            ['teacher', '👩‍🏫', 'Teachers', 'Opens on ☰ moments — pick the arc of the lesson → one-click deck (⌘P → PDF). Every slide links to its live widget for in-class play.', '85M educators · $160B edtech tools'],
+            ['creator', '✍️', 'Creators / Writers', 'Select a thread of moments → Markdown with keyframes, runnable code and remix links. Paste into Medium / Substack / your editor.', '200M creators · $250B creator economy'],
+            ['researcher', '🔬', 'Researchers', 'Select any sentence, mint the widget you need. Coming soon: trace a concept across lectures, citation export.', '10M researchers · $35B research tools'],
+          ].map(([key, icon, title, text, market]) => (
             <button key={key} className="edu-card" onClick={() => onOpen('kCc8FmEb1nY', key)} style={{
               textAlign: 'left', background: T.panel, border: `1px solid ${T.line}`, borderRadius: 12,
               padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{icon} {title}</span>
               <span style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>{text}</span>
+              <span style={{ fontFamily: mono, fontSize: 10.5, color: T.acc, borderTop: `1px solid ${T.line}`, paddingTop: 8, marginTop: 4, letterSpacing: '.03em' }}>
+                ◔ {market}
+              </span>
             </button>
           ))}
         </div>
