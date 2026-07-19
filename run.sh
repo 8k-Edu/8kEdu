@@ -27,8 +27,8 @@ stop() {
 [ "${1:-}" = "--stop" ] && { stop; exit 0; }
 
 stop; sleep 1
-echo "→ ask backend (Nemotron via LM Studio) on :8756"
-uv run serve.py --backend lmstudio --port 8756 > "$LOGDIR/serve.log" 2>&1 &
+echo "→ ask backend (vision · ${TACTILE_BACKEND:-lmstudio}) on :8756"
+uv run serve.py --backend "${TACTILE_BACKEND:-lmstudio}" --port 8756 > "$LOGDIR/serve.log" 2>&1 &
 
 echo "→ agent dashboard API on :8787"
 uv run python -m agent.api --port 8787 > "$LOGDIR/agent_api.log" 2>&1 &

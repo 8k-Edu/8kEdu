@@ -294,8 +294,8 @@ def main() -> None:
     info.update(
         backend=args.backend,
         model=getattr(backend, "model_name", "?"),
-        mode="local" if args.backend in ("mlx", "lmstudio") else "byok",
-        cloud=args.backend not in ("mlx", "lmstudio"),
+        mode="local" if args.backend in ("mlx", "lmstudio", "vllm") else "byok",
+        cloud=args.backend not in ("mlx", "lmstudio", "vllm"),
     )
     print(f"ready: {info}")
     uvicorn.run(app, host="127.0.0.1", port=args.port)
