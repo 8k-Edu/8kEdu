@@ -88,6 +88,7 @@ network_policies:
           - allow: { method: GET, path: "/**" }
           - allow: { method: POST, path: "/**" }
           - allow: { method: PATCH, path: "/**" }
+          - allow: { method: DELETE, path: "/rest/v1/**" }  # upsert_concepts replaces a video's rows
       # transaction pooler (psycopg2) — raw TCP passthrough, no MITM so postgres TLS works
       - host: cfyelmzuuwqadnwxcxkv.supabase.co
         port: 6543
