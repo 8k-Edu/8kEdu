@@ -495,7 +495,9 @@ function Lecture({ videoId, role }) {
   const [touchMode, setTouchMode] = useState(false)
   const liveParams = useRef(null)
   const { holder, time, seek } = useYouTube(videoId)
-  const ingested = INGESTED.includes(videoId)
+  // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
+  // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
+  const [analyzed, setAnalyzed] = useState(INGESTED.includes(videoId))
 
   useEffect(() => {
     fetch('/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
@@ -504,14 +506,13 @@ function Lecture({ videoId, role }) {
   useEffect(() => {
     const remix = specFromHash()
     if (remix) { setSelected(remix); setFollowVideo(false) }
-    if (!ingested) return
-    fetch(`/${videoId}/concepts.json`).then(r => r.json()).then(cs => {
+    fetch(`/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
       setConcepts(cs)
-      if (cs.length) setDuration(Math.max(...cs.map(c => c.time)) * 1.08)
+      if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
     }).catch(() => setConcepts([]))
-    fetch(`/${videoId}/transcript.json`).then(r => r.json()).then(setCues).catch(() => setCues([]))
-    fetch(`/${videoId}/chapters.json`).then(r => r.json()).then(setChapters).catch(() => setChapters([]))
-  }, [ingested, videoId])
+    fetch(`/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
+    fetch(`/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
+  }, [videoId])
 
   const pinnedUntil = useRef(0)
   useEffect(() => {
@@ -737,7 +738,7 @@ function Lecture({ videoId, role }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
-          {ingested && <GlobalAsk onAsk={askGlobal} busy={busy} concepts={concepts} time={time} />}
+          {analyzed && <GlobalAsk onAsk={askGlobal} busy={busy} concepts={concepts} time={time} />}
           {active ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -769,7 +770,7 @@ function Lecture({ videoId, role }) {
 
       {ask && <AskBox ask={ask} busy={busy} onClose={() => setAsk(null)} onCreate={createWidget} />}
       {shareUrl && <ShareModal url={shareUrl} onClose={() => setShareUrl(null)} />}
-      {!ingested && (
+      {!analyzed && (
         <div style={{ color: '#d29922', fontSize: 13, border: '1px solid #d2992255', borderRadius: 10, padding: '10px 14px' }}>
           this video isn't analyzed yet — run <code>uv run ingest.py "&lt;url&gt;" && uv run analyze.py</code> to mint its widgets
         </div>
