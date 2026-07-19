@@ -1,0 +1,197 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Fresh Pasta Dough Ingredient Scaler",
+  "explanation": "Adjust the number of doughs to see how ingredient amounts scale.",
+  "params": {
+   "expr": "flour = 1 * servings / base_servings",
+   "sliders": {
+    "servings": 2.0,
+    "base_servings": 2.0
+   }
+  },
+  "time": 10,
+  "frame": "f_000010.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Fresh Pasta Recipe Scaler",
+  "explanation": "Adjust serving size and ingredient amounts to see how the pasta dough scales.",
+  "params": {
+   "cells": [
+    "servings = int(slider_servings)\n",
+    "eggs = int(slider_eggs)\n",
+    "flour_cups = float(slider_flour_cups)\n",
+    "scaling = servings / 2.0\n",
+    "eggs_needed = eggs * scaling\n",
+    "flour_needed_cups = flour_cups * scaling\n",
+    "total_time_minutes = servings * 15\n",
+    "print(f\"Servings: {servings}\")\n",
+    "print(f\"Eggs needed: {int(eggs_needed)}\")\n",
+    "print(f\"Flour (cups): {flour_needed_cups:.2f}\")\n",
+    "print(f\"Estimated total time (minutes): {total_time_minutes}\")"
+   ],
+   "sliders": [
+    {
+     "name": "servings",
+     "type": "int",
+     "min": 1,
+     "max": 6,
+     "default": 2
+    },
+    {
+     "name": "eggs",
+     "type": "int",
+     "min": 0,
+     "max": 4,
+     "default": 2
+    },
+    {
+     "name": "flour_cups",
+     "type": "float",
+     "min": 0.5,
+     "max": 5.0,
+     "default": 2.0
+    }
+   ]
+  },
+  "time": 30,
+  "frame": "f_000030.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Pasta dough ingredient and time calculator",
+  "explanation": "Adjusting ingredient amounts and cooking time based on the number of servings.",
+  "params": {
+   "expr": "servings * 20",
+   "sliders": [
+    {
+     "name": "servings",
+     "default": 2,
+     "min": 1,
+     "max": 10,
+     "step": 1
+    }
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Italian double zero flour dough recipe scaler",
+  "explanation": "Adjust sliders to see how ingredient amounts change with servings and egg usage.",
+  "params": {
+   "sliders": [
+    {
+     "name": "servings",
+     "type": "int",
+     "min": 1,
+     "max": 10,
+     "default": 2
+    },
+    {
+     "name": "eggs_per_serving",
+     "type": "float",
+     "min": 0,
+     "max": 5,
+     "default": 1
+    },
+    {
+     "name": "flour_cups_per_egg",
+     "type": "float",
+     "min": 0,
+     "max": 5,
+     "default": 1
+    },
+    {
+     "name": "salt_fair_amount",
+     "type": "float",
+     "min": 0,
+     "max": 2,
+     "default": 0.5
+    }
+   ],
+   "cells": [
+    "# Compute total ingredients",
+    "total_eggs = servings * eggs_per_serving",
+    "total_flour_cups = total_eggs * flour_cups_per_egg",
+    "total_salt = servings * salt_fair_amount",
+    "print(f\"Total eggs: {total_eggs}\")",
+    "print(f\"Total flour cups: {total_flour_cups}\")",
+    "print(f\"Total fair amount of salt: {total_salt}\")",
+    "# Plot ingredient proportions",
+    "import matplotlib.pyplot as plt",
+    "labels = ['Eggs', 'Flour (cups)', 'Salt']",
+    "sizes = [total_eggs, total_flour_cups, total_salt]",
+    "plt.bar(labels, sizes)",
+    "plt.title('Ingredient Quantities')",
+    "plt.show()"
+   ]
+  },
+  "time": 50,
+  "frame": "f_000050.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Recipe scaler for egg dough",
+  "explanation": "Adjusting servings and flour per egg lets you scale the dough proportionally.",
+  "params": {
+   "expr": "totalFlour = servings * flourPerEgg; totalEggs = servings;",
+   "sliders": [
+    {
+     "name": "servings",
+     "default": 2
+    },
+    {
+     "name": "flourPerEgg",
+     "default": 0.5
+    }
+   ]
+  },
+  "time": 80,
+  "frame": "f_000080.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Recipe Scaler for Pasta Dough",
+  "explanation": "Adjusting ingredient quantities lets you scale the dough recipe for any number of servings.",
+  "params": {
+   "sliders": [
+    {
+     "name": "servings",
+     "type": "int",
+     "default": 2,
+     "min": 1,
+     "max": 10
+    }
+   ],
+   "cells": [
+    "# Compute scaled ingredient amounts based on servings\n total_eggs = servings\n total_flour_cups = servings * 0.5\n total_salt_tsp = servings * 0.25\n\n print(f\"Eggs needed: {total_eggs}\")\n print(f\"Flour (cups): {total_flour_cups:.2f}\")\n print(f\"Salt (tsp): {total_salt_tsp:.2f}\")",
+    "import matplotlib.pyplot as plt\n labels = ['Eggs', 'Flour (cups)', 'Salt (tsp)']\n values = [total_eggs, total_flour_cups, total_salt_tsp]\n plt.bar(labels, values)\n plt.ylabel('Amount')\n plt.title('Scaled Ingredient Quantities')\n plt.show()"
+   ]
+  },
+  "time": 100,
+  "frame": "f_000100.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Recipe scaling \u2013 cooking time vs servings",
+  "explanation": "The viewer can see how total preparation time changes as the number of servings varies.",
+  "params": {
+   "expr": "total_time = servings * 10",
+   "sliders": {
+    "servings": 4
+   }
+  },
+  "time": 110,
+  "frame": "f_000110.jpg"
+ }
+]
