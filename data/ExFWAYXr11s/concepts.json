@@ -1,0 +1,42 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Back of the Envelope Rental Property Calculator",
+  "explanation": "A quick mental model lets investors estimate cash flow without complex spreadsheets.",
+  "params": {
+   "cells": [
+    "price = 200_000\nrent = 1500\ninterest_rate = 0.05\nyears = 30\ndown_pct = 20\n# loan amount\nloan = price * (1 - down_pct/100)\n# monthly payment using amortization formula\nn = years*12\nmonthly_payment = loan * (interest_rate/12) / (1 - (1 + interest_rate/12)**(-n))\n# monthly cash flow after mortgage\nnet_cash_flow = rent - monthly_payment\nprint(f\"Monthly payment: ${monthly_payment:,.2f}\")\nprint(f\"Net cash flow: ${net_cash_flow:,.2f}\")"
+   ],
+   "sliders": {
+    "price": {
+     "min": 100000,
+     "max": 500000,
+     "value": 200000
+    },
+    "rent": {
+     "min": 500,
+     "max": 5000,
+     "value": 1500
+    },
+    "interest_rate": {
+     "min": 0.01,
+     "max": 0.1,
+     "value": 0.05
+    },
+    "years": {
+     "min": 5,
+     "max": 40,
+     "value": 30
+    },
+    "down_payment_pct": {
+     "min": 0,
+     "max": 50,
+     "value": 20
+    }
+   }
+  },
+  "time": 70.3,
+  "frame": "f_000070.jpg"
+ }
+]

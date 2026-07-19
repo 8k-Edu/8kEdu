@@ -1,0 +1,41 @@
+[
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Attention Mechanism in RNNs",
+  "explanation": "Attention enables models to dynamically focus on relevant previous words, overcoming the short reference window limitation of recurrent networks.",
+  "params": {
+   "q": [
+    [
+     1,
+     0,
+     1
+    ],
+    [
+     0,
+     1,
+     0
+    ]
+   ],
+   "k": [
+    [
+     1,
+     2,
+     3
+    ],
+    [
+     4,
+     5,
+     6
+    ],
+    [
+     7,
+     8,
+     9
+    ]
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ }
+]

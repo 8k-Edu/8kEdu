@@ -1,0 +1,17 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Couch to 5K Training Volume Planner",
+  "explanation": "Allows viewers to adjust the plan length and daily run time to see how total training volume changes.",
+  "params": {
+   "expr": "(weeks - 3) * minutes_per_run",
+   "sliders": [
+    "weeks",
+    "minutes_per_run"
+   ]
+  },
+  "time": 50,
+  "frame": "f_000050.jpg"
+ }
+]
