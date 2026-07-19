@@ -2048,10 +2048,16 @@ function LearnView({ onExit, onOpen }) {
                 return (
                   <motion.div key={u.video_id} initial={{ opacity: 0, x: i % 2 ? 30 : -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * .12, type: 'spring', stiffness: 140, damping: 18 }}
                     style={{ display: 'flex', justifyContent: i % 2 ? 'flex-end' : 'flex-start', marginBottom: 14 }}>
-                    <button onClick={() => ready && onOpen(u.video_id)} disabled={!ready}
+                    <button disabled={!unlocked}
+                      onClick={() => {
+                        if (!unlocked) return
+                        // unprocessed but unlocked → open the lecture and auto-start the agent on it
+                        if (!ready) sessionStorage.setItem('8kedu-auto-process', u.video_id)
+                        onOpen(u.video_id)
+                      }}
                       style={{ display: 'flex', gap: 12, alignItems: 'center', width: 'min(420px,86%)', textAlign: 'left',
                         background: T.panel, border: `1px solid ${ready ? T.acc + '66' : T.line}`, borderRadius: 16, padding: 12,
-                        cursor: ready ? 'pointer' : 'default', opacity: unlocked ? 1 : .5 }}>
+                        cursor: unlocked ? 'pointer' : 'default', opacity: unlocked ? 1 : .5 }}>
                       <span style={{ width: 42, height: 42, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 18, fontWeight: 800, background: ready ? T.acc : T.line, color: ready ? T.accText : T.faint }}>
                         {ready ? '▶' : (unlocked ? i + 1 : '🔒')}
@@ -2059,7 +2065,7 @@ function LearnView({ onExit, onOpen }) {
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 650, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.title}</div>
                         <div style={{ fontFamily: mono, fontSize: 10.5, color: ready ? '#56d364' : T.faint, marginTop: 2 }}>
-                          {ready ? `✓ ${u.widgets} widgets ready — tap to learn` : (unlocked ? 'agent will process this next' : 'locked')}
+                          {ready ? `✓ ${u.widgets} widgets ready — tap to learn` : (unlocked ? '⚡ tap to process now — agent ingests + mints widgets' : 'locked')}
                         </div>
                       </div>
                     </button>
