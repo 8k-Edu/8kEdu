@@ -36,6 +36,14 @@ BRAIN_PORT="${BRAIN_VLLM_PORT:-8001}"
 # up and cascade to 100s+ under load. Cancel them instead.
 REQ_TIMEOUT="${VLLM_TIMEOUT:-180}"
 
+# --default-temperature 0 is a safety net (the app already sends 0.1; server default is 0.7).
+# Opt-in extras (unset ⇒ vllm-mlx defaults, no behavior change):
+#   VLLM_MAX_NUM_SEQS=<n>   cap concurrent sequences (default 256; lower guards Metal memory)
+#   VLLM_KV_CACHE_QUANT=1   8-bit KV cache → fit more concurrent image sequences (A/B quality)
+EXTRA="--default-temperature 0"
+[ -n "${VLLM_MAX_NUM_SEQS:-}" ] && EXTRA="$EXTRA --max-num-seqs $VLLM_MAX_NUM_SEQS"
+[ "${VLLM_KV_CACHE_QUANT:-}" = "1" ] && EXTRA="$EXTRA --kv-cache-quantization"
+
 LOGDIR="/tmp/8kedu-logs"; mkdir -p "$LOGDIR"
 
 # 1x1 JPEG — a warmup ping over the multimodal path so the FIRST real request doesn't eat MLX
@@ -56,12 +64,12 @@ warm() {  # <port> <served-model-name> <is_vision:1|0>
 
 echo "→ vllm-mlx vision : $VISION_MODEL on :$VISION_PORT"
 # --mllm forces multimodal (vision) load — the vision role always sends images.
-vllm-mlx serve "$VISION_MODEL" --port "$VISION_PORT" --continuous-batching --mllm --timeout "$REQ_TIMEOUT" \
+vllm-mlx serve "$VISION_MODEL" --port "$VISION_PORT" --continuous-batching --mllm --timeout "$REQ_TIMEOUT" $EXTRA \
   > "$LOGDIR/vllm-vision.log" 2>&1 &
 
 if [ -n "$BRAIN_PORT" ]; then
   echo "→ vllm-mlx brain  : $BRAIN_MODEL on :$BRAIN_PORT"
-  vllm-mlx serve "$BRAIN_MODEL" --port "$BRAIN_PORT" --continuous-batching --timeout "$REQ_TIMEOUT" \
+  vllm-mlx serve "$BRAIN_MODEL" --port "$BRAIN_PORT" --continuous-batching --timeout "$REQ_TIMEOUT" $EXTRA \
     > "$LOGDIR/vllm-brain.log" 2>&1 &
 fi
 

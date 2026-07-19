@@ -24,6 +24,10 @@ from pathlib import Path
 
 MLX_MODEL = os.environ.get("KEDU_MLX_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit")
 
+# max_tokens for the vision spec. Default preserves the prior 6000 so a reasoning-model vision
+# backend isn't truncated; set KEDU_MAX_TOKENS lower (e.g. 1024) for a plain VLM like Qwen-VL.
+KEDU_MAX_TOKENS = int(os.environ.get("KEDU_MAX_TOKENS", "6000"))
+
 CONCEPT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -158,14 +162,21 @@ def detect_genre(cues: list[dict]) -> str:
     return best if scores[best] >= 3 else "general"
 
 
-def apply_genre(genre: str) -> str:
-    """Compose SYSTEM = base ⊕ S_g. 'general' keeps the base prompt as-is."""
-    global SYSTEM
+def compose_system(genre: str) -> str:
+    """base ⊕ S_g, pure — the per-request form used by the server (no global mutation).
+    'general'/unknown keeps the base prompt as-is."""
     block = GENRE_PROMPTS.get(genre)
-    if block:
-        SYSTEM = SYSTEM.replace(
-            "Reply with ONLY a JSON object:",
-            f"GENRE LENS ({genre}): {block}\n\nReply with ONLY a JSON object:")
+    if not block:
+        return SYSTEM
+    return SYSTEM.replace(
+        "Reply with ONLY a JSON object:",
+        f"GENRE LENS ({genre}): {block}\n\nReply with ONLY a JSON object:")
+
+
+def apply_genre(genre: str) -> str:
+    """Compose SYSTEM = base ⊕ S_g in place for the offline CLI run (called once)."""
+    global SYSTEM
+    SYSTEM = compose_system(genre)
     return genre
 
 
@@ -241,7 +252,7 @@ class MlxBackend:
         self.config = load_config(MLX_MODEL)
         self.model_name = MLX_MODEL
 
-    def ask(self, frame: Path, context: str, max_px: int | None = None) -> str:
+    def ask(self, frame: Path, context: str, max_px: int | None = None, system: str | None = None) -> str:
         src = frame
         tmp = None
         if max_px:
@@ -255,7 +266,7 @@ class MlxBackend:
         try:
             prompt = self._apply(
                 self.processor, self.config,
-                f'{SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
+                f'{system or SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
                 num_images=1,
             )
             out = self._generate(
@@ -284,10 +295,10 @@ class OpenAIBackend:
             max_retries=0,
         )
 
-    def ask(self, frame: Path, context: str, max_px: int | None = None) -> str:
+    def ask(self, frame: Path, context: str, max_px: int | None = None, system: str | None = None) -> str:
         img = base64.standard_b64encode(_jpeg_bytes(frame, max_px)).decode()
         messages = [
-            {"role": "system", "content": SYSTEM},
+            {"role": "system", "content": system or SYSTEM},
             {"role": "user", "content": [
                 {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img}"}},
                 {"type": "text", "text": f'Teacher is saying: "{context}"\n\nEmit the concept spec JSON.'},
@@ -306,7 +317,7 @@ class OpenAIBackend:
             try:
                 resp = self.client.chat.completions.create(
                     model=self.model, messages=messages, temperature=0.1,
-                    max_tokens=6000,  # thinking models spend reasoning tokens from this budget
+                    max_tokens=KEDU_MAX_TOKENS,  # thinking models spend reasoning tokens from this budget
                     **({"response_format": fmt} if fmt else {}),
                 )
                 content = (resp.choices[0].message.content or "").strip()
@@ -421,35 +432,68 @@ def main() -> None:
             print(f"recursive warm plan: {len(plans)}/{len(frames)} frames, "
                   f"{sum(1 for plan in plans if plan['kind'] == 'reuse')} retrieved")
 
-    started = time.perf_counter()
-    concepts = []
-    vlm_calls = 0
-    widgets_reused = 0
-    for i, plan in enumerate(plans):
+    sweep_max_px = args.max_px or None
+    concurrency = int(os.environ.get("KEDU_CONCURRENCY", "1"))
+    # Concurrency only helps a server that batches in-flight requests (vllm-mlx
+    # --continuous-batching); mlx is in-process and lmstudio's concurrency is its own concern.
+    if concurrency > 1 and args.backend != "vllm":
+        print(f"(KEDU_CONCURRENCY={concurrency} ignored for '{args.backend}'; only vllm batches)")
+        concurrency = 1
+    if concurrency > 1 and not sweep_max_px:
+        sweep_max_px = 768  # OOM guard: N concurrent full-res images blow the Metal KV cache
+        print("(downscaling to 768px for the concurrent sweep — OOM guard)")
+
+    def process(i: int, plan: dict) -> tuple:
         fr = plan["frame"]
-        ctx = plan["context"]
-        spec = recursive.reusable_spec(plan) if recursive and plan["kind"] == "reuse" else None
-        if spec and valid(spec):
-            widgets_reused += 1
-            spec["time"] = fr["time"]
-            spec["frame"] = fr["file"]
-            concepts.append(spec)
-            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ↻ {spec['widget']}: {spec.get('title', '')[:60]}")
-            continue
         try:
-            vlm_calls += 1
-            raw = backend.ask(data / "frames" / fr["file"], ctx, max_px=args.max_px or None)
-        except Exception as e:  # keep sweeping; one bad frame must not kill the run
-            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ! {e}")
-            continue
+            if recursive and plan["kind"] == "reuse":
+                spec = recursive.reusable_spec(plan)
+                if spec and valid(spec):
+                    spec["time"] = fr["time"]
+                    spec["frame"] = fr["file"]
+                    return ("reuse", i, plan, spec)
+            raw = backend.ask(data / "frames" / fr["file"], plan["context"], max_px=sweep_max_px)
+        except Exception as e:  # one bad frame must not kill the run — surfaced in the summary
+            return ("error", i, plan, str(e))
         spec = extract_json(raw)
         if valid(spec):
             spec["time"] = fr["time"]
             spec["frame"] = fr["file"]
-            concepts.append(spec)
-            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ✓ {spec['widget']}: {spec.get('title', '')[:60]}")
+            return ("ok", i, plan, spec)
+        return ("none", i, plan, None)
+
+    def show(status: str, i: int, plan: dict, payload) -> None:
+        head = f"[{i+1}/{len(plans)}] {plan['frame']['time']:>7.1f}s"
+        if status == "reuse":
+            print(f"{head}  ↻ {payload['widget']}: {payload.get('title', '')[:60]}")
+        elif status == "ok":
+            print(f"{head}  ✓ {payload['widget']}: {payload.get('title', '')[:60]}")
+        elif status == "none":
+            print(f"{head}  – no concept")
         else:
-            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  – no concept")
+            print(f"{head}  ! {payload}")
+
+    started = time.perf_counter()
+    results: list = [None] * len(plans)
+    if concurrency > 1 and len(plans) > 1:
+        # The server is warmed at startup (scripts/serve-vllm.sh), so no cold-kernel burst here.
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futs = {pool.submit(process, i, plan): i for i, plan in enumerate(plans)}
+            for fut in as_completed(futs):
+                r = fut.result()
+                results[r[1]] = r
+                show(*r)
+    else:
+        for i, plan in enumerate(plans):
+            r = process(i, plan)
+            results[i] = r
+            show(*r)
+
+    concepts = [r[3] for r in results if r and r[0] in ("reuse", "ok")]
+    widgets_reused = sum(1 for r in results if r and r[0] == "reuse")
+    vlm_calls = sum(1 for r in results if r and r[0] in ("ok", "none", "error"))
+    errors = sum(1 for r in results if r and r[0] == "error")
 
     merged = []
     for c in concepts:
@@ -459,6 +503,12 @@ def main() -> None:
 
     (data / args.out_name).write_text(json.dumps(merged, indent=1))
     print(f"done: {len(merged)} concepts (of {len(concepts)} raw) → {data}/{args.out_name}")
+    elapsed = time.perf_counter() - started
+    fps = len(plans) / elapsed if elapsed else 0.0
+    print(f"swept {len(plans)} in {elapsed:.1f}s ({fps:.2f}/s, concurrency={concurrency}, "
+          f"max_px={sweep_max_px}, vlm={vlm_calls}, reused={widgets_reused}, errors={errors})")
+    if errors and not concepts:  # total failure → fail loud so the curator's check=True catches it
+        raise SystemExit(f"all {len(plans)} frames errored — check the vllm-mlx server / timeout")
 
     if recursive and args.recursive_mode != "off":
         elapsed_ms = round((time.perf_counter() - started) * 1000)
