@@ -18,7 +18,7 @@ How each requirement, bounty, and track maps to a real part of the build. (Visua
 | **Most Commercializable** | A personal AI tutor that auto-builds your course from YouTube — obvious market, near-zero marginal cost via the shared cache. |
 
 ## Tracks
-- **Recursive Intelligence** — quiz performance feeds back each cycle → agent re-sequences the curriculum + re-picks sources. Self-improving.
+- **Recursive Intelligence** — a **cross-teacher concept knowledge graph** built as the byproduct of the widget pipeline: same concept from different teachers collapses to one node; new videos reuse known nodes instead of regenerating → measurably faster/sharper each run. Full plan: [`RECURSIVE.md`](RECURSIVE.md).
 - **HiddenLayer Runtime Security** — pairs with the OpenShell containment story.
 - **Red Hat Live Data** — Apify live monitoring of channels.
 
