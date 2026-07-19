@@ -294,6 +294,14 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     try:
         raw = use.ask(DATA / req.video / "frames" / fr["file"], context,
                       max_px=WIDGET_MAX_PX, system=compose_system(genre))
+    except FileNotFoundError:
+        # frame jpgs pruned from disk (concepts stay cached) — degrade, don't 500
+        if req.cloud and metered and _db and credits_left is not None:
+            _db.refund_credit(handle, model_name, 1)
+        ev.update(cache_hit=False, spec_valid=False, error="frames missing on disk",
+                  t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return {"error": "this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable live asks"}
     except Exception as e:
         if req.cloud and metered and _db and credits_left is not None:
             _db.refund_credit(handle, model_name, 1)
@@ -379,6 +387,8 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
     ev["cache_hit"] = False
 
     src = DATA / req.video / "frames" / fr["file"]
+    if not src.exists():
+        return {"error": "this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable region asks"}
     img = Image.open(src)
     W, H = img.size
     pad = 0.12  # a little context around the selection
