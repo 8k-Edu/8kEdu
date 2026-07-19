@@ -87,11 +87,25 @@ Then open:
 
 ```bash
 uv run ingest.py "https://www.youtube.com/watch?v=<id>"
-uv run analyze.py --backend lmstudio --video <id>
-uv run serve.py --backend lmstudio
+uv run analyze.py --backend vllm --video <id>
+uv run serve.py --backend vllm
 ```
 
 Supported analysis backends include `mlx`, `lmstudio`, `vllm`, `openai`, and `gemini`. Cloud backends require `KEDU_ALLOW_CLOUD=1`; local inference is the default path.
+
+### Serving Nemotron on Apple Silicon (vLLM)
+
+One model — Nemotron-3-Nano-Omni — does vision (reads keyframes), reasoning, and the agent's decisions. We serve the 4-bit MLX build with [`vllm-mlx`](https://pypi.org/project/vllm-mlx/) (OpenAI-compatible), so both the analysis pipeline and the agent brain point at one endpoint on `:8000`.
+
+```bash
+uv tool install vllm-mlx
+# One-time: fix mlx_vlm loading the 4bit audio tower (see note below)
+uv run python scripts/patch-vllm-nemotron-audio.py
+# Serve vision + reasoning on :8000
+./scripts/serve-vllm.sh
+```
+
+> **Note — audio-tower patch.** mlx-community's 4-bit conversion stores the Omni audio (`sound_encoder`) conv weights in MLX layout, but `mlx_vlm`'s loader assumes PyTorch layout and re-transposes them, crashing at load (`Expected shape (256, 3, 3, 1) but received (256, 3, 1, 3)`). 8kEdu uses only the vision + text towers; `scripts/patch-vllm-nemotron-audio.py` makes that transpose a no-op so the model loads. It is idempotent — re-run it after `uv tool upgrade vllm-mlx`. LM Studio (`--backend lmstudio`, `:1234`) remains a drop-in fallback that serves the same model via GGUF.
 
 ## Configuration
 
@@ -103,9 +117,20 @@ SUPABASE_URL="https://<project>.supabase.co"
 SUPABASE_SECRET_KEY="sb_secret_..."
 SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
 APIFY_API_TOKEN="apify_api_..."
-KEDU_BASE_URL="http://localhost:1234/v1"
-KEDU_MODEL="nvidia/nemotron-3-nano-omni"
-NEMOTRON_MODEL="nvidia/nemotron-3-nano-omni"
+
+# Local inference — vLLM (Apple Silicon MLX), one endpoint for vision + brain
+KEDU_BACKEND="vllm"
+VLLM_BASE_URL="http://localhost:8000/v1"
+VLLM_MODEL="mlx-community/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-4bit"
+NEMOTRON_BASE_URL="http://localhost:8000/v1"
+NEMOTRON_MODEL="mlx-community/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-4bit"
+KEDU_TIMEOUT="240"
+
+# LM Studio fallback (serves the same model over GGUF on :1234)
+# KEDU_BACKEND="lmstudio"
+# KEDU_BASE_URL="http://localhost:1234/v1"
+# KEDU_MODEL="nvidia/nemotron-3-nano-omni"
+
 AGENT_HANDLE="demo"
 ```
 
