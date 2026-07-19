@@ -87,7 +87,6 @@ def perf(limit: int = 50, scope: str = "mine"):
     try:
         handle = _handle() if scope == "mine" else None
         events = db.recent_widget_events(handle=handle, limit=limit)
-        # events already sorted desc by created_at — for percentiles we want them in perf order
         totals = sorted([e["t_total_ms"] for e in events if e.get("t_total_ms") is not None])
         vlms = sorted([e["t_backend_ask_ms"] for e in events
                        if e.get("t_backend_ask_ms") is not None and not e.get("cache_hit")])

@@ -32,18 +32,16 @@ info = {"backend": "?", "model": "?", "mode": "?"}
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
     from agent import db as _db
-    _db.load_env()  # so AGENT_HANDLE is populated before the first request logs an event
+    _db.load_env()  # AGENT_HANDLE must be set before the first request logs an event
 except Exception:
     _db = None
 
 
 def _handle() -> str:
-    """AGENT_HANDLE for observability — identifies whose serve.py logged the event."""
     return os.environ.get("AGENT_HANDLE", "demo")
 
 
 def _fire_event(payload: dict) -> None:
-    """Hand the event to db's single-writer queue — a microsecond put_nowait, never blocks."""
     if not _db:
         return
     _db.enqueue_widget_event(payload)
