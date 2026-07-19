@@ -951,6 +951,12 @@ function Lecture({ videoId, role }) {
                     : <>remixed spec — loaded from the link · <button onClick={() => setFollowVideo(true)} style={{ background: 'none', border: 'none', color: '#2f81f7', fontSize: 11, padding: 0, textDecoration: 'underline' }}>back to the lecture</button></>}
               </div>
             </div>
+          ) : busy ? (
+            <div style={{ color: '#e6edf3', fontSize: 14, padding: '48px 30px', textAlign: 'center', border: `1px solid ${engine?.mode === 'local' ? '#2f81f7' : '#8957e5'}55`, borderRadius: 14, background: '#0d1117', lineHeight: 1.7, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <span className="kedu-spin" style={{ width: 28, height: 28, border: '3px solid #2f81f755', borderTopColor: '#2f81f7', borderRadius: '50%' }} />
+              <div style={{ color: '#58a6ff', fontWeight: 600 }}>the agent is building your widget…</div>
+              <div style={{ fontSize: 12, color: '#8b949e' }}>reading the keyframe + transcript, then writing an interactive spec · {engine?.mode === 'local' ? '~30s on the free local model (⚡ cloud is faster)' : 'a few seconds on the cloud model'}</div>
+            </div>
           ) : (
             <div style={{ color: '#8b949e', fontSize: 14, padding: '52px 30px', textAlign: 'center', border: '1px dashed #30363d', borderRadius: 14, background: '#0d111788', lineHeight: 1.6 }}>
               <div style={{ fontSize: 26, marginBottom: 10 }}>⚡</div>
