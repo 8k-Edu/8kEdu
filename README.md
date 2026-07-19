@@ -220,12 +220,16 @@ No cloud API keys are required — the default path is **fully local** (LM Studi
 
 ## Known limitations & next steps
 
+**Fixed**
+- ✅ **Video download now runs contained** — `*.googlevideo.com` + `*.youtube.com` are wildcard-allowlisted
+  in the `8kedu` policy, and yt-dlp runs inside the sandbox (`--no-check-certificates`, since the egress
+  proxy is the boundary). Verified: a full video pulled + framed inside scoutclaw.
+- ✅ **The whole heartbeat runs in-sandbox** — search, download, frame, Nemotron analyze, and the DB
+  write all execute inside scoutclaw. Raw Postgres can't cross the SNI egress proxy, so DB writes go
+  via **Supabase PostgREST** (`agent/db_rest.py`, `KEDU_DB_REST=1`). Verified: run rows + concept
+  upserts written to Supabase from inside the sandbox, exfil still blocked + OCSF-logged.
+
 **Limitations**
-- **Video download isn't sandboxed** — YouTube media comes from rotating `*.googlevideo.com`
-  subdomains that per-host egress can't practically allowlist; the *reasoning* (the part touching
-  untrusted content) is what runs contained.
-- **Learner/curator loops run on the host** — the `analyze` step runs contained (option D); putting
-  the whole heartbeat inside the sandbox is the remaining step.
 - **Recursive benchmark is a replay** — the 64→8 result uses cached real full-sweep outputs and a
   concrete warm retrieval plan; it is not a fresh paired wall-clock run.
 - **Warm reuse copies a validated prior spec** — adapting that spec to the new teacher's exact visual
@@ -238,8 +242,8 @@ No cloud API keys are required — the default path is **fully local** (LM Studi
 **Next steps**
 1. Run fresh paired cold/warm model benchmarks and adapt retrieved specs to new-frame parameters.
 2. Use widget priors during generation and prerequisite edges during course assembly.
-3. Run the full heartbeat inside the sandbox end to end.
-4. Wire mastery feedback → curriculum re-sequencing; add Supabase Auth for real profiles.
+3. Wire mastery feedback → curriculum re-sequencing.
+4. Add Supabase Auth for real profiles/voting (the remaining community limitation).
 
 ---
 
