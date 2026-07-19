@@ -119,7 +119,7 @@ uv run serve.py --backend mlx                    # :8756, vite proxies /api → 
 cd app && npm run dev                            # http://localhost:5173
 ```
 
-Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` · `vllm` (local [vllm-mlx](https://github.com/waybarrios/vllm-mlx) on Apple Silicon, via `VLLM_BASE_URL`/`VLLM_MODEL`) · `openai` (any OpenAI-compatible endpoint via `TACTILE_BASE_URL`/`TACTILE_MODEL`) · `gemini` (BYOK). For `run.sh` and the agent jobs, pick the vision backend with `TACTILE_BACKEND` (default `lmstudio`).
+Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` · `vllm` (local [vllm-mlx](https://github.com/waybarrios/vllm-mlx) on Apple Silicon, via `VLLM_BASE_URL`/`VLLM_MODEL`) · `openai` (any OpenAI-compatible endpoint via `KEDU_BASE_URL`/`KEDU_MODEL`) · `gemini` (BYOK). For `run.sh` and the agent jobs, pick the vision backend with `KEDU_BACKEND` (default `lmstudio`).
 
 ### The autonomous agent + live dashboard
 
@@ -150,7 +150,7 @@ Then open **http://localhost:5173/?view=agent** (or `dev.localhost:5174` on the 
 heartbeat feed, the curriculum building itself, the cache moat, and the OpenShell containment status.
 Containment is applied + proven separately: see [`claw-agent/`](claw-agent/).
 
-> **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `TACTILE_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`/`vllm`) is unrestricted. Secrets live in a gitignored `.env` (see `.env.example`).
+> **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `KEDU_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`/`vllm`) is unrestricted. Secrets live in a gitignored `.env` (see `.env.example`).
 
 Pyodide (for notebook widgets) is vendored under `data/pyodide-dist/` for offline use.
 
@@ -187,14 +187,14 @@ APIFY_API_TOKEN="apify_api_..."
 APIFY_USER_ID="<apify-user-id>"
 
 # --- Model (Nemotron via any OpenAI-compatible server; LM Studio or ollama) ---
-TACTILE_MODEL="nvidia/nemotron-3-nano-omni"       # analyze/serve
+KEDU_MODEL="nvidia/nemotron-3-nano-omni"       # analyze/serve
 NEMOTRON_MODEL="nvidia/nemotron-3-nano-omni"      # agent brain
-# TACTILE_BASE_URL / NEMOTRON_BASE_URL default to http://localhost:1234/v1 (LM Studio)
+# KEDU_BASE_URL / NEMOTRON_BASE_URL default to http://localhost:1234/v1 (LM Studio)
 
 # --- Local runtime ---
 AGENT_HANDLE="demo"                                # per-learner isolation on the shared DB
 DOCKER_HOST="unix:///Users/<you>/.orbstack/run/docker.sock"   # for the NemoClaw sandbox
-# TACTILE_ALLOW_CLOUD=1                             # opt-in only; cloud VLM backends are off by default
+# KEDU_ALLOW_CLOUD=1                             # opt-in only; cloud VLM backends are off by default
 ```
 
 No cloud API keys are required — the default path is **fully local** (LM Studio/ollama), $0.

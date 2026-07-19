@@ -64,7 +64,7 @@ def process_video(video_id: str):
     # cold: run the engine (ingest + analyze). Slow; used for genuinely new videos.
     subprocess.run(["uv", "run", "ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                    cwd=ROOT, timeout=600, check=True)
-    subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("TACTILE_BACKEND", "lmstudio"),
+    subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
                     "--video", video_id],
                    cwd=ROOT, timeout=1800, check=True)
     n = _upsert_from_disk(video_id)

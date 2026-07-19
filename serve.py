@@ -26,7 +26,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 DATA = Path("data")
 DEFAULT_VIDEO = "42L1q1Z4Ojc"  # has keyframes on disk → live-ask never 404s on the fallback
 PROMPT_VERSION = "v1"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
-WIDGET_MAX_PX = int(os.environ.get("TACTILE_MAX_PX", "768"))
+WIDGET_MAX_PX = int(os.environ.get("KEDU_MAX_PX", "768"))
 _frames_cache: dict[str, list] = {}
 backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
