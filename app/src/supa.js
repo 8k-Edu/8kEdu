@@ -10,6 +10,7 @@
 // code change.
 import { createClient } from '@supabase/supabase-js'
 
+const P = import.meta.env.BASE_URL.replace(/\/$/, '')
 const LS_GUEST = '8kedu-guest-id'
 let _client
 let _clientPromise
@@ -19,7 +20,7 @@ async function client() {
   if (!_clientPromise) {
     _clientPromise = (async () => {
       try {
-        const cfg = await fetch('/pub/config').then((r) => r.json())
+        const cfg = await fetch(P + '/pub/config').then((r) => r.json())
         _client = cfg?.url && cfg?.anon_key
           ? createClient(cfg.url, cfg.anon_key, { auth: { persistSession: true, autoRefreshToken: true } })
           : null
