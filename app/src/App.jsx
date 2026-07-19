@@ -2088,6 +2088,184 @@ function AgentDashboard({ onExit }) {
   )
 }
 
+// ---------- ?view=perf: live observability for /api/widget + /api/region ----------
+function fmtMs(v) {
+  if (v == null) return '—'
+  return v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v} ms`
+}
+
+function TimingBar({ ms, max, color }) {
+  const w = max ? Math.min(100, (ms / max) * 100) : 0
+  return (
+    <div style={{ flex: 1, height: 6, background: '#22292f', borderRadius: 3, overflow: 'hidden', minWidth: 40 }}>
+      <div style={{ width: `${w}%`, height: '100%', background: color, borderRadius: 3 }} />
+    </div>
+  )
+}
+
+function Sparkline({ values, width = 220, height = 32, color = '#8ee23e', threshold }) {
+  if (!values || !values.length) return <svg width={width} height={height} />
+  const max = Math.max(...values, threshold || 0, 1)
+  const min = 0
+  const pts = values.map((v, i) => {
+    const x = (i / Math.max(1, values.length - 1)) * width
+    const y = height - ((v - min) / (max - min)) * height
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  return (
+    <svg width={width} height={height} style={{ display: 'block' }}>
+      {threshold && (
+        <line x1={0} x2={width} y1={height - (threshold / max) * height} y2={height - (threshold / max) * height}
+          stroke="#e5484d" strokeDasharray="2,3" strokeWidth={1} opacity={0.55} />
+      )}
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} />
+    </svg>
+  )
+}
+
+function PerfDashboard({ onExit }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  const [data, setData] = useState(null)
+  const [err, setErr] = useState(null)
+  const [scope, setScope] = useState('mine')
+  useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
+
+  const load = async () => {
+    try {
+      const r = await fetch(`/agent/perf?scope=${scope}&limit=50`)
+      const d = await r.json()
+      if (d.ok) { setData(d); setErr(null) } else setErr(d.error || 'unknown error')
+    } catch (e) { setErr('agent api offline — start agent/api.py') }
+  }
+  useEffect(() => { load(); const id = setInterval(load, 2000); return () => clearInterval(id) }, [scope])
+
+  const events = data?.events || []
+  const agg = data?.aggregates || {}
+  const oldestFirst = [...events].reverse()
+  const totalSpark = oldestFirst.map(e => e.t_total_ms || 0)
+  const maxBar = Math.max(1, ...events.map(e => e.t_total_ms || 0))
+
+  const kindCounts = {}
+  events.forEach(e => {
+    const k = e.widget_kind || 'unknown'
+    kindCounts[k] = (kindCounts[k] || 0) + 1
+  })
+  const kindList = Object.entries(kindCounts).sort((a, b) => b[1] - a[1])
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
+      <LandingStyles acc={T.acc} />
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px 60px' }}>
+        {/* top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
+            <Logo size={28} wordColor={T.text} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 4, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: 3 }}>
+              {['mine', 'all'].map(s => (
+                <button key={s} onClick={() => setScope(s)}
+                  style={{ background: scope === s ? T.acc : 'transparent', color: scope === s ? T.accText : T.text, border: 'none', borderRadius: 999, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  {s === 'mine' ? `${data?.handle || 'me'}` : 'all users'}
+                </button>
+              ))}
+            </div>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: mono, fontSize: 12, color: T.muted }}>
+              <motion.span animate={{ scale: [1, 1.5, 1], opacity: [1, .5, 1] }} transition={{ duration: 1.8, repeat: Infinity }}
+                style={{ width: 9, height: 9, borderRadius: 5, background: err ? '#e5484d' : T.acc, display: 'inline-block' }} />
+              {err ? 'offline' : 'polling live'}
+            </span>
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>
+              {theme === 'dark' ? '☀' : '☾'}
+            </button>
+          </div>
+        </div>
+
+        {/* header */}
+        <div style={{ marginTop: 26 }}>
+          <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>perf, live</div>
+          <h1 style={{ fontSize: 'clamp(26px,4vw,40px)', letterSpacing: '-.03em', margin: '8px 0 0', textWrap: 'balance' }}>
+            time to first widget — every ask, every latency.
+          </h1>
+          <div style={{ color: T.sub, fontSize: 15, marginTop: 6 }}>
+            target: <span style={{ color: T.text, fontWeight: 650 }}>p50 &lt; 5 s cold-miss</span> · red line on the sparkline marks the budget.
+          </div>
+        </div>
+
+        {/* stat tiles */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+          <StatTile T={T} label="p50 total" value={fmtMs(agg.t_total_p50_ms)}
+            sub={`across ${events.length} recent request${events.length === 1 ? '' : 's'}`}
+            accent={agg.t_total_p50_ms == null ? T.muted : agg.t_total_p50_ms < 5000 ? T.acc : '#e5484d'} />
+          <StatTile T={T} label="p90 total" value={fmtMs(agg.t_total_p90_ms)} sub="tail latency" accent="#79c0ff" />
+          <StatTile T={T} label="p50 vlm-only" value={fmtMs(agg.t_backend_ask_p50_ms)} sub="cold-miss only · excludes cache hits" />
+          <StatTile T={T} label="cache hit rate" value={`${Math.round((agg.cache_hit_rate || 0) * 100)}%`}
+            sub={`${events.filter(e => e.cache_hit).length} of ${events.length} served from cache`} accent="#56d364" />
+          <StatTile T={T} label="requests" value={events.length} sub="in the last 50" accent="#79c0ff" />
+        </div>
+
+        {/* sparkline + widget-kind mix */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)', gap: 16, marginTop: 20, alignItems: 'stretch' }}>
+          <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>total-ms over last {oldestFirst.length}</div>
+            <Sparkline values={totalSpark} width={520} height={64} color={T.acc} threshold={5000} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: T.muted, fontFamily: mono, fontSize: 11, marginTop: 6 }}>
+              <span>oldest</span><span>newest</span>
+            </div>
+          </div>
+          <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>widget mix</div>
+            {kindList.length === 0 && <div style={{ color: T.faint, fontSize: 13 }}>no events yet</div>}
+            {kindList.map(([k, n]) => (
+              <div key={k} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '3px 0' }}>
+                <span style={{ fontSize: 12, color: T.text, width: 96, flexShrink: 0 }}>{k}</span>
+                <div style={{ flex: 1, height: 8, background: T.line, borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${(n / events.length) * 100}%`, height: '100%', background: k === 'none' ? T.muted : k === 'answer' ? '#79c0ff' : '#8ee23e', borderRadius: 4 }} />
+                </div>
+                <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, width: 24, textAlign: 'right' }}>{n}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* events table */}
+        <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 16, padding: '16px', marginTop: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 750, marginBottom: 12 }}>Recent events</div>
+          {events.length === 0 && <div style={{ color: T.faint, fontSize: 13, padding: '10px 0' }}>{err || 'no widget mints yet — go to a lecture and click "make it interactive"'}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 520, overflowY: 'auto' }}>
+            {events.map(e => {
+              const overBudget = (e.t_total_ms || 0) > 5000
+              const time = e.created_at ? new Date(e.created_at).toLocaleTimeString() : ''
+              return (
+                <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '68px 60px 74px 40px 1fr 60px', gap: 10, alignItems: 'center', padding: '8px 10px', border: `1px solid ${overBudget ? '#e5484d55' : T.line}`, borderLeft: `3px solid ${overBudget ? '#e5484d' : e.cache_hit ? '#56d364' : e.spec_valid ? T.acc : '#ffab70'}`, borderRadius: 8, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8' }}>
+                  <span style={{ fontFamily: mono, fontSize: 11, color: T.faint }}>{time}</span>
+                  <span style={{ fontFamily: mono, fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: e.kind === 'region' ? '#79c0ff' : T.acc, background: (e.kind === 'region' ? '#79c0ff' : T.acc) + '1f', borderRadius: 5, padding: '2px 6px', textAlign: 'center' }}>{e.kind}</span>
+                  <span style={{ fontFamily: mono, fontSize: 11, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.widget_kind || '—'}</span>
+                  <span title={e.cache_hit ? 'cache hit' : 'cache miss'} style={{ fontFamily: mono, fontSize: 12, textAlign: 'center' }}>
+                    {e.cache_hit ? '⚡' : '·'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <span title="cache lookup" style={{ fontFamily: mono, fontSize: 10, color: T.faint, width: 34 }}>{e.t_cache_lookup_ms ?? 0}</span>
+                    <TimingBar ms={e.t_backend_ask_ms || 0} max={maxBar} color={overBudget ? '#e5484d' : '#8ee23e'} />
+                    <span title="VLM (backend.ask)" style={{ fontFamily: mono, fontSize: 10.5, color: overBudget ? '#e5484d' : T.text, width: 62, textAlign: 'right' }}>{fmtMs(e.t_backend_ask_ms)}</span>
+                  </div>
+                  <span style={{ fontFamily: mono, fontSize: 11.5, fontWeight: 700, color: overBudget ? '#e5484d' : T.text, textAlign: 'right' }}>{fmtMs(e.t_total_ms)}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div style={{ color: T.faint, fontSize: 12, fontFamily: mono, marginTop: 20, textAlign: 'center' }}>
+          instrumented in serve.py · non-blocking write to widget_events · polled every 2 s
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [view, setView] = useState(() => new URLSearchParams(location.search).get('view'))
   const [videoId, setVideoId] = useState(() => {
@@ -2113,6 +2291,7 @@ export default function App() {
   }, [])
   const exitView = () => { history.pushState({}, '', location.pathname); setView(null) }
   if (view === 'agent') return <AgentDashboard onExit={exitView} />
+  if (view === 'perf') return <PerfDashboard onExit={exitView} />
   if (view === 'learn') return <LearnView onExit={exitView} onOpen={open} />
   if (view === 'community') return <CommunityView onExit={exitView} onOpen={open} />
   return videoId ? <Lecture key={`${videoId}-${role}`} videoId={videoId} role={role} /> : <Landing onOpen={open} />
