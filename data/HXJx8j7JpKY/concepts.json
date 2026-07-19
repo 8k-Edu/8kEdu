@@ -1,0 +1,16 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Tie Position vs Wide End Length",
+  "explanation": "Shows how adjusting the wide end length changes where the tie ends, helping you set it correctly quickly.",
+  "params": {
+   "expr": "finalPos = wide_end - 4",
+   "sliders": [
+    "wide_end"
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ }
+]
