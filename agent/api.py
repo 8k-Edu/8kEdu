@@ -18,9 +18,9 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from agent import db, tools
+from agent import db, kg, tools
 
 # Load .env early so AGENT_HANDLE (and everything else) is set before routes fire.
 db.load_env()
@@ -132,6 +132,49 @@ def containment():
         pass
     _containment_cache["data"] = out
     return out
+
+
+class GraphBuild(BaseModel):
+    topic: str = "ai_stem"
+    video_ids: list[str] = Field(default_factory=lambda: ["kCc8FmEb1nY"])
+
+
+class RecursionReplay(BaseModel):
+    topic: str = "ai_stem"
+    target_video_id: str = "42L1q1Z4Ojc"
+    add_to_graph: bool = True
+
+
+@app.get("/agent/graph")
+def graph(topic: str = "ai_stem"):
+    try:
+        return {"ok": True, **kg.graph_snapshot(topic)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:240], "nodes": [], "edges": [], "summary": {}}
+
+
+@app.post("/agent/kg/build")
+def graph_build(req: GraphBuild):
+    try:
+        return kg.build_graph(req.topic, req.video_ids)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:240]}
+
+
+@app.get("/agent/recursion")
+def recursion(topic: str = "ai_stem", limit: int = 30):
+    try:
+        return {"ok": True, "topic": topic, "runs": kg.recursion_runs(topic, limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:240], "runs": []}
+
+
+@app.post("/agent/recursion/replay")
+def recursion_replay(req: RecursionReplay):
+    try:
+        return kg.replay_benchmark(req.topic, req.target_video_id, req.add_to_graph)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:240]}
 
 
 # ---------- R1: dynamic curriculum (Duolingo-style) ----------
