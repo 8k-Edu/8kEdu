@@ -1,0 +1,8 @@
+# Egress allowlist gateway (squid). Dual-homed: internal net (faces the reasoner) +
+# a normal bridge (faces the internet). The reasoner has no other route out.
+FROM debian:12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends squid ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY deploy/containment/squid.conf /etc/squid/squid.conf
+RUN mkdir -p /var/log/squid && chown -R proxy:proxy /var/log/squid
+CMD ["squid", "-N", "-f", "/etc/squid/squid.conf"]

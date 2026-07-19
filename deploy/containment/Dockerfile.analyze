@@ -1,0 +1,10 @@
+# The contained reasoner: 8kEdu's analyze step, nothing else.
+# Only the openrouter (cloud vision) code path is exercised, so the image needs just
+# openai + pillow. curl is included solely for the 4-way network fail-closed test.
+FROM python:3.12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir "openai>=1.30" pillow
+WORKDIR /sandbox
+COPY analyze.py .
+ENTRYPOINT ["python", "analyze.py"]
