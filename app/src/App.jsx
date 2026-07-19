@@ -945,7 +945,9 @@ function Lecture({ videoId, role }) {
           )}
         </div>
       )}
-      <style>{`@keyframes kedu-spin{to{transform:rotate(360deg)}} .kedu-spin{animation:kedu-spin .8s linear infinite}`}</style>
+      <style>{`@keyframes kedu-spin{to{transform:rotate(360deg)}} .kedu-spin{animation:kedu-spin .8s linear infinite}
+        input:focus{box-shadow:0 0 0 3px #1f6feb40;transition:box-shadow .15s ease}
+        button{transition:filter .12s ease,transform .1s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.98)}`}</style>
       {proc?.state === 'done' && !analyzed && (
         <div style={{ color: '#56d364', fontSize: 13 }}>done — {proc.widgets} widgets minted. reloading…</div>
       )}
@@ -1023,6 +1025,7 @@ function AttentionField({ light = false }) {
 function LandingStyles({ acc }) {
   return <style>{`
     @keyframes eduGlow{0%,100%{opacity:.55}50%{opacity:1}}
+    input:focus{box-shadow:0 0 0 3px ${acc}44;transition:box-shadow .15s ease}
     .edu-card{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
     .edu-card:hover{transform:translateY(-3px);border-color:${acc}99;box-shadow:0 12px 34px -14px ${acc}66}
     .edu-open{transition:transform .12s ease,filter .18s ease}
