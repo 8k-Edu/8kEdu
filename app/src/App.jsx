@@ -2142,6 +2142,55 @@ function ConceptGraph({ nodes, edges, selected, onSelect, T }) {
   )
 }
 
+function RecursiveLearningCurve({ cold, warm, T }) {
+  if (!cold || !warm) {
+    return <div style={{ minHeight: 190, display: 'grid', placeItems: 'center', color: T.faint, fontSize: 13 }}>Run the controlled cold/warm experiment to draw the learning curve.</div>
+  }
+  const width = 860
+  const height = 190
+  const left = 76
+  const right = width - 56
+  const top = 28
+  const bottom = height - 48
+  const maxCalls = Math.max(1, cold.vlm_calls, warm.vlm_calls)
+  const points = [
+    { x: left, y: top + (1 - cold.vlm_calls / maxCalls) * (bottom - top), calls: cold.vlm_calls, label: 'RUN 1 · COLD', sub: 'no cross-teacher memory', color: '#ffab70' },
+    { x: right, y: top + (1 - warm.vlm_calls / maxCalls) * (bottom - top), calls: warm.vlm_calls, label: 'RUN 2 · WARM', sub: `${warm.widgets_reused} graph reuses`, color: '#56d364' },
+  ]
+  const reduction = Math.round((1 - warm.vlm_calls / Math.max(1, cold.vlm_calls)) * 100)
+  const gridValues = [maxCalls, Math.round(maxCalls / 2), 0]
+  return (
+    <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px 10px', marginTop: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+        <div><strong>Improvement over time</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>same held-out task · lower is better</span></div>
+        <div style={{ display: 'flex', gap: 8, fontFamily: mono, fontSize: 10.5 }}>
+          <span style={{ color: '#56d364', border: '1px solid #56d36444', background: '#56d36412', borderRadius: 999, padding: '4px 8px' }}>calls ↓ {reduction}%</span>
+          <span style={{ color: '#b48eff', border: '1px solid #b48eff44', background: '#b48eff12', borderRadius: 999, padding: '4px 8px' }}>known recall {Math.round((warm.concept_recall || 0) * 100)}%</span>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`VLM calls improve from ${cold.vlm_calls} cold to ${warm.vlm_calls} warm`} style={{ width: '100%', height: 190, display: 'block', marginTop: 4 }}>
+        <defs>
+          <linearGradient id="recursiveCurve" x1="0" x2="1"><stop offset="0" stopColor="#ffab70" /><stop offset="1" stopColor="#56d364" /></linearGradient>
+          <linearGradient id="recursiveArea" x1="0" x2="1"><stop offset="0" stopColor="#ffab70" stopOpacity=".15" /><stop offset="1" stopColor="#56d364" stopOpacity=".04" /></linearGradient>
+        </defs>
+        {gridValues.map(value => {
+          const y = top + (1 - value / maxCalls) * (bottom - top)
+          return <g key={value}><line x1={left} x2={right} y1={y} y2={y} stroke={T.line} strokeDasharray="3,5" /><text x={left - 14} y={y + 4} textAnchor="end" fill={T.faint} fontFamily={mono} fontSize="10">{value}</text></g>
+        })}
+        <text x="12" y={(top + bottom) / 2} fill={T.faint} fontFamily={mono} fontSize="10" transform={`rotate(-90 12 ${(top + bottom) / 2})`}>PLANNED VLM CALLS</text>
+        <path d={`M ${points[0].x} ${bottom} L ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y} L ${points[1].x} ${bottom} Z`} fill="url(#recursiveArea)" />
+        <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke="url(#recursiveCurve)" strokeWidth="5" strokeLinecap="round" />
+        {points.map(point => <g key={point.label}>
+          <circle cx={point.x} cy={point.y} r="10" fill={T.panel} stroke={point.color} strokeWidth="4" />
+          <text x={point.x} y={Math.max(17, point.y - 18)} textAnchor="middle" fill={point.color} fontFamily={mono} fontSize="15" fontWeight="800">{point.calls} calls</text>
+          <text x={point.x} y={height - 22} textAnchor="middle" fill={T.text} fontFamily={mono} fontSize="11" fontWeight="800">{point.label}</text>
+          <text x={point.x} y={height - 8} textAnchor="middle" fill={T.faint} fontFamily={mono} fontSize="9.5">{point.sub}</text>
+        </g>)}
+      </svg>
+    </div>
+  )
+}
+
 function RecursiveDashboard({ onExit }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
   const T = THEMES[theme]
@@ -2240,6 +2289,8 @@ function RecursiveDashboard({ onExit }) {
           <StatTile T={T} label="call reduction" value={reduction == null ? '—' : `${reduction}%`} sub="self-RAG + exploration" accent="#56d364" />
           <StatTile T={T} label="known recall" value={latestWarm?.concept_recall == null ? '—' : `${Math.round(latestWarm.concept_recall * 100)}%`} sub="against full-sweep concepts" accent="#b48eff" />
         </div>
+
+        <RecursiveLearningCurve cold={latestCold} warm={latestWarm} T={T} />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(280px,.85fr)', gap: 16, marginTop: 18 }}>
           <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px 8px', overflow: 'hidden' }}>

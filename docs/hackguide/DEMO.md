@@ -42,7 +42,7 @@ Open the graph. Point to concepts, exemplars, teachers, and reinforced nodes. Ex
 
 ### 4. Recursive proof — 1:48–2:37
 
-Hold on the cold/warm rows. State that this is a reproducible replay over cached real full-sweep outputs, not a fresh wall-clock test.
+Trace the over-time curve from run one to run two, then hold on the cold/warm rows. State that this is a reproducible replay over cached real full-sweep outputs, not a fresh wall-clock test.
 
 Say the exact delta: **64 cold calls → eight warm exploration calls + seven graph reuses; 56 calls saved; 87.5% reduction; 100% recall and precision.**
 
