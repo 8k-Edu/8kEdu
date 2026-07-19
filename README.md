@@ -1,10 +1,42 @@
-# 8kedu — lectures you can touch
+# 8kEdu — lectures you can touch
 
-Turn any YouTube lecture into an **interactive learning dashboard**. An AI pipeline reads the video's transcript + keyframes and turns every teachable moment into a **live, editable widget** beside the player — drag an attention matrix, run real Python in-browser, tweak a mortgage calculator with the speaker's own numbers. Works on any topic: AI/STEM, real estate, fintech.
+Turn any YouTube lecture into an **interactive learning dashboard**. An autonomous agent reads the video's transcript + keyframes and turns every teachable moment into a **live, editable widget** beside the player — drag an attention matrix, run real Python in-browser, tweak a mortgage calculator with the speaker's own numbers. Any topic: AI/STEM, real estate, fintech, how-to.
 
 > Brilliant.org, auto-generated from any lecture — on any topic.
 
-Part of the **8kedu autonomous learning agent** (built for the AITX × NVIDIA Claw Agent Hackathon). This repo is the video→widget **engine + app**; the agent layer (heartbeat curriculum builder, NemoClaw/OpenShell containment, Nemotron omni brain, Supabase persistence) wraps it — see [`spec/spec.md`](spec/spec.md) and [`docs/hackguide/`](docs/hackguide/).
+---
+
+## 🏁 Hackathon submission
+
+| | |
+|---|---|
+| **Project** | 8kEdu — *YouTube video → interactive learning dashboard* |
+| **Team** | `<TEAM NAME>` — roster below |
+| **Event** | AITX × NVIDIA Claw Agent Hackathon (Jul 17–19 2026) |
+| **Primary track** | **Recursive Intelligence** — a cross-teacher concept knowledge graph that makes each run cheaper/sharper ([plan](docs/hackguide/RECURSIVE.md)) |
+| **Also targeting** | **Red Hat Live Data** (Apify channel monitoring in the loop) · bounties: **NemoClaw + OpenShell**, **Nemotron**, **Most Commercializable** |
+| **Loom video (2–5 min)** | `<PASTE LOOM URL>` — records the core loop live *(must be recorded with Loom)* |
+| **Repo** | https://github.com/8k-Edu/8kEdu *(public)* |
+| **Deployed** | Runs locally — `dev.localhost:5174` (dev) / `localhost:5173` (main); working-app capture is in the Loom |
+
+### Write-up
+
+**Problem.** The best teaching on Earth is on YouTube, but it's *passive* — you watch someone manipulate an attention matrix or a mortgage model, and you can't touch it. Re-deriving that interactivity by hand, per lecture, doesn't scale.
+
+**Who it helps.** Students (tonight's lab from tonight's lecture), teachers (one-click decks), creators (one lecture → endless remixable artifacts), and researchers — a combined multi-hundred-billion-dollar learning market.
+
+**Solution.** 8kEdu is an autonomous **Claw Agent**: on a heartbeat it finds lectures, watches them with **Nemotron-3-Nano-Omni** (vision + reasoning + tools, one open model, local/$0), and turns each teachable moment into a live widget — matrices, softmax, plots, runnable notebooks. A second **curator** agent grows a shared library per genre. Everything persists + caches in **Supabase**: analyze a video once, every future learner reuses it, so marginal cost → ~$0. The agent runs **contained by NemoClaw + OpenShell** — its reasoning executes inside a sandbox that can reach only allowlisted services and is blocked (and audit-logged) from exfiltrating anything.
+
+**Impact.** A personal AI tutor that auto-builds a maintained, *touchable* course from any video, on any topic — with a cross-teacher knowledge graph that measurably gets faster and better the more it runs.
+
+### Team roster
+| Name | Role | Contact |
+|---|---|---|
+| Andy Khan | Agent loop, engine, frontend, containment | support@perspectivity.co |
+| Nickolas Scipione | Performance, observability, DB schema/infra | `<GitHub: nickscip / contact>` |
+| `<3rd member, if any>` | `<role>` | `<contact>` |
+
+> Fill the `<...>` placeholders (team name, Loom URL, contacts) before submitting.
 
 ---
 
@@ -48,7 +80,7 @@ Widget tiers: parametric kit (`matrix_mul`/`attention`/`softmax`/`function_plot`
 
 ---
 
-## Install
+## Quick start
 
 Prereqs: **Node ≥ 22.19**, **Python 3.12**, [`uv`](https://docs.astral.sh/uv/), `ffmpeg`. Local inference is optional (LM Studio or ollama with a vision + tools model); cloud backends are off by default.
 
@@ -57,7 +89,10 @@ git clone https://github.com/8k-Edu/8kEdu.git
 cd 8kEdu
 uv sync                 # python deps (yt-dlp, mlx-vlm, fastapi, pillow, …)
 cd app && npm install   # frontend deps
+cd .. && cd app && npm run dev   # browse the pre-baked demos at localhost:5173 — zero setup, zero model calls
 ```
+
+Everything below (live widget minting, the agent, the dashboard) is optional and needs `.env` + a local model.
 
 ---
 
@@ -118,6 +153,88 @@ Containment is applied + proven separately: see [`claw-agent/`](claw-agent/).
 > **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `TACTILE_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`/`vllm`) is unrestricted. Secrets live in a gitignored `.env` (see `.env.example`).
 
 Pyodide (for notebook widgets) is vendored under `data/pyodide-dist/` for offline use.
+
+### Contained agent (NemoClaw + OpenShell)
+
+The agent's reasoning can run **inside an OpenShell sandbox** that allowlists only YouTube, Apify,
+Supabase and the local model — everything else is blocked + OCSF-logged. Reproduce:
+
+```bash
+export DOCKER_HOST="unix:///Users/<you>/.orbstack/run/docker.sock"   # OrbStack socket
+nemoclaw scoutclaw policy-add 8kedu --from-file claw-agent/policies/8kedu.yaml --yes
+bash claw-agent/contain_demo.sh            # allowed sinks succeed, exfil blocked + logged
+bash claw-agent/contained_agent_demo.sh    # 8kEdu's analyze runs INSIDE the sandbox → real widget
+```
+Full write-up: [`claw-agent/README.md`](claw-agent/README.md).
+
+---
+
+## Sample `.env`
+
+Secrets live in a gitignored `.env` at the repo root. Copy this and fill in your values:
+
+```bash
+# --- Supabase (persistence + shared cache) ---
+# Prefer the Transaction pooler (IPv4 :6543); the direct db.<ref>.supabase.co:5432 is IPv6-only.
+SUPABASE_DB_URL="postgresql://postgres.<ref>:<db-password>@aws-0-<region>.pooler.supabase.com:6543/postgres"
+SUPABASE_URL="https://<ref>.supabase.co"
+SUPABASE_SECRET_KEY="sb_secret_..."          # service role (server-side only)
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
+SUPABASE_PROJECT_REF="<ref>"
+
+# --- Apify (live channel monitoring) ---
+APIFY_API_TOKEN="apify_api_..."
+APIFY_USER_ID="<apify-user-id>"
+
+# --- Model (Nemotron via any OpenAI-compatible server; LM Studio or ollama) ---
+TACTILE_MODEL="nvidia/nemotron-3-nano-omni"       # analyze/serve
+NEMOTRON_MODEL="nvidia/nemotron-3-nano-omni"      # agent brain
+# TACTILE_BASE_URL / NEMOTRON_BASE_URL default to http://localhost:1234/v1 (LM Studio)
+
+# --- Local runtime ---
+AGENT_HANDLE="demo"                                # per-learner isolation on the shared DB
+DOCKER_HOST="unix:///Users/<you>/.orbstack/run/docker.sock"   # for the NemoClaw sandbox
+# TACTILE_ALLOW_CLOUD=1                             # opt-in only; cloud VLM backends are off by default
+```
+
+No cloud API keys are required — the default path is **fully local** (LM Studio/ollama), $0.
+
+---
+
+## Datasets & provenance
+
+- **Demo lectures** — public YouTube videos, fetched with `yt-dlp`: Karpathy *Let's build GPT*
+  (`kCc8FmEb1nY`), VisualAI *Multi-Head Attention* (`42L1q1Z4Ojc`), a real-estate explainer, a fintech
+  explainer, an Epicurious how-to. We store derived artifacts only (transcript, keyframes, concept
+  specs) under `data/<videoId>/` — not the source video.
+- **Concept specs** — *generated* by Nemotron-3-Nano-Omni from each keyframe + transcript window
+  (the `{widget, params, …}` JSON). Cached in Supabase and reused across users.
+- **Community feed seed** — **synthetic** demo data: public-artifact rows seeded from real cached
+  concepts, with fabricated usernames (`ada`, `karpathy_fan`, …) and vote counts, to populate
+  `?view=community`. Clearly synthetic; no real user data.
+- **Curator library** — the curator agent discovers real YouTube videos per genre at runtime and
+  frames them; those become additional cached concepts.
+
+---
+
+## Known limitations & next steps
+
+**Limitations**
+- **Video download isn't sandboxed** — YouTube media comes from rotating `*.googlevideo.com`
+  subdomains that per-host egress can't practically allowlist; the *reasoning* (the part touching
+  untrusted content) is what runs contained.
+- **Learner/curator loops run on the host** — the `analyze` step runs contained (option D); putting
+  the whole heartbeat inside the sandbox is the remaining step.
+- **Recursive-intelligence KG** — designed + specced ([RECURSIVE.md](docs/hackguide/RECURSIVE.md));
+  the graph-build (T1) and viewer are the next build.
+- **Mastery → re-sequence** loop is schema-only (not yet wired).
+- **Community needs real auth** — currently a single `demo` learner; profiles/voting need Supabase Auth.
+
+**Next steps**
+1. Build the cross-teacher concept knowledge graph + `?view=graph` (recursive-intelligence delta).
+2. Run the full heartbeat inside the sandbox (finish option D end-to-end).
+3. Wire mastery feedback → curriculum re-sequencing.
+4. Supabase Auth → real profiles for the remix network.
 
 ---
 
