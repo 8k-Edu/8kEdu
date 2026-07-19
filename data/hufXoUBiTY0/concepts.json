@@ -1,0 +1,155 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Real Estate Cash Flow Calculator",
+  "explanation": "Determines whether a property meets the $100\u2011$200 monthly cash flow target based on purchase price, financing and rent.",
+  "params": {
+   "cells": [
+    "# Compute monthly mortgage payment\nimport numpy as np\nP = purchase_price * (1 - down_payment_percent/100)\nL = P\nr = interest_rate_annual/12/100\nn = loan_term_years*12\nmonthly_mortgage = L * r / (1 - (1+r)**-n)",
+    "# Compute net cash flow\nmonthly_rent = monthly_rent\nvacancy_loss = monthly_rent * vacancy_rate/100\noperating_expenses = monthly_rent * operating_expenses_ratio/100\net_cash_flow = monthly_rent - vacancy_loss - operating_expenses - monthly_mortgage\nprint(f\"Monthly cash flow: ${et_cash_flow:.2f}\")",
+    "# Plot cash flow vs purchase price\nimport matplotlib.pyplot as plt\nprices = np.linspace(100000,300000,200)\ncash_flows = []\nfor p in prices:\n    L = p * (1 - down_payment_percent/100)\n    r = interest_rate_annual/12/100\n    n = loan_term_years*12\n    mortgage = L * r / (1 - (1+r)**-n)\n    cf = monthly_rent - monthly_rent*vacancy_rate/100 - monthly_rent*operating_expenses_ratio/100 - mortgage\n    cash_flows.append(cf)\nplt.plot(prices, cash_flows)\nplt.xlabel('Purchase Price')\nplt.ylabel('Monthly Cash Flow')\nplt.title('Cash Flow vs Purchase Price')\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "purchase_price",
+     "default": 200000,
+     "min": 50000,
+     "max": 500000,
+     "step": 1000
+    },
+    {
+     "name": "down_payment_percent",
+     "default": 20,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    },
+    {
+     "name": "interest_rate_annual",
+     "default": 5,
+     "min": 0,
+     "max": 12,
+     "step": 0.1
+    },
+    {
+     "name": "monthly_rent",
+     "default": 1500,
+     "min": 0,
+     "max": 10000,
+     "step": 10
+    },
+    {
+     "name": "vacancy_rate",
+     "default": 5,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    },
+    {
+     "name": "operating_expenses_ratio",
+     "default": 30,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    }
+   ]
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Cash on Cash Return Calculator",
+  "explanation": "Computes the cash on cash return percentage based on monthly cash flow and total investment.",
+  "params": {
+   "expr": "12*monthly_cash_flow/total_investment*100",
+   "sliders": [
+    "monthly_cash_flow",
+    "total_investment"
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Cash on Cash Return Calculator",
+  "explanation": "It calculates the percentage return on your cash investment based on annual cash flow.",
+  "params": {
+   "cells": [
+    "annual_cash_flow = monthly_cash_flow * 12\ncash_on_cash_return = annual_cash_flow / investment_amount * 100\nprint(f\"Cash on cash return: {cash_on_cash_return:.2f}%\")"
+   ],
+   "sliders": [
+    {
+     "name": "investment_amount",
+     "min": 0,
+     "max": 200000,
+     "step": 1000,
+     "default": 74000
+    },
+    {
+     "name": "monthly_cash_flow",
+     "min": 0,
+     "max": 5000,
+     "step": 10,
+     "default": 200
+    }
+   ]
+  },
+  "time": 100,
+  "frame": "f_000100.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Cash on Cash Return Calculator",
+  "explanation": "Computes the cash on cash return percentage by dividing annual cash flow by the investment amount.",
+  "params": {
+   "expr": "(monthly_cash_flow*12)/investment_amount*100",
+   "sliders": [
+    "monthly_cash_flow",
+    "investment_amount"
+   ]
+  },
+  "time": 110,
+  "frame": "f_000110.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Cash on Cash Return Calculator",
+  "explanation": "It lets you adjust cash flow and investment amounts to see how the resulting cash on cash return compares to your target percentage.",
+  "params": {
+   "sliders": [
+    {
+     "name": "monthly_cash_flow",
+     "type": "float",
+     "default": 200
+    },
+    {
+     "name": "months_per_year",
+     "type": "int",
+     "default": 12
+    },
+    {
+     "name": "investment_amount",
+     "type": "float",
+     "default": 74000
+    }
+   ],
+   "cells": [
+    "# Compute annual cash flow",
+    "annual_cash_flow = monthly_cash_flow * months_per_year\nprint(f\"Annual cash flow: ${annual_cash_flow:,.0f}\")",
+    "# Cash on cash return percentage",
+    "coc_return_pct = (annual_cash_flow / investment_amount) * 100\nprint(f\"Cash on cash return: {coc_return_pct:.2f}%\")",
+    "# Plot actual vs target return",
+    "import matplotlib.pyplot as plt\n\ntarget_pct = 10  # teacher's minimum threshold\nlabels = ['Actual', 'Target']\nvalues = [coc_return_pct, target_pct]\ncolors = ['steelblue', 'orange']\nplt.bar(labels, values, color=colors)\nplt.ylabel('Return (%)')\nplt.ylim(0, max(values)*1.5)\nplt.title('Cash on Cash Return Comparison')\nplt.show()"
+   ]
+  },
+  "time": 130,
+  "frame": "f_000130.jpg"
+ }
+]
