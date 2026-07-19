@@ -12,7 +12,9 @@ Run:  uv run --with fastapi --with uvicorn --with psycopg2-binary agent/api.py
 import argparse
 import json
 import os
+import re
 import subprocess
+import urllib.request
 from pathlib import Path
 
 import uvicorn
@@ -114,6 +116,58 @@ def perf(limit: int = 50, scope: str = "mine"):
         }
     except Exception as e:
         return {"ok": False, "error": str(e)[:200], "events": [], "aggregates": {}}
+
+
+# vllm-metal exposes a Prometheus /metrics endpoint per engine (vision :8000, brain :8001).
+# We scrape both, keep only the handful of fields the live dashboard renders, and hide the
+# port topology from the browser (avoids CORS + lets the client stay engine-agnostic).
+_VLLM_METRICS_ENGINES = {"vision": 8000, "brain": 8001}
+_VLLM_METRIC_LINE = re.compile(
+    r'^vllm:(?P<name>[^\s{]+)(?:\{(?P<labels>[^}]*)\})?\s+(?P<value>[-+]?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?)\s*$'
+)
+_VLLM_KEEP = {
+    "num_requests_running", "num_requests_waiting",
+    "kv_cache_usage_perc",
+    "generation_tokens_total", "prompt_tokens_total",
+    "prefix_cache_queries_total", "prefix_cache_hits_total",
+    "mm_cache_queries_total", "mm_cache_hits_total",
+    "num_preemptions_total",
+}
+
+
+def _scrape_vllm(port: int, timeout: float = 0.6) -> dict | None:
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/metrics", timeout=timeout) as r:
+            text = r.read().decode("utf-8", errors="replace")
+    except Exception:
+        return None
+    out: dict = {}
+    for line in text.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        m = _VLLM_METRIC_LINE.match(line)
+        if not m:
+            continue
+        name, labels, value = m.group("name"), m.group("labels") or "", float(m.group("value"))
+        if name in _VLLM_KEEP:
+            out[name] = value
+        elif name == "engine_sleep_state" and 'sleep_state="awake"' in labels:
+            out["awake"] = int(value)
+        elif name == "request_success_total":
+            out["success_total"] = out.get("success_total", 0.0) + value
+        elif name == "num_requests_running" and "model_name=" in labels:
+            pass
+        if "model_name" not in out:
+            mn = re.search(r'model_name="([^"]+)"', labels)
+            if mn:
+                out["model_name"] = mn.group(1)
+    return out or None
+
+
+@app.get("/agent/vllm_metrics")
+def vllm_metrics():
+    """Snapshot of vllm-metal engine metrics for the live dashboard. Fails soft per engine."""
+    return {"ok": True, "engines": {name: _scrape_vllm(port) for name, port in _VLLM_METRICS_ENGINES.items()}}
 
 
 @app.get("/agent/containment")

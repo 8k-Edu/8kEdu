@@ -2686,6 +2686,118 @@ function Sparkline({ values, width = 220, height = 32, color = '#8ee23e', thresh
   )
 }
 
+function MiniTile({ T, label, value, accent }) {
+  return (
+    <div>
+      <div style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: T.faint }}>{label}</div>
+      <div style={{ fontFamily: mono, fontSize: 20, fontWeight: 800, color: accent || T.acc, marginTop: 1 }}>{value}</div>
+    </div>
+  )
+}
+
+function EngineCard({ T, theme, name, m }) {
+  if (!m) return (
+    <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: '14px 16px', opacity: 0.55 }}>
+      <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: T.faint }}>{name}</div>
+      <div style={{ fontSize: 14, color: T.muted, marginTop: 8 }}>offline — /metrics unreachable on this engine's port</div>
+    </div>
+  )
+  const prefixQ = m.prefix_cache_queries_total || 0
+  const prefixH = m.prefix_cache_hits_total || 0
+  const prefixPct = prefixQ > 0 ? Math.round((prefixH / prefixQ) * 100) : null
+  const mmQ = m.mm_cache_queries_total || 0
+  const mmH = m.mm_cache_hits_total || 0
+  const mmPct = mmQ > 0 ? Math.round((mmH / mmQ) * 100) : null
+  const kvPct = Math.round((m.kv_cache_usage_perc || 0) * 100)
+  const tok = m.tokPerSec != null ? m.tokPerSec.toFixed(m.tokPerSec >= 10 ? 0 : 1) : '—'
+  return (
+    <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+        <div>
+          <span style={{ fontFamily: mono, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: T.acc }}>{name}</span>
+          <span style={{ fontFamily: mono, fontSize: 11, color: T.faint, marginLeft: 8 }}>{m.model_name || ''}</span>
+        </div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: mono, fontSize: 10.5, color: m.awake ? '#56d364' : T.muted }}>
+          <span style={{ width: 7, height: 7, borderRadius: 4, background: m.awake ? '#56d364' : T.muted }} />
+          {m.awake ? 'awake' : 'asleep'}
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
+        <MiniTile T={T} label="running" value={Math.round(m.num_requests_running || 0)} accent={m.num_requests_running > 0 ? T.acc : T.muted} />
+        <MiniTile T={T} label="queued" value={Math.round(m.num_requests_waiting || 0)} accent={m.num_requests_waiting > 0 ? '#ffab70' : T.muted} />
+        <MiniTile T={T} label="kv %" value={`${kvPct}%`} accent={kvPct > 80 ? '#e5484d' : kvPct > 40 ? '#ffab70' : T.acc} />
+        <MiniTile T={T} label="preempt" value={Math.round(m.num_preemptions_total || 0)} accent={m.num_preemptions_total > 0 ? '#e5484d' : T.muted} />
+      </div>
+      <div style={{ marginTop: 12, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8', border: `1px solid ${T.line}`, borderRadius: 10, padding: '10px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: T.faint }}>tok/s · generation</span>
+          <span style={{ fontFamily: mono, fontSize: 22, fontWeight: 800, color: T.text }}>{tok}</span>
+        </div>
+        <Sparkline values={m.spark || []} width={280} height={36} color={T.acc} />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 10, fontFamily: mono, fontSize: 11 }}>
+        <span style={{ color: T.faint }}>prefix cache <span style={{ color: prefixPct != null ? T.text : T.muted, fontWeight: 700 }}>{prefixPct != null ? `${prefixPct}%` : '—'}</span> <span style={{ color: T.faint }}>({prefixH.toLocaleString()}/{prefixQ.toLocaleString()})</span></span>
+        <span style={{ color: T.faint }}>mm cache <span style={{ color: mmPct != null ? T.text : T.muted, fontWeight: 700 }}>{mmPct != null ? `${mmPct}%` : '—'}</span> <span style={{ color: T.faint }}>({mmH}/{mmQ})</span></span>
+      </div>
+    </div>
+  )
+}
+
+function EngineLivePanel({ T, theme }) {
+  const [engines, setEngines] = useState({ vision: null, brain: null })
+  const [err, setErr] = useState(false)
+  const histRef = useRef({ vision: [], brain: [] })
+  const prevRef = useRef({ vision: null, brain: null })
+
+  useEffect(() => {
+    let alive = true
+    const tick = async () => {
+      try {
+        const r = await fetch(P + '/agent/vllm_metrics')
+        const d = await r.json()
+        if (!alive) return
+        const now = performance.now()
+        const next = {}
+        for (const key of ['vision', 'brain']) {
+          const m = d.engines?.[key]
+          if (!m) { next[key] = null; continue }
+          const prev = prevRef.current[key]
+          let tokPerSec = null
+          if (prev && now > prev.t && m.generation_tokens_total >= prev.gen) {
+            const dt = (now - prev.t) / 1000
+            tokPerSec = dt > 0 ? (m.generation_tokens_total - prev.gen) / dt : null
+          }
+          const hist = histRef.current[key]
+          hist.push(tokPerSec ?? 0)
+          if (hist.length > 60) hist.shift()
+          next[key] = { ...m, tokPerSec, spark: [...hist] }
+          prevRef.current[key] = { gen: m.generation_tokens_total, t: now }
+        }
+        setEngines(next); setErr(false)
+      } catch {
+        setErr(true)
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => { alive = false; clearInterval(id) }
+  }, [])
+
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: T.acc }}>vllm-metal · engine live</div>
+        <span style={{ fontFamily: mono, fontSize: 11, color: err ? '#e5484d' : T.faint }}>{err ? '/agent/vllm_metrics offline' : 'polled 1×/s'}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+        {['vision', 'brain'].map(key => (
+          <EngineCard key={key} T={T} theme={theme} name={key} m={engines[key]} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PerfDashboard({ onExit }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
   const T = THEMES[theme]
@@ -2756,6 +2868,8 @@ function PerfDashboard({ onExit }) {
             target: <span style={{ color: T.text, fontWeight: 650 }}>p50 &lt; 5 s cold-miss</span> · red line on the sparkline marks the budget.
           </div>
         </div>
+
+        <EngineLivePanel T={T} theme={theme} />
 
         {/* stat tiles */}
         <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
