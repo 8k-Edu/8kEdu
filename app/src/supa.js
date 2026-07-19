@@ -1,28 +1,73 @@
-// Browser Supabase client with anonymous sign-in — gives each visitor a real auth.uid()
-// so votes are per-user and RLS-enforced (one vote per artifact), no email friction.
-// The anon/publishable key is public by design; we fetch it at runtime from /pub/config.
+// Community identity for the remix network.
+//
+// Primary path: Supabase anonymous auth — one tap, no email, gives a real auth.uid()
+// so votes are RLS-enforced (one per artifact+voter). Requires "Allow anonymous sign-ins"
+// enabled in Supabase → Authentication → Sign In / Providers.
+//
+// Fallback: if anonymous sign-in is disabled (or config missing), mint a persisted local
+// guest id so login + voting still work in the demo; votes go through the open /pub/vote
+// endpoint keyed on that stable id. Flipping the toggle upgrades identity to cloud with no
+// code change.
 import { createClient } from '@supabase/supabase-js'
 
-let _ready = null
+const LS_GUEST = '8kedu-guest-id'
+let _client
+let _clientPromise
 
-export function auth() {
-  if (_ready) return _ready
-  _ready = (async () => {
-    try {
-      const cfg = await fetch('/pub/config').then((r) => r.json())
-      if (!cfg?.url || !cfg?.anon_key) return { client: null, uid: null, reason: 'no config' }
-      const client = createClient(cfg.url, cfg.anon_key, { auth: { persistSession: true, autoRefreshToken: true } })
-      let { data: { session } } = await client.auth.getSession()
-      if (!session) {
-        const { error } = await client.auth.signInAnonymously()
-        // anonymous sign-ins must be enabled in Supabase → Auth settings; if off we degrade gracefully
-        if (error) return { client, uid: null, reason: error.message }
+async function client() {
+  if (_client !== undefined) return _client
+  if (!_clientPromise) {
+    _clientPromise = (async () => {
+      try {
+        const cfg = await fetch('/pub/config').then((r) => r.json())
+        _client = cfg?.url && cfg?.anon_key
+          ? createClient(cfg.url, cfg.anon_key, { auth: { persistSession: true, autoRefreshToken: true } })
+          : null
+      } catch {
+        _client = null
       }
-      const { data: { user } } = await client.auth.getUser()
-      return { client, uid: user?.id || null }
-    } catch (e) {
-      return { client: null, uid: null, reason: String(e).slice(0, 120) }
+      return _client
+    })()
+  }
+  return _clientPromise
+}
+
+const cloud = (user, c) => ({ uid: user.id, handle: 'guest-' + user.id.slice(0, 4), mode: 'cloud', client: c })
+
+function localGuest() {
+  let id = localStorage.getItem(LS_GUEST)
+  if (!id) {
+    id = 'guest-' + Math.random().toString(36).slice(2, 8)
+    localStorage.setItem(LS_GUEST, id)
+  }
+  return { uid: id, handle: id, mode: 'local', client: null }
+}
+
+// Restore an existing identity WITHOUT logging in — so a fresh visitor sees a "Sign in" button.
+export async function restore() {
+  const c = await client()
+  if (c) {
+    const { data: { session } } = await c.auth.getSession()
+    if (session?.user) return cloud(session.user, c)
+  }
+  const existing = localStorage.getItem(LS_GUEST)
+  return existing ? { uid: existing, handle: existing, mode: 'local', client: null } : null
+}
+
+export async function signInGuest() {
+  const c = await client()
+  if (c) {
+    const { error } = await c.auth.signInAnonymously()
+    if (!error) {
+      const { data: { user } } = await c.auth.getUser()
+      if (user) return cloud(user, c)
     }
-  })()
-  return _ready
+  }
+  return localGuest()
+}
+
+export async function signOut() {
+  const c = await client()
+  if (c) { try { await c.auth.signOut() } catch { /* ignore */ } }
+  localStorage.removeItem(LS_GUEST)
 }

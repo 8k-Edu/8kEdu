@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
-import { auth } from './supa.js'
+import { restore, signInGuest, signOut } from './supa.js'
 
 const TYPE_ICON = {
   matrix_mul: '✕', attention: '◧', softmax: '▮', function_plot: '∿', composite: '⧉', notebook: '🐍',
@@ -1620,8 +1620,11 @@ function CommunityView({ onExit, onOpen }) {
   const [sort, setSort] = useState('hot')
   const [items, setItems] = useState([])
   const [err, setErr] = useState(null)
-  const [sess, setSess] = useState(null)   // {client, uid} from anonymous Supabase auth
-  useEffect(() => { auth().then(setSess) }, [])
+  const [me, setMe] = useState(null)        // {uid, handle, mode:'cloud'|'local', client} or null
+  const [authBusy, setAuthBusy] = useState(false)
+  useEffect(() => { restore().then(setMe) }, [])
+  const login = async () => { setAuthBusy(true); try { setMe(await signInGuest()) } finally { setAuthBusy(false) } }
+  const logout = async () => { await signOut(); setMe(null) }
   const load = async (s) => {
     try {
       const r = await fetch(`/pub/feed?sort=${s ?? sort}`); const d = await r.json()
@@ -1631,16 +1634,17 @@ function CommunityView({ onExit, onOpen }) {
   useEffect(() => { load() }, [sort])
   const setVotes = (id, n) => setItems(x => x.map(a => a.id === id ? { ...a, votes: n } : a))
   const upvoteVia = async (id) => {
-    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: sess?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
+    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: me?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
     const d = await r.json(); if (d.ok) setVotes(id, d.votes)
   }
   const upvote = async (id) => {
-    // Real per-user vote: RLS lets each anon identity vote once (PK artifact_id+voter).
-    if (sess?.client && sess?.uid) {
+    if (!me) return login()   // must have an identity to vote
+    // Cloud identity → RLS insert (one vote per artifact+voter); local guest → open endpoint.
+    if (me.client && me.mode === 'cloud') {
       try {
-        const { error } = await sess.client.from('votes').insert({ artifact_id: id, voter: sess.uid })
+        const { error } = await me.client.from('votes').insert({ artifact_id: id, voter: me.uid })
         if (error && error.code !== '23505') return upvoteVia(id)   // 23505 = already voted → no-op
-        const { count } = await sess.client.from('votes').select('*', { count: 'exact', head: true }).eq('artifact_id', id)
+        const { count } = await me.client.from('votes').select('*', { count: 'exact', head: true }).eq('artifact_id', id)
         if (typeof count === 'number') setVotes(id, count)
         return
       } catch (e) { return upvoteVia(id) }
@@ -1659,7 +1663,22 @@ function CommunityView({ onExit, onOpen }) {
             <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
             <Logo size={28} wordColor={T.text} />
           </div>
-          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>{theme === 'dark' ? '☀' : '☾'}</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {me ? (
+              <button onClick={logout} title={`${me.mode === 'cloud' ? 'signed in (cloud identity)' : 'guest — enable Supabase anonymous sign-ins for cloud identity'} · click to sign out`}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '5px 12px 5px 6px', fontSize: 13, cursor: 'pointer' }}>
+                <span style={{ width: 22, height: 22, borderRadius: 11, background: T.acc, color: T.accText, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{me.handle.replace('guest-', '')[0]?.toUpperCase() || 'G'}</span>
+                <span style={{ fontFamily: mono, fontSize: 12 }}>{me.handle}</span>
+                <span title={me.mode === 'cloud' ? 'cloud identity' : 'local guest'} style={{ fontSize: 11 }}>{me.mode === 'cloud' ? '☁' : '🕶'}</span>
+              </button>
+            ) : (
+              <button onClick={login} disabled={authBusy}
+                style={{ background: T.acc, border: 'none', color: T.accText, borderRadius: 999, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: authBusy ? 'default' : 'pointer', opacity: authBusy ? .6 : 1 }}>
+                {authBusy ? 'signing in…' : 'Sign in as guest'}
+              </button>
+            )}
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>{theme === 'dark' ? '☀' : '☾'}</button>
+          </div>
         </div>
 
         <div style={{ marginTop: 26, textAlign: 'center' }}>
@@ -1705,7 +1724,7 @@ function CommunityView({ onExit, onOpen }) {
         </div>
         {!items.length && !err && <div style={{ color: T.faint, textAlign: 'center', marginTop: 40 }}>no public artifacts yet</div>}
         <div style={{ textAlign: 'center', marginTop: 26, fontFamily: mono, fontSize: 12, color: T.faint }}>
-          a remix is just a URL · publish is one tap · <span style={{ color: T.muted }}>{sess?.uid ? `signed in · one vote each (RLS) · id ${sess.uid.slice(0, 8)}` : 'anonymous voting via Supabase Auth'}</span>
+          a remix is just a URL · publish is one tap · <span style={{ color: T.muted }}>{me ? (me.mode === 'cloud' ? `signed in · one vote each (RLS) · ${me.handle}` : `guest · ${me.handle} · enable Supabase anonymous sign-ins for cloud identity`) : 'sign in to vote'}</span>
         </div>
       </div>
     </div>
