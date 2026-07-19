@@ -67,6 +67,7 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] `claw-agent/policies/8kedu.yaml` — egress allowlist (youtube/apify/supabase/local-inference), schema-valid, applied as **policy v4** on `scoutclaw`
 - [x] Blocked-exfil demo: `claw-agent/contain_demo.sh` — YouTube→200, Supabase→401 (reached), webhook.site exfil→**BLOCKED**; agent's own `python3` urllib path denied too
 - [x] OCSF audit log proof: `NET:OPEN DENIED python3.13 -> webhook.site:443 [reason: not allowed by any policy]`, `denied_action_count=1`
+- [x] **option D done** — 8kEdu's `analyze` runs *inside* scoutclaw (Nemotron via allowlisted endpoint → real widget; exfil blocked + OCSF-logged; snapshot-persisted). Unblocked by allowlisting the OpenShell gateway IP. See `claw-agent/contained_agent_demo.sh`
 - [ ] final step for demo: `nemoclaw scoutclaw shields up` on camera
 
 **P3 — agent dashboard** ✅ done — judges SEE the autonomy

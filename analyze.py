@@ -19,6 +19,7 @@ import base64
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 MLX_MODEL = os.environ.get("TACTILE_MLX_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit")
@@ -389,11 +390,18 @@ def main() -> None:
                     help="output filename (use e.g. concepts.mlx.json for eval runs)")
     ap.add_argument("--genre", default="auto",
                     help=f"system-prompt lens: auto|general|{'|'.join(GENRE_PROMPTS)}")
+    ap.add_argument("--recursive-topic", default="",
+                    help="persistent concept-graph topic, e.g. ai_stem")
+    ap.add_argument("--recursive-mode", choices=["off", "cold", "warm"], default="off")
+    ap.add_argument("--experiment-id", default="")
+    ap.add_argument("--exploration-rate", type=float, default=0.125)
+    ap.add_argument("--max-px", type=int, default=0)
     args = ap.parse_args()
     data = Path(args.data) / args.video if args.video else Path(args.data)
 
     cues = json.loads((data / "transcript.json").read_text())
-    frames = json.loads((data / "frames.json").read_text())
+    all_frames = json.loads((data / "frames.json").read_text())
+    frames = all_frames
     frames = frames[args.start:]
     if args.limit:
         frames = frames[: args.limit]
@@ -402,22 +410,46 @@ def main() -> None:
     print(f"genre lens: {genre}")
     backend = make_backend(args.backend)
 
+    recursive = None
+    plans = [{"kind": "explore", "frame": frame, "context": transcript_window(cues, frame["time"]),
+              "node": None, "score": 0.0} for frame in frames]
+    if args.recursive_topic:
+        from agent import kg
+        recursive = kg
+        if args.recursive_mode == "warm":
+            plans = kg.plan_frames(args.recursive_topic, cues, frames, args.exploration_rate)
+            print(f"recursive warm plan: {len(plans)}/{len(frames)} frames, "
+                  f"{sum(1 for plan in plans if plan['kind'] == 'reuse')} retrieved")
+
+    started = time.perf_counter()
     concepts = []
-    for i, fr in enumerate(frames):
-        ctx = transcript_window(cues, fr["time"])
+    vlm_calls = 0
+    widgets_reused = 0
+    for i, plan in enumerate(plans):
+        fr = plan["frame"]
+        ctx = plan["context"]
+        spec = recursive.reusable_spec(plan) if recursive and plan["kind"] == "reuse" else None
+        if spec and valid(spec):
+            widgets_reused += 1
+            spec["time"] = fr["time"]
+            spec["frame"] = fr["file"]
+            concepts.append(spec)
+            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ↻ {spec['widget']}: {spec.get('title', '')[:60]}")
+            continue
         try:
-            raw = backend.ask(data / "frames" / fr["file"], ctx)
+            vlm_calls += 1
+            raw = backend.ask(data / "frames" / fr["file"], ctx, max_px=args.max_px or None)
         except Exception as e:  # keep sweeping; one bad frame must not kill the run
-            print(f"[{i+1}/{len(frames)}] {fr['time']:>7.1f}s  ! {e}")
+            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ! {e}")
             continue
         spec = extract_json(raw)
         if valid(spec):
             spec["time"] = fr["time"]
             spec["frame"] = fr["file"]
             concepts.append(spec)
-            print(f"[{i+1}/{len(frames)}] {fr['time']:>7.1f}s  ✓ {spec['widget']}: {spec.get('title', '')[:60]}")
+            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  ✓ {spec['widget']}: {spec.get('title', '')[:60]}")
         else:
-            print(f"[{i+1}/{len(frames)}] {fr['time']:>7.1f}s  – no concept")
+            print(f"[{i+1}/{len(plans)}] {fr['time']:>7.1f}s  – no concept")
 
     merged = []
     for c in concepts:
@@ -427,6 +459,31 @@ def main() -> None:
 
     (data / args.out_name).write_text(json.dumps(merged, indent=1))
     print(f"done: {len(merged)} concepts (of {len(concepts)} raw) → {data}/{args.out_name}")
+
+    if recursive and args.recursive_mode != "off":
+        elapsed_ms = round((time.perf_counter() - started) * 1000)
+        recursive.log_processing_run(args.recursive_topic, {
+            "experiment_id": args.experiment_id or f"live-{args.video}-{int(time.time())}",
+            "mode": f"live_{args.recursive_mode}",
+            "video_id": args.video,
+            "source_videos": [],
+            "frames_total": len(frames),
+            "frames_analyzed": len(plans),
+            "vlm_calls": vlm_calls,
+            "widgets_new": max(0, len(merged) - widgets_reused),
+            "widgets_reused": widgets_reused,
+            "novel_concepts": max(0, len(merged) - widgets_reused),
+            "known_concepts": widgets_reused,
+            "build_ms": elapsed_ms,
+            "yield": round(len(merged) / max(1, len(plans)), 3),
+            "concept_recall": None,
+            "retrieval_precision": None,
+            "model": getattr(backend, "model_name", args.backend),
+            "prompt_version": "kg-v1",
+            "metadata": {"output": args.out_name, "exploration_rate": args.exploration_rate},
+        })
+        if args.recursive_mode == "warm":
+            recursive.ingest_specs(args.recursive_topic, args.video, merged)
 
 
 if __name__ == "__main__":
