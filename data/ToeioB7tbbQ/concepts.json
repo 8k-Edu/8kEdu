@@ -1,0 +1,64 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "5K Training Calculator",
+  "explanation": "Estimate calorie burn and plan weekly training volume for a first 5k based on bodyweight, target time, and weeks of preparation.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nbodyweight_kg = bodyweight_kg\ngoal_time_min = goal_time_min\nweeks = weeks\npace_min_per_km = goal_time_min / 5\ncalories_per_run = bodyweight_kg * 5 * 0.5  # kcal\nweekly_runs = 3\ntotal_calories = calories_per_run * weekly_runs * weeks\nprint(f\"Estimated total calories over {weeks} weeks: {total_calories:.1f}\")\n\ncum_cal = np.arange(1, weeks+1) * calories_per_run * weekly_runs\nplt.figure(figsize=(6,4))\nplt.plot(cum_cal, marker='o')\nplt.title('Cumulative Calories Over Training Weeks')\nplt.xlabel('Week')\nplt.ylabel('Calories (kcal)')\nplt.grid(True)\nplt.show()",
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Simple bar chart of weekly mileage (km) assuming 3 runs per week at half the 5k distance\nweekly_km = 2.5 * 3  # half 5k per run\nweeks_array = np.arange(1, weeks+1)\nplt.figure(figsize=(6,4))\nplt.bar(weeks_array, weekly_km * weeks_array, color='skyblue')\nplt.title('Weekly Mileage (km)')\nplt.xlabel('Week')\nplt.ylabel('Kilometers')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.show()"
+   ],
+   "sliders": [
+    "bodyweight_kg",
+    "goal_time_min",
+    "weeks"
+   ]
+  },
+  "time": 10,
+  "frame": "f_000010.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Running Schedule Planner",
+  "explanation": "It lets you adjust training parameters to see how many kilometers you\u2019ll run each week.",
+  "params": {
+   "expr": "weeks * days * distance",
+   "sliders": [
+    {
+     "name": "weeks",
+     "default": 4
+    },
+    {
+     "name": "days",
+     "default": 3
+    },
+    {
+     "name": "distance",
+     "default": 5
+    }
+   ]
+  },
+  "time": 130,
+  "frame": "f_000130.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Weekly Running Volume Calculator",
+  "explanation": "It shows how many miles you\u2019ll run each week based on your chosen schedule, helping you build a consistent running habit.",
+  "params": {
+   "sliders": {
+    "runs_per_week": 3,
+    "distance_miles": 5,
+    "duration_minutes": 30
+   },
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef weekly_volume(runs, miles):\n    return runs * miles\n\ntotal = weekly_volume(runs_per_week, distance_miles)\nprint(f\"Total weekly mileage: {total} miles\")\nplt.bar(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], [distance_miles]*runs_per_week + [0]*(7-runs_per_week))\nplt.title('Weekly Running Schedule')\nplt.ylabel('Miles')\nplt.show()"
+   ]
+  },
+  "time": 150,
+  "frame": "f_000150.jpg"
+ }
+]
