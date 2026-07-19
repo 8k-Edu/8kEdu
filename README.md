@@ -88,6 +88,16 @@ Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` / `openai` (any 
 
 ### The autonomous agent + live dashboard
 
+The agent stack (`?view=agent`, `?view=learn`, `?view=community`) persists to
+Supabase. One-time setup:
+
+1. Create a Supabase project → Project Settings → Database → copy the connection URI.
+2. Add it to `.env`: `SUPABASE_DB_URL="postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres"`.
+3. Apply the schema — pick one:
+   - **Tracked** (Supabase CLI, brew install supabase/tap/supabase):
+     `supabase link --project-ref <ref> && supabase db push`
+   - **One-shot** (psql): `psql "$SUPABASE_DB_URL" -f supabase/migrations/*.sql`
+
 ```bash
 # learner heartbeat — Nemotron decides FIND / PROCESS / SEQUENCE / MONITOR each tick
 uv run python -m agent.loop --interval 60
@@ -95,8 +105,8 @@ uv run python -m agent.loop --interval 60
 # curator heartbeat — autonomously grows the shared library per genre (find → frame → cache)
 uv run python -m agent.curator --interval 300
 
-# dashboard API (light, no VLM) — powers ?view=agent
-uv run python -m agent.api   # :8787, vite proxies /agent → here
+# dashboard API (light, no VLM) — powers ?view=agent / ?view=learn / ?view=community
+uv run python -m agent.api   # :8787, vite proxies /agent and /pub → here
 ```
 Or just **`./run.sh --loop`** to start everything (serve + api + frontend + both heartbeats).
 Then open **http://localhost:5173/?view=agent** (or `dev.localhost:5174` on the dev branch) — the live

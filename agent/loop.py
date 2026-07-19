@@ -13,6 +13,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent import db, brain, tools
 
+db.load_env()  # so AGENT_HANDLE is resolvable at argparse time
+
 DECIDE_SYSTEM = (
     "You are 8kEdu, an autonomous learning agent. On each heartbeat you decide the single next "
     "action that best advances the learner toward their goal. Actions: "
@@ -117,7 +119,7 @@ def tick(user_id, goal):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--goal", default="master transformers from Karpathy's lecture")
-    ap.add_argument("--handle", default="demo")
+    ap.add_argument("--handle", default=os.environ.get("AGENT_HANDLE", "demo"))
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--interval", type=int, default=60)
     args = ap.parse_args()

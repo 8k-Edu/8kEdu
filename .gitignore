@@ -9,3 +9,8 @@ nohup.out
 node_modules/
 __pycache__/
 dist/
+
+# claude-code plugin skill machinery (per-user, not source)
+.agents/
+.claude/skills/
+skills-lock.json
