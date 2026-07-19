@@ -11,7 +11,7 @@ Turn any YouTube lecture into an **interactive learning dashboard**. An autonomo
 | | |
 |---|---|
 | **Project** | 8kEdu — *YouTube video → interactive learning dashboard* |
-| **Team** | `<TEAM NAME>` — roster below |
+| **Team** | **Team 8kEdu** — roster below |
 | **Event** | AITX × NVIDIA Claw Agent Hackathon (Jul 17–19 2026) |
 | **Primary track** | **Recursive Intelligence** — a cross-teacher concept knowledge graph that makes each run cheaper/sharper ([plan](docs/hackguide/RECURSIVE.md)) |
 | **Also targeting** | **Red Hat Live Data** (Apify channel monitoring in the loop) · bounties: **NemoClaw + OpenShell**, **Nemotron**, **Most Commercializable** |
@@ -33,10 +33,9 @@ Turn any YouTube lecture into an **interactive learning dashboard**. An autonomo
 | Name | Role | Contact |
 |---|---|---|
 | Andy Khan | Agent loop, engine, frontend, containment | support@perspectivity.co |
-| Nickolas Scipione | Performance, observability, DB schema/infra | `<GitHub: nickscip / contact>` |
-| `<3rd member, if any>` | `<role>` | `<contact>` |
+| Nickolas Scipione | Performance, observability, DB schema/infra | github.com/nickscip |
 
-> Fill the `<...>` placeholders (team name, Loom URL, contacts) before submitting.
+> Paste the Loom URL before submitting.
 
 ---
 
@@ -49,6 +48,8 @@ Turn any YouTube lecture into an **interactive learning dashboard**. An autonomo
 - **Point at the video** ("touch the screen") — drag a box over any drawing → it comes alive.
 - **Remix** — any widget's state encodes into a URL + QR (no backend); **export** selected moments to Jupyter `.ipynb`, Markdown, or a printable deck.
 - **Roles** — student / teacher / creator / researcher tailor the default view + export.
+- **Recursive memory** — `?view=graph` shows cross-teacher concepts and a persisted 64→8 held-out
+  replay with recall and precision guardrails.
 
 ---
 
@@ -225,16 +226,20 @@ No cloud API keys are required — the default path is **fully local** (LM Studi
   untrusted content) is what runs contained.
 - **Learner/curator loops run on the host** — the `analyze` step runs contained (option D); putting
   the whole heartbeat inside the sandbox is the remaining step.
-- **Recursive-intelligence KG** — designed + specced ([RECURSIVE.md](docs/hackguide/RECURSIVE.md));
-  the graph-build (T1) and viewer are the next build.
+- **Recursive benchmark is a replay** — the 64→8 result uses cached real full-sweep outputs and a
+  concrete warm retrieval plan; it is not a fresh paired wall-clock run.
+- **Warm reuse copies a validated prior spec** — adapting that spec to the new teacher's exact visual
+  parameters is the next grounding upgrade.
+- **Widget priors and prerequisite edges are visible but not yet closed-loop** — generation bias and
+  prerequisite-sorted course assembly remain future work.
 - **Mastery → re-sequence** loop is schema-only (not yet wired).
 - **Community needs real auth** — currently a single `demo` learner; profiles/voting need Supabase Auth.
 
 **Next steps**
-1. Build the cross-teacher concept knowledge graph + `?view=graph` (recursive-intelligence delta).
-2. Run the full heartbeat inside the sandbox (finish option D end-to-end).
-3. Wire mastery feedback → curriculum re-sequencing.
-4. Supabase Auth → real profiles for the remix network.
+1. Run fresh paired cold/warm model benchmarks and adapt retrieved specs to new-frame parameters.
+2. Use widget priors during generation and prerequisite edges during course assembly.
+3. Run the full heartbeat inside the sandbox end to end.
+4. Wire mastery feedback → curriculum re-sequencing; add Supabase Auth for real profiles.
 
 ---
 

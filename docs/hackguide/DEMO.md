@@ -1,69 +1,74 @@
-# 8kEdu — Demo Runbook
+# 8kEdu — Loom recording runbook
 
-Target: a tight **~2-minute** demo video that hits all four judging criteria. Record in this order.
+Target: **4:05–4:25**, camera on, one continuous walkthrough. Read the exact narration in [`DEMO_VIDEO_TRANSCRIPT.md`](DEMO_VIDEO_TRANSCRIPT.md).
 
-## Before you record
+## Start and verify
+
 ```bash
-./run.sh            # serve + agent-api + frontend  (add --loop to run the live heartbeat)
+./run.sh
 ```
-Confirm the LLM server is up — LM Studio serving `nvidia/nemotron-3-nano-omni` on :1234, or vllm-mlx via `./scripts/serve-vllm.sh` (then `KEDU_BACKEND=vllm`) — and the scoutclaw sandbox is up
-(`nemoclaw scoutclaw status`). Open the app at `http://dev.localhost:5174/`.
 
-Have two terminals ready: one for the app, one for `claw-agent/contain_demo.sh`.
+Confirm the local Nemotron endpoint is up. Open `http://dev.localhost:5174/` and prepare these tabs:
 
----
+1. Landing page.
+2. Karpathy lecture at a working attention or softmax widget.
+3. `/?view=graph`.
+4. `/?view=agent`.
+5. Optional containment terminal.
 
-## Scene 1 — the hook (15s)
-**Landing page.** "Drop any YouTube lecture, an autonomous agent turns it into an interactive
-course." Show the hero: the Karpathy video pours into the funnel, artifacts pop out, the river of
-artifacts flows. One line: *"This isn't a chatbot — it's an agent that works on a heartbeat."*
+The graph must show:
 
-## Scene 2 — the product vision, live (30s)  → `?view=learn`
-Click **learn**. Type **"Reinforcement Learning"** → *build my course*.
-- The agent runs a real search and proposes **two paths** (Fast track / Deep dive) — real videos.
-- Pick Fast track → the **Duolingo unit map** appears: unit 1 unlocked, the rest locked.
-- Line: *"It found the videos, sequenced the course, and it'll process each unit on its heartbeat."*
+- 15 concepts and 59 real frame exemplars.
+- Two teachers and 11 reinforced concepts.
+- Cold: 64/64 frames, 64 VLM calls.
+- Warm: 15/64 frames, seven reuses, eight VLM calls.
+- 87.5% reduction and 100% known-concept recall.
 
-## Scene 3 — watch the autonomy (30s)  → `?view=agent`
-Click **agent live**. This is the money shot.
-- **Heartbeat feed**: real decisions — FIND → PROCESS (⚡ 55 widgets reused) → SEQUENCE — each with
-  Nemotron's reasoning and a timestamp.
-- Press **⏻ wake now** → a new heartbeat fires live, Nemotron decides, the feed updates.
-- Point at the tiles: **cache hit-rate**, **$ saved**, **containment ON · N exfil blocked**.
-- **Watching for new uploads** (Apify) + **Contained by OpenShell** panels.
-- Line: *"Nemotron decides, the tools act, Supabase remembers — every 60 seconds, on its own."*
+Do **not** click **test unseen teacher** while recording. VisualAI is already in the graph because the valid held-out experiment ran before admission.
 
-## Scene 4 — contain the capable agent (25s)  → terminal
-```bash
-bash claw-agent/contain_demo.sh
-```
-- YouTube → 200 (allowed) · Supabase → 401 reached (allowed) · **webhook.site exfil → BLOCKED**.
-- Show the OCSF audit line: `NET:OPEN DENIED python3 -> webhook.site:443 [not allowed by any policy]`.
-- Line: *"A learning agent that runs generated code and reaches the web is dangerous — so we
-  contained it. Everything off the allowlist is blocked and logged."*
-- Optional flourish: `nemoclaw scoutclaw shields up`.
+## Recording order
 
-## Scene 5 — it compounds (15s)  → `?view=community`
-Click **community**. The remix feed: artifacts other learners published, upvoted, forked.
-- Line: *"Every artifact is a URL — publish, upvote, remix. One lecture becomes endless content."*
+### 1. Team and hook — 0:00–0:43
 
-## Close (10s)
-Back to the landing gallery — scroll the genres (AI, How-To, Real estate, Fintech).
-- Line: *"Any topic, not just code. Analyze once, cached for everyone — marginal cost near zero.
-  That's 8kEdu."*
+Introduce Andy Khan, Nickolas Scipione, Team 8kEdu, and the Recursive Intelligence Track. Pitch passive video → interactive learning + persistent cross-teacher memory.
 
----
+### 2. Product — 0:43–1:15
 
-## The four criteria, hit in order
-- **Technical execution** — Scene 3 (real heartbeat, tools, DB, no crash).
-- **Sponsor use** — Scenes 3+4 (Nemotron, OpenShell, Supabase, Apify all on screen) + the 6 "why"
-  lines in [`SUBMISSION.md`](SUBMISSION.md).
-- **Value & impact** — Scene 2 (paste a goal → a real course).
-- **Frontier factor** — Scene 4 (a *contained* code-gen agent) + the cache moat number in Scene 3.
+Manipulate a live widget beside the synchronized Karpathy lecture. Name yt-dlp, FFmpeg, Nemotron, validated specs, and React.
 
-## If something fails on camera
-- LM Studio slow/down → the loop shows a **heuristic fallback** run (still advances) — that's a
-  feature, mention it. The frontend still renders cached data.
-- Apify slow → `monitor_channel` falls back to yt-dlp automatically.
-- serve.py down → the engine badge shows "offline"; the dashboard + learn/community still work
-  (they read Supabase via the agent API, not the VLM).
+### 3. Persistent memory — 1:15–1:48
+
+Open the graph. Point to concepts, exemplars, teachers, and reinforced nodes. Explain knowledge graph + compressed episodic memory + self-RAG.
+
+### 4. Recursive proof — 1:48–2:37
+
+Hold on the cold/warm rows. State that this is a reproducible replay over cached real full-sweep outputs, not a fresh wall-clock test.
+
+Say the exact delta: **64 cold calls → eight warm exploration calls + seven graph reuses; 56 calls saved; 87.5% reduction; 100% recall and precision.**
+
+### 5. Mechanism — 2:37–3:06
+
+Click Self-attention. Show Andrej Karpathy and VisualAI together. Explain transcript matching, validated spec reuse, exploration, and graph reinforcement.
+
+### 6. Agent and containment — 3:06–3:39
+
+Open the agent dashboard. Show persisted heartbeat decisions and containment. Wake the agent only if the model is already warm.
+
+### 7. “So what?” — 3:39–4:20
+
+Return to the cross-teacher exemplars. Close on active learning, reusable educator material, and the system becoming cheaper as memory grows.
+
+## Truth guardrails
+
+- Do not claim measured cold/warm wall-clock time.
+- Do not claim new-frame parameter adaptation; warm retrieval currently copies a validated prior spec.
+- Do not describe the recursive result as a same-video cache hit.
+- Do not claim Nemotron canonicalizes concepts; canonicalization is deterministic.
+- Do not show or mention a “Best of every teacher” button or prerequisite-sorted course.
+
+## If something fails
+
+- Keep the graph tab loaded before starting Loom; it reads the persisted proof from Supabase.
+- If the local model is cold, do not press **Wake now**. Narrate the already-persisted heartbeat rows.
+- If containment is slow, show its persisted dashboard status and explain the prepared allowlist/block proof.
+- If the widget API drops, use an already-loaded interactive widget; the recursive proof remains available through the agent API.
