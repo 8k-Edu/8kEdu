@@ -22,6 +22,9 @@ from pydantic import BaseModel
 
 from agent import db, tools
 
+# Load .env early so AGENT_HANDLE (and everything else) is set before routes fire.
+db.load_env()
+
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -29,10 +32,16 @@ ROOT = Path(__file__).resolve().parent.parent
 DOCKER_HOST = "unix:///Users/azehady/.orbstack/run/docker.sock"
 
 
+def _handle() -> str:
+    """Learner identity for this process. Isolates state on a shared Supabase."""
+    return os.environ.get("AGENT_HANDLE", "demo")
+
+
 @app.get("/agent/state")
 def state():
     try:
-        return {"ok": True, **db.dashboard_state()}
+        user_id = db.ensure_learner(_handle())
+        return {"ok": True, **db.dashboard_state(user_id)}
     except Exception as e:
         return {"ok": False, "error": str(e)[:200]}
 
@@ -42,7 +51,7 @@ def tick():
     """Fire one heartbeat and return the decision — the agent wakes on demand for the demo."""
     from agent import loop
     try:
-        user_id = db.ensure_learner("demo")
+        user_id = db.ensure_learner(_handle())
         goal = db.active_goal(user_id)
         if not goal:
             goal = {"id": db.set_goal(user_id, "master transformers from Karpathy's lecture"),
@@ -101,7 +110,7 @@ class Propose(BaseModel):
 def learn_propose(req: Propose):
     """Learner says what to learn → agent finds videos → proposes 2 course paths."""
     try:
-        user_id = db.ensure_learner("demo")
+        user_id = db.ensure_learner(_handle())
         goal_id = db.set_goal(user_id, req.subject)
         with db.conn() as c, c.cursor() as cur:
             cur.execute("update goals set kind=%s, level=%s where id=%s", (req.kind, req.level, goal_id))
