@@ -132,8 +132,8 @@ _WIDGET_EVENT_KEYS = (
 
 
 def log_widget_event(payload: dict) -> None:
-    """Insert one row into widget_events synchronously (opens its own connection).
-    Kept for tests / one-off callers. The hot path uses enqueue_widget_event instead."""
+    """Synchronous single-row insert for tests / one-off callers.
+    The hot path uses enqueue_widget_event instead."""
     cols = ",".join(_WIDGET_EVENT_KEYS)
     placeholders = ",".join(["%s"] * len(_WIDGET_EVENT_KEYS))
     values = [payload.get(k) for k in _WIDGET_EVENT_KEYS]
@@ -145,12 +145,8 @@ def log_widget_event(payload: dict) -> None:
         pass  # observability must never break the request
 
 
-# --- fire-and-forget telemetry writer -------------------------------------------------
-# A single background thread drains a bounded queue holding ONE reused connection, so the
-# hot path (serve.py /api/*) pays only a microsecond put_nowait — no per-event connect,
-# no .env disk read, no unbounded thread spawning. Events are dropped (never blocked) if
-# the queue backs up; batched inserts share a commit during bursts; the writer reconnects
-# on connection loss (Supabase pooler may drop an idle connection).
+# One writer thread + one reused connection drains the queue, so the hot path pays only a
+# put_nowait instead of a connection handshake per event. See enqueue_widget_event.
 _event_q: "_queue.Queue | None" = None
 _writer_started = False
 _writer_lock = _threading.Lock()
@@ -164,14 +160,14 @@ def _widget_event_writer() -> None:
     sql = f"insert into widget_events({cols}) values ({placeholders})"
     c = None
     while True:
-        batch = [_event_q.get()]  # block until at least one event
-        try:  # opportunistically coalesce a burst into one commit
+        batch = [_event_q.get()]
+        try:
             while len(batch) < _EVENT_BATCH_MAX:
                 batch.append(_event_q.get_nowait())
         except _queue.Empty:
             pass
         rows = [[e.get(k) for k in _WIDGET_EVENT_KEYS] for e in batch]
-        for _attempt in (1, 2):  # reconnect-and-retry once on connection loss
+        for _attempt in (1, 2):  # retry once: the pooler may have dropped an idle connection
             try:
                 if c is None or c.closed:
                     c = psycopg2.connect(os.environ["SUPABASE_DB_URL"], connect_timeout=20)
@@ -185,17 +181,17 @@ def _widget_event_writer() -> None:
                         c.close()
                 except Exception:
                     pass
-                c = None  # force a fresh connect on retry; drop the batch if retry fails
+                c = None
 
 
 def enqueue_widget_event(payload: dict) -> None:
-    """Non-blocking hand-off to the single writer thread. Drops the event if the queue is
-    full — telemetry must never block or OOM the request path."""
+    """Non-blocking hand-off to the writer thread. Drops the event if the queue is full —
+    telemetry must never block or OOM the request path."""
     global _event_q, _writer_started
     if not _writer_started:
         with _writer_lock:
             if not _writer_started:
-                load_env()  # ensure SUPABASE_DB_URL before the writer's first connect
+                load_env()
                 _event_q = _queue.Queue(maxsize=_EVENT_Q_MAX)
                 _threading.Thread(target=_widget_event_writer, daemon=True,
                                   name="widget-event-writer").start()
