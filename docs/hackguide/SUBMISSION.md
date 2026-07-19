@@ -39,8 +39,11 @@ unreachable → heuristic fallback; tool failure → logged error run; it never 
 2. **NemoClaw + OpenShell** — *build a capable agent worth containing, then contain it.* The agent
    has web reach (yt-dlp/Apify) and executes generated Python — genuinely dangerous. The `8kedu`
    egress policy allowlists exactly YouTube, Apify, Supabase and the local model; **everything else
-   is blocked at the proxy and written to a tamper-evident OCSF audit log.** Proof: an exfil to
-   `webhook.site` is `DENIED` — the agent's own `python3` interpreter, blocked on camera.
+   is blocked at the proxy and written to a tamper-evident OCSF audit log.** And it's not just a
+   probe: **8kEdu's actual reasoning (`analyze.py`) runs *inside* `scoutclaw`** — Nemotron reaches
+   only the allowlisted endpoint, produces a real widget, and **cannot exfil what it made** (POST to
+   `webhook.site` → `DENIED`, OCSF-logged). Provisioned within the policy (pypi-only), snapshot-persisted.
+   See [`claw-agent/contained_agent_demo.sh`](../../claw-agent/contained_agent_demo.sh).
 
 3. **Supabase** — *persistence is the Claw-Agent requirement, and the moat.* Two tiers: per-learner
    state (goals, curriculum, mastery) and a **global cache** (transcripts, frames, concepts,
