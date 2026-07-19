@@ -70,7 +70,7 @@ def process_new(video_id, genre, title="", channel=""):
         subprocess.run(runner + ["ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                        cwd=ROOT, timeout=900, check=True)
     subprocess.run(runner + ["analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
-                    "--video", video_id, "--genre", genre, "--limit", "16",
+                    f"--video={video_id}", "--genre", genre, "--limit", "16",  # = form: IDs can start with '-'
                     "--recursive-topic", genre, "--recursive-mode", "warm", "--max-px", "512"],
                    cwd=ROOT, timeout=2400, check=True)
     n = tools._upsert_from_disk(video_id)
