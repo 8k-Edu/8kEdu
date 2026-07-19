@@ -102,25 +102,67 @@ def mark_curriculum(cid, state):
 
 
 # ---------- inference_cache — frame-level moat: identical asks across users never recompute ----------
+# The live ask path calls these per request, so they reuse one connection instead of paying
+# a ~600ms pooler handshake each time (see the perf baseline). Guarded by a lock because
+# uvicorn runs sync endpoints across a threadpool, and a psycopg2 connection isn't
+# shareable across concurrent cursors.
+_cache_conn = None
+_cache_conn_lock = _threading.Lock()
+
+
+def _cache_connection():
+    global _cache_conn
+    if _cache_conn is None or _cache_conn.closed:
+        load_env()
+        _cache_conn = psycopg2.connect(os.environ["SUPABASE_DB_URL"], connect_timeout=20)
+    return _cache_conn
+
+
+def _drop_cache_connection():
+    global _cache_conn
+    try:
+        if _cache_conn:
+            _cache_conn.close()
+    except Exception:
+        pass
+    _cache_conn = None
+
+
 def cache_get(prompt_hash):
     """Hit → return the stored result and bump the hits counter. Miss → None."""
-    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("select result from inference_cache where prompt_hash=%s", (prompt_hash,))
-        row = _one(cur)
-        if not row:
-            return None
-        cur.execute("update inference_cache set hits = hits + 1 where prompt_hash=%s", (prompt_hash,))
-        c.commit()
-        return row["result"]
+    with _cache_conn_lock:
+        for _attempt in (1, 2):
+            try:
+                c = _cache_connection()
+                with c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("select result from inference_cache where prompt_hash=%s", (prompt_hash,))
+                    row = cur.fetchone()
+                    if not row:
+                        c.commit()
+                        return None
+                    cur.execute("update inference_cache set hits = hits + 1 where prompt_hash=%s",
+                                (prompt_hash,))
+                c.commit()
+                return row["result"]
+            except Exception:
+                _drop_cache_connection()
+        return None
 
 
 def cache_put(prompt_hash, video_id, model, result):
-    with conn() as c, c.cursor() as cur:
-        cur.execute(
-            "insert into inference_cache(cache_key,video_id,model,prompt_hash,result,hits) "
-            "values (%s,%s,%s,%s,%s,0) on conflict (cache_key) do nothing",
-            (prompt_hash, video_id, model, prompt_hash, json.dumps(result)))
-        c.commit()
+    with _cache_conn_lock:
+        for _attempt in (1, 2):
+            try:
+                c = _cache_connection()
+                with c.cursor() as cur:
+                    cur.execute(
+                        "insert into inference_cache(cache_key,video_id,model,prompt_hash,result,hits) "
+                        "values (%s,%s,%s,%s,%s,0) on conflict (cache_key) do nothing",
+                        (prompt_hash, video_id, model, prompt_hash, json.dumps(result)))
+                c.commit()
+                return
+            except Exception:
+                _drop_cache_connection()
 
 
 # ---------- widget_events — per-request observability for the /api/* hot path ----------
