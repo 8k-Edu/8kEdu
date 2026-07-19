@@ -110,17 +110,31 @@ network_policies:
       - { path: /sandbox/.local/bin/python* }
 
   # --- REASON: Nemotron Omni via the host inference gateway ---
+  # :8000 = vllm-mlx (primary), :1234 = LM Studio (fallback) — both reached through
+  # host.openshell.internal so the contained agent works with whichever is serving.
   local_inference:
     name: local_inference
     endpoints:
       - host: host.openshell.internal
-        port: 1234
+        port: 8000
         protocol: rest
         enforcement: enforce
         allowed_ips:
           # OpenShell's host gateway (host.openshell.internal) resolves to 0.250.250.254
           # inside the sandbox — not a standard private range, so it must be allowlisted
           # explicitly or the SSRF guard 403s the model call.
+          - 0.250.250.0/24
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/v1/**" }
+      - host: host.openshell.internal
+        port: 1234
+        protocol: rest
+        enforcement: enforce
+        allowed_ips:
           - 0.250.250.0/24
           - 10.0.0.0/8
           - 172.16.0.0/12
