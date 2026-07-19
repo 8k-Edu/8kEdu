@@ -88,17 +88,25 @@ network_policies:
           - allow: { method: GET, path: "/**" }
           - allow: { method: POST, path: "/**" }
           - allow: { method: PATCH, path: "/**" }
-      # transaction pooler (psycopg2) — raw TCP, no L7 rules
+      # transaction pooler (psycopg2) — raw TCP passthrough, no MITM so postgres TLS works
       - host: cfyelmzuuwqadnwxcxkv.supabase.co
         port: 6543
         access: full
       - host: cfyelmzuuwqadnwxcxkv.supabase.co
         port: 5432
         access: full
+      # the IPv4 pooler host we actually connect through (aws-0-<region>.pooler.supabase.com)
+      - host: "*.pooler.supabase.com"
+        port: 6543
+        access: full
+      - host: "*.pooler.supabase.com"
+        port: 5432
+        access: full
     binaries:
       - { path: /usr/bin/curl }
       - { path: /usr/bin/python3* }
       - { path: /sandbox/.venv/bin/python* }
+      - { path: /sandbox/.local/bin/python* }
 
   # --- REASON: Nemotron Omni via the host inference gateway ---
   local_inference:
