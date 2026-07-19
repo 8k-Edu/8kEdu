@@ -2785,6 +2785,7 @@ export default function App() {
   const [role, setRole] = useState(() => new URLSearchParams(location.search).get('role'))
   const open = (id, r) => {
     history.pushState({}, '', `?v=${id}${r ? `&role=${r}` : ''}`)
+    setView(null)   // leave community/learn so the lesson actually renders
     setVideoId(id)
     setRole(r ?? null)
   }
