@@ -121,6 +121,40 @@ def cache_put(prompt_hash, video_id, model, result):
         c.commit()
 
 
+# ---------- widget_events — per-request observability for the /api/* hot path ----------
+_WIDGET_EVENT_KEYS = (
+    "handle", "video_id", "t_s", "frame_file", "kind",
+    "t_cache_lookup_ms", "t_backend_ask_ms", "t_parse_validate_ms", "t_total_ms",
+    "cache_hit", "model", "spec_valid", "widget_kind", "error",
+)
+
+
+def log_widget_event(payload: dict) -> None:
+    """Insert one row into widget_events. Safe to call from any thread; swallows errors
+    so telemetry never breaks the hot path. See supabase migration 20260719020731."""
+    cols = ",".join(_WIDGET_EVENT_KEYS)
+    placeholders = ",".join(["%s"] * len(_WIDGET_EVENT_KEYS))
+    values = [payload.get(k) for k in _WIDGET_EVENT_KEYS]
+    try:
+        with conn() as c, c.cursor() as cur:
+            cur.execute(f"insert into widget_events({cols}) values ({placeholders})", values)
+            c.commit()
+    except Exception:
+        pass  # observability must never break the request
+
+
+def recent_widget_events(handle: str | None = None, limit: int = 50) -> list[dict]:
+    """Most recent widget_events, optionally scoped to a handle."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        if handle:
+            cur.execute(
+                "select * from widget_events where handle=%s order by created_at desc limit %s",
+                (handle, limit))
+        else:
+            cur.execute("select * from widget_events order by created_at desc limit %s", (limit,))
+        return [dict(r) for r in cur.fetchall()]
+
+
 # ---------- curator: grow the shared library per genre ----------
 def set_video_genre(video_id, genre, title="", channel_name=""):
     ensure_video(video_id, title, channel_name)

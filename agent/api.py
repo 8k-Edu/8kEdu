@@ -74,6 +74,42 @@ def library():
         return {"ok": False, "error": str(e)[:200], "videos": []}
 
 
+def _pctile(sorted_values, p):
+    if not sorted_values:
+        return None
+    idx = min(len(sorted_values) - 1, int(round((p / 100.0) * (len(sorted_values) - 1))))
+    return sorted_values[idx]
+
+
+@app.get("/agent/perf")
+def perf(limit: int = 50, scope: str = "mine"):
+    """Recent widget_events + p50/p90/p99. scope='mine' filters to AGENT_HANDLE; 'all' returns global."""
+    try:
+        handle = _handle() if scope == "mine" else None
+        events = db.recent_widget_events(handle=handle, limit=limit)
+        # events already sorted desc by created_at — for percentiles we want them in perf order
+        totals = sorted([e["t_total_ms"] for e in events if e.get("t_total_ms") is not None])
+        vlms = sorted([e["t_backend_ask_ms"] for e in events
+                       if e.get("t_backend_ask_ms") is not None and not e.get("cache_hit")])
+        hit_rate = round(sum(1 for e in events if e.get("cache_hit")) / len(events), 3) if events else 0.0
+        return {
+            "ok": True,
+            "handle": handle,
+            "count": len(events),
+            "events": events,
+            "aggregates": {
+                "cache_hit_rate": hit_rate,
+                "t_total_p50_ms": _pctile(totals, 50),
+                "t_total_p90_ms": _pctile(totals, 90),
+                "t_total_p99_ms": _pctile(totals, 99),
+                "t_backend_ask_p50_ms": _pctile(vlms, 50),
+                "t_backend_ask_p90_ms": _pctile(vlms, 90),
+            },
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200], "events": [], "aggregates": {}}
+
+
 @app.get("/agent/containment")
 def containment():
     """Live policy status from the scoutclaw sandbox (cached — the sandbox call is slow)."""
