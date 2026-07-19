@@ -278,18 +278,25 @@ def recent_runs(limit=10):
         return [dict(r) for r in cur.fetchall()]
 
 
-def dashboard_state(limit=12):
-    """Everything the live agent dashboard shows, in one round-trip-ish read."""
+def dashboard_state(user_id, limit=12):
+    """Everything the live agent dashboard shows, in one round-trip-ish read.
+
+    Per-learner state (runs, curriculum, goals, channels) is filtered by user_id
+    so teammates sharing this Supabase see only their own workspace. The cache
+    stats (concepts_cached / videos_cached / infer_hits / infer_entries) stay
+    global — that's the moat, shared by design.
+    """
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
-            "select id, job, woke_at, status, decided, actions from runs order by woke_at desc limit %s",
-            (limit,))
+            "select id, job, woke_at, status, decided, actions from runs "
+            "where user_id=%s order by woke_at desc limit %s",
+            (user_id, limit))
         runs = [dict(r) for r in cur.fetchall()]
 
-        # scope the course to the demo learner's active goal (avoids mixing multiple goals)
+        # scope the course to THIS learner's active goal (single-course dashboard view)
         cur.execute(
-            "select g.id from goals g join learners l on l.user_id=g.user_id "
-            "where l.handle='demo' and g.status='active' order by g.created_at limit 1")
+            "select id from goals where user_id=%s and status='active' "
+            "order by created_at limit 1", (user_id,))
         grow = cur.fetchone()
         active_goal_id = grow["id"] if grow else None
         cur.execute(
@@ -304,19 +311,25 @@ def dashboard_state(limit=12):
         concepts_cached = cur.fetchone()["count"]
         cur.execute("select count(distinct video_id) from concepts")
         videos_cached = cur.fetchone()["count"]
-        # cache reuses = ticks that hit the Supabase cache instead of recomputing
-        cur.execute("select count(*) from runs where actions->>'source' = 'supabase-cache'")
+        # this learner's cache reuses = their ticks that hit Supabase instead of recomputing
+        cur.execute(
+            "select count(*) from runs where user_id=%s and actions->>'source' = 'supabase-cache'",
+            (user_id,))
         cache_reuses = cur.fetchone()["count"]
-        # frame-level cache: identical asks served without a VLM call
+        # frame-level cache: identical asks served without a VLM call (global)
         cur.execute("select coalesce(sum(hits),0) as h, count(*) as n from inference_cache")
         ic = cur.fetchone()
         infer_hits, infer_entries = int(ic["h"]), int(ic["n"])
 
-        cur.execute("select goal_text from goals where status='active' order by created_at limit 1")
+        cur.execute(
+            "select goal_text from goals where user_id=%s and status='active' "
+            "order by created_at limit 1", (user_id,))
         g = cur.fetchone()
         goal = g["goal_text"] if g else None
 
-        cur.execute("select channel_id, last_checked, last_video_id from monitored_channels order by id")
+        cur.execute(
+            "select channel_id, last_checked, last_video_id from monitored_channels "
+            "where user_id=%s order by id", (user_id,))
         channels = [dict(r) for r in cur.fetchall()]
 
         cur.execute(
