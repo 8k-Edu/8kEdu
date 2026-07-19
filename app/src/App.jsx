@@ -1488,6 +1488,7 @@ function Landing({ onOpen }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <a href="?view=learn" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>learn</a>
         <a href="?view=community" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>community</a>
+        <a href="?view=graph" style={{ textDecoration: 'none', color: T.acc, background: T.acc + '12', border: `1px solid ${T.acc}66`, borderRadius: 999, padding: '7px 13px', fontSize: 13, fontWeight: 700 }}>recursive ↗</a>
         <a href="?view=agent"
           style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: T.panel, border: `1px solid ${T.acc}55`, color: T.text, borderRadius: 999, padding: '7px 13px', fontSize: 13, cursor: 'pointer' }}>
           <span className="edu-pulse" style={{ width: 8, height: 8, borderRadius: 4, background: T.acc, display: 'inline-block' }} />
@@ -2088,6 +2089,202 @@ function AgentDashboard({ onExit }) {
   )
 }
 
+function ConceptGraph({ nodes, edges, selected, onSelect, T }) {
+  const width = 680
+  const height = 430
+  const visible = nodes.slice(0, 28)
+  const visibleIds = new Set(visible.map(node => node.id))
+  const positions = useMemo(() => {
+    const map = {}
+    visible.forEach((node, index) => {
+      const ring = index < 7 ? 0 : 1
+      const ringIndex = ring === 0 ? index : index - 7
+      const ringCount = ring === 0 ? Math.min(7, visible.length) : Math.max(1, visible.length - 7)
+      const angle = (ringIndex / ringCount) * Math.PI * 2 - Math.PI / 2
+      const radiusX = ring === 0 ? 145 : 285
+      const radiusY = ring === 0 ? 112 : 185
+      map[node.id] = { x: width / 2 + Math.cos(angle) * radiusX, y: height / 2 + Math.sin(angle) * radiusY }
+    })
+    return map
+  }, [visible.map(node => node.id).join(',')])
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', minHeight: 390, display: 'block' }}>
+      <defs>
+        <filter id="nodeGlow"><feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      {edges.filter(edge => visibleIds.has(edge.src_id) && visibleIds.has(edge.dst_id)).map((edge, index) => {
+        const source = positions[edge.src_id]
+        const target = positions[edge.dst_id]
+        return <line key={`${edge.src_id}-${edge.dst_id}-${edge.kind}-${index}`} x1={source.x} y1={source.y} x2={target.x} y2={target.y}
+          stroke={edge.kind === 'prereq' ? '#b48eff' : T.line} strokeWidth={edge.kind === 'prereq' ? 1.8 : Math.min(3, .5 + edge.weight * .35)}
+          strokeDasharray={edge.kind === 'prereq' ? '5,4' : undefined} opacity={edge.kind === 'prereq' ? .8 : .48} />
+      })}
+      {visible.map(node => {
+        const pos = positions[node.id]
+        const active = selected?.id === node.id
+        const reinforced = node.exemplar_count > 1
+        const radius = Math.min(26, 9 + Math.sqrt(node.exemplar_count) * 4)
+        return (
+          <g key={node.id} transform={`translate(${pos.x},${pos.y})`} onClick={() => onSelect(node)} style={{ cursor: 'pointer' }}>
+            {reinforced && <circle r={radius + 7} fill="none" stroke={T.acc} strokeWidth="1" opacity=".25"><animate attributeName="r" values={`${radius + 4};${radius + 10};${radius + 4}`} dur="2.8s" repeatCount="indefinite" /></circle>}
+            <circle r={radius} fill={active ? T.acc : reinforced ? '#1d4322' : T.panel} stroke={active ? T.acc : reinforced ? '#56d364' : T.faint}
+              strokeWidth={active ? 3 : 1.5} filter={active ? 'url(#nodeGlow)' : undefined} />
+            <text textAnchor="middle" y="3.5" fill={active ? T.accText : T.text} fontSize="10" fontFamily={mono} fontWeight="800">{node.exemplar_count}</text>
+            <text textAnchor="middle" y={radius + 14} fill={active ? T.acc : T.sub} fontSize="10.5" fontFamily={mono}>
+              {node.label.length > 24 ? `${node.label.slice(0, 22)}…` : node.label}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function RecursiveDashboard({ onExit }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('8kedu-theme') || 'dark')
+  const T = THEMES[theme]
+  const [graph, setGraph] = useState(null)
+  const [runs, setRuns] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [busy, setBusy] = useState(null)
+  const [err, setErr] = useState(null)
+  useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
+
+  const load = async () => {
+    try {
+      const [graphResponse, runsResponse] = await Promise.all([
+        fetch('/agent/graph?topic=ai_stem'),
+        fetch('/agent/recursion?topic=ai_stem&limit=30'),
+      ])
+      const graphData = await graphResponse.json()
+      const runsData = await runsResponse.json()
+      if (!graphData.ok) throw new Error(graphData.error || 'graph unavailable')
+      setGraph(graphData)
+      setRuns(runsData.runs || [])
+      setSelected(current => current ? graphData.nodes.find(node => node.id === current.id) || graphData.nodes[0] : graphData.nodes[0])
+      setErr(null)
+    } catch (error) {
+      setErr(error.message || 'agent api offline')
+    }
+  }
+  useEffect(() => { load() }, [])
+
+  const runAction = async (kind, path, payload) => {
+    setBusy(kind)
+    setErr(null)
+    try {
+      const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const data = await response.json()
+      if (!data.ok) throw new Error(data.error || `${kind} failed`)
+      await load()
+    } catch (error) {
+      setErr(error.message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const latestWarm = runs.find(run => run.mode === 'benchmark_warm')
+  const latestCold = latestWarm && runs.find(run => run.mode === 'benchmark_cold' && run.experiment_id === latestWarm.experiment_id)
+  const reduction = latestCold && latestWarm
+    ? Math.round((1 - latestWarm.vlm_calls / Math.max(1, latestCold.vlm_calls)) * 100)
+    : null
+  const nodes = graph?.nodes || []
+  const edges = graph?.edges || []
+  const summary = graph?.summary || {}
+  const exemplars = selected?.exemplars || []
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
+      <LandingStyles acc={T.acc} />
+      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '18px 24px 64px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
+            <Logo size={28} wordColor={T.text} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: mono, fontSize: 11, color: err ? '#e5484d' : '#56d364' }}>● {err ? 'offline' : 'persistent memory live'}</span>
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>{theme === 'dark' ? '☀' : '☾'}</button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 26, display: 'flex', justifyContent: 'space-between', gap: 20, alignItems: 'end', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>recursive intelligence · ai_stem</div>
+            <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', lineHeight: 1.02, letterSpacing: '-.045em', margin: '9px 0 0', maxWidth: 760 }}>Every teacher makes the next lecture cheaper—and sharper.</h1>
+            <div style={{ color: T.sub, fontSize: 15, marginTop: 10, maxWidth: 760 }}>Concepts collapse across teachers into persistent memory. The held-out benchmark runs the same 64 VisualAI frames cold and warm—no retraining, no same-video cache.</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button disabled={busy} onClick={() => runAction('build', '/agent/kg/build', { topic: 'ai_stem', video_ids: ['kCc8FmEb1nY'] })}
+              style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 9, padding: '10px 14px', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}>{busy === 'build' ? 'learning…' : '1 · learn Karpathy'}</button>
+            <button disabled={busy || !nodes.length} onClick={() => runAction('replay', '/agent/recursion/replay', { topic: 'ai_stem', target_video_id: '42L1q1Z4Ojc', add_to_graph: true })}
+              style={{ background: T.acc, border: 'none', color: T.accText, borderRadius: 9, padding: '10px 14px', fontWeight: 800, cursor: busy ? 'wait' : 'pointer' }}>{busy === 'replay' ? 'measuring…' : '2 · test unseen teacher'}</button>
+          </div>
+        </div>
+
+        {err && <div style={{ marginTop: 14, border: '1px solid #e5484d66', background: '#e5484d14', color: '#ff8b8f', borderRadius: 10, padding: '10px 12px', fontSize: 13 }}>{err}</div>}
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+          <StatTile T={T} label="persistent concepts" value={summary.node_count ?? '—'} sub={`${summary.exemplar_count || 0} real frame exemplars`} />
+          <StatTile T={T} label="teachers learned" value={summary.teacher_count ?? '—'} sub={`${summary.reinforced_nodes || 0} concepts reinforced`} accent="#79c0ff" />
+          <StatTile T={T} label="VLM calls" value={latestCold && latestWarm ? `${latestCold.vlm_calls} → ${latestWarm.vlm_calls}` : '—'} sub="same held-out 64-frame lecture" accent="#ffab70" />
+          <StatTile T={T} label="call reduction" value={reduction == null ? '—' : `${reduction}%`} sub="self-RAG + exploration" accent="#56d364" />
+          <StatTile T={T} label="known recall" value={latestWarm?.concept_recall == null ? '—' : `${Math.round(latestWarm.concept_recall * 100)}%`} sub="against full-sweep concepts" accent="#b48eff" />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(280px,.85fr)', gap: 16, marginTop: 18 }}>
+          <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px 8px', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <div><strong>Cross-teacher concept memory</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>node size = exemplars</span></div>
+              <div style={{ fontFamily: mono, fontSize: 10.5, color: T.faint }}><span style={{ color: '#b48eff' }}>--</span> prerequisite · <span style={{ color: T.muted }}>—</span> related</div>
+            </div>
+            {nodes.length ? <ConceptGraph nodes={nodes} edges={edges} selected={selected} onSelect={setSelected} T={T} /> : <div style={{ minHeight: 390, display: 'grid', placeItems: 'center', color: T.faint }}>Click “learn Karpathy” to form the first memory.</div>}
+          </div>
+
+          <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 16, minHeight: 430 }}>
+            <div style={{ fontFamily: mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '.14em', color: T.acc }}>selected concept</div>
+            <h2 style={{ margin: '8px 0 4px', fontSize: 25, letterSpacing: '-.025em' }}>{selected?.label || 'No concept selected'}</h2>
+            {selected && <div style={{ color: T.sub, fontSize: 13 }}>{selected.exemplar_count} exemplars · {(selected.widgets || []).join(' + ')}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
+              {exemplars.slice(0, 6).map(exemplar => (
+                <a key={exemplar.id} href={`?v=${exemplar.video_id}`} style={{ textDecoration: 'none', border: `1px solid ${T.line}`, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8', borderRadius: 10, padding: '9px 10px', color: T.text }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><strong style={{ fontSize: 12.5 }}>{exemplar.channel || 'Unknown teacher'}</strong><span style={{ fontFamily: mono, fontSize: 10.5, color: T.acc }}>{fmt(exemplar.t_s)}</span></div>
+                  <div style={{ fontSize: 11.5, color: T.faint, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{exemplar.spec?.title || exemplar.video_title}</div>
+                </a>
+              ))}
+              {!exemplars.length && <div style={{ color: T.faint, fontSize: 13 }}>Build memory to attach grounded teaching moments.</div>}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 16, marginTop: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16 }}>
+            <div><strong>Measured run delta</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>persisted in Supabase · newest first</span></div>
+            <div style={{ fontFamily: mono, fontSize: 10.5, color: T.faint }}>quality guardrail: known-concept recall + retrieval precision</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+            {runs.filter(run => run.mode !== 'learn').slice(0, 8).map(run => (
+              <div key={run.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 90px 90px 90px', gap: 10, alignItems: 'center', border: `1px solid ${T.line}`, borderLeft: `3px solid ${run.mode.includes('warm') ? '#56d364' : '#ffab70'}`, borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                <span style={{ fontFamily: mono, color: run.mode.includes('warm') ? '#56d364' : '#ffab70', fontWeight: 800 }}>{run.mode.replace('benchmark_', '')}</span>
+                <span style={{ fontFamily: mono, color: T.faint }}>{run.experiment_id || 'live'}</span>
+                <span style={{ color: T.sub }}>{run.frames_analyzed}/{run.frames_total} frames analyzed</span>
+                <span style={{ fontFamily: mono }}><strong>{run.vlm_calls}</strong> VLM calls</span>
+                <span style={{ fontFamily: mono }}>{run.widgets_reused} reused</span>
+                <span style={{ fontFamily: mono }}>{run.concept_recall == null ? '—' : `${Math.round(run.concept_recall * 100)}% recall`}</span>
+              </div>
+            ))}
+            {!runs.some(run => run.mode !== 'learn') && <div style={{ color: T.faint, fontSize: 13 }}>Run the held-out test to record the cold-versus-warm delta.</div>}
+          </div>
+        </div>
+
+        <div style={{ color: T.faint, fontFamily: mono, fontSize: 11.5, textAlign: 'center', marginTop: 20 }}>same target · same 64 frames · same model · persistent cross-teacher memory is the only changed variable</div>
+      </div>
+    </div>
+  )
+}
+
 // ---------- ?view=perf: live observability for /api/widget + /api/region ----------
 function fmtMs(v) {
   if (v == null) return '—'
@@ -2291,6 +2488,7 @@ export default function App() {
   }, [])
   const exitView = () => { history.pushState({}, '', location.pathname); setView(null) }
   if (view === 'agent') return <AgentDashboard onExit={exitView} />
+  if (view === 'graph') return <RecursiveDashboard onExit={exitView} />
   if (view === 'perf') return <PerfDashboard onExit={exitView} />
   if (view === 'learn') return <LearnView onExit={exitView} onOpen={open} />
   if (view === 'community') return <CommunityView onExit={exitView} onOpen={open} />
