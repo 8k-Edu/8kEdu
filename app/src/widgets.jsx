@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { evalFormula } from './formula.js'
 
 // ---------- Alammar-style role colors (Illustrated Transformer) ----------
 export const ROLE = {
@@ -537,6 +538,162 @@ export function Notebook({ params, onState }) {
   )
 }
 
+const SS_FEATURES = [
+  { id: 'align_left',   group: 'Align',  label: '⯇',    apply: s => ({ ...s, align: 'left' }) },
+  { id: 'align_center', group: 'Align',  label: '≡',    apply: s => ({ ...s, align: 'center' }) },
+  { id: 'align_right',  group: 'Align',  label: '⯈',    apply: s => ({ ...s, align: 'right' }) },
+  { id: 'wrap',         group: 'Align',  label: 'wrap', apply: s => ({ ...s, wrap: !s.wrap }) },
+  { id: 'shrink',       group: 'Align',  label: 'shrink', apply: s => ({ ...s, shrink: !s.shrink }) },
+  { id: 'orientation',  group: 'Align',  label: '⤡',    apply: s => ({ ...s, orient: s.orient ? 0 : 90 }) },
+  { id: 'merge_center', group: 'Align',  label: 'merge', structural: true },
+  { id: 'bold',         group: 'Text',   label: 'B',    apply: s => ({ ...s, bold: !s.bold }) },
+  { id: 'italic',       group: 'Text',   label: 'I',    apply: s => ({ ...s, italic: !s.italic }) },
+  { id: 'underline',    group: 'Text',   label: 'U',    apply: s => ({ ...s, underline: !s.underline }) },
+  { id: 'fill',         group: 'Text',   label: '🖌',    apply: s => ({ ...s, fill: s.fill ? null : '#fff3b0' }) },
+  { id: 'currency',     group: 'Number', label: '$',    apply: s => ({ ...s, numFmt: s.numFmt === 'currency' ? null : 'currency' }) },
+  { id: 'percent',      group: 'Number', label: '%',    apply: s => ({ ...s, numFmt: s.numFmt === 'percent' ? null : 'percent' }) },
+  { id: 'decimals',     group: 'Number', label: '.00',  apply: s => ({ ...s, decimals: ((s.decimals ?? 0) + 1) % 4 }) },
+]
+const SS_BY_ID = Object.fromEntries(SS_FEATURES.map(f => [f.id, f]))
+const colName = (c) => { let s = '', n = c + 1; while (n > 0) { s = String.fromCharCode(65 + (n - 1) % 26) + s; n = Math.floor((n - 1) / 26) } return s }
+
+function fmtDisplay(raw, grid, style) {
+  let v = (typeof raw === 'string' && raw.startsWith('=')) ? evalFormula(raw, grid) : raw
+  if (typeof v === 'number') {
+    const d = style.decimals ?? (style.numFmt ? 2 : undefined)
+    if (style.numFmt === 'currency') return '$' + v.toLocaleString(undefined, { minimumFractionDigits: d ?? 2, maximumFractionDigits: d ?? 2 })
+    if (style.numFmt === 'percent') return (v * 100).toFixed(d ?? 0) + '%'
+    if (d != null) return v.toFixed(d)
+  }
+  return v ?? ''
+}
+
+export function Spreadsheet({ params, onState }) {
+  const seed = (params.cells && params.cells.length ? params.cells : [['']]).map(
+    row => row.map(v => ({ value: v == null ? '' : String(v), style: {} }))
+  )
+  const cols = Math.max(...seed.map(r => r.length), 3)
+  const norm = seed.map(r => { const c = r.slice(); while (c.length < cols) c.push({ value: '', style: {} }); return c })
+  const [grid, setGrid] = useState(norm)
+  const [sel, setSel] = useState({ r: 0, c: 0 })
+  const [range, setRange] = useState(null) // {r0,c0,r1,c1} or null
+  const dragging = useRef(false)
+  const spotlight = new Set(params.features ?? [])
+  const hi = params.highlight
+
+  useEffect(() => { onState?.({ ...params, cells: grid.map(r => r.map(c => c.value)) }) }, [grid]) // eslint-disable-line
+
+  useEffect(() => {
+    const stop = () => { dragging.current = false }
+    window.addEventListener('mouseup', stop)
+    return () => window.removeEventListener('mouseup', stop)
+  }, [])
+
+  const inRange = (r, c) => range && r >= Math.min(range.r0, range.r1) && r <= Math.max(range.r0, range.r1)
+    && c >= Math.min(range.c0, range.c1) && c <= Math.max(range.c0, range.c1)
+
+  const rawGrid = grid.map(r => r.map(c => ({ value: c.value, style: c.style })))
+  const setCell = (r, c, patch) => setGrid(g => g.map((row, ri) => row.map((cell, ci) =>
+    ri === r && ci === c ? { ...cell, ...patch } : cell)))
+  const applyFeature = (f) => {
+    if (f.id === 'merge_center') {
+      if (!range) return
+      const r0 = Math.min(range.r0, range.r1), c0 = Math.min(range.c0, range.c1)
+      const r1 = Math.max(range.r0, range.r1), c1 = Math.max(range.c0, range.c1)
+      setGrid(g => g.map((row, ri) => row.map((cell, ci) => {
+        if (ri === r0 && ci === c0) return { ...cell, style: { ...cell.style, align: 'center', merged: { rows: r1 - r0 + 1, cols: c1 - c0 + 1 }, covered: false } }
+        if (ri >= r0 && ri <= r1 && ci >= c0 && ci <= c1) return { ...cell, style: { ...cell.style, covered: true } }
+        return cell
+      })))
+      return
+    }
+    if (!f.structural) setCell(sel.r, sel.c, { style: f.apply(grid[sel.r][sel.c].style) })
+  }
+  const groups = ['Align', 'Text', 'Number']
+
+  return (
+    <div style={{ ...card }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+        {groups.map(gr => (
+          <div key={gr} style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+            <span style={{ fontSize: 10, color: '#8b949e', marginRight: 2 }}>{gr}</span>
+            {SS_FEATURES.filter(f => f.group === gr).map(f => (
+              <button key={f.id} onClick={() => applyFeature(f)} title={f.id}
+                style={{
+                  fontSize: 12, minWidth: 26, height: 24, cursor: 'pointer',
+                  border: `1px solid ${spotlight.has(f.id) ? '#e3b341' : '#30363d'}`,
+                  background: spotlight.has(f.id) ? '#e3b34122' : '#161b22', color: '#e6edf3',
+                  fontWeight: f.id === 'bold' ? 800 : 500, borderRadius: 5,
+                }}>{f.label}</button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{ overflow: 'auto' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr>
+              <th style={ssHead}></th>
+              {grid[0].map((_, c) => <th key={c} style={ssHead}>{colName(c)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {grid.map((row, r) => (
+              <tr key={r}>
+                <td style={ssHead}>{r + 1}</td>
+                {row.map((cell, c) => {
+                  const st = cell.style
+                  if (st.covered) return null
+                  const isHi = hi && hi.row === r && hi.col === c
+                  const isSel = sel.r === r && sel.c === c
+                  const isInRange = inRange(r, c)
+                  return (
+                    <td key={c}
+                      colSpan={st.merged?.cols}
+                      rowSpan={st.merged?.rows}
+                      onMouseDown={() => { dragging.current = true; setRange({ r0: r, c0: c, r1: r, c1: c }); setSel({ r, c }) }}
+                      onMouseEnter={() => { if (dragging.current) setRange(rg => rg && { ...rg, r1: r, c1: c }) }}
+                      style={{
+                        border: `1px solid ${isSel ? '#388bfd' : '#30363d'}`,
+                        outline: isHi ? '2px solid #e3b341' : 'none',
+                        minWidth: 70, maxWidth: st.wrap ? 90 : 220, height: 26, padding: '2px 6px',
+                        textAlign: st.align || (typeof cell.value === 'number' ? 'right' : 'left'),
+                        fontWeight: st.bold ? 700 : 400, fontStyle: st.italic ? 'italic' : 'normal',
+                        textDecoration: st.underline ? 'underline' : 'none',
+                        whiteSpace: st.wrap ? 'normal' : 'nowrap', overflow: 'hidden',
+                        background: st.fill || (isInRange && !isSel ? '#388bfd22' : 'transparent'),
+                        writingMode: st.orient ? 'vertical-rl' : 'horizontal-tb',
+                      }}>
+                      <input value={cell.value}
+                        onChange={e => setCell(r, c, { value: e.target.value })}
+                        onFocus={() => setSel({ r, c })}
+                        style={{
+                          width: '100%', border: 'none', background: 'transparent', color: '#e6edf3',
+                          font: 'inherit', textAlign: 'inherit', outline: 'none',
+                          display: (document.activeElement && isSel) ? undefined : 'none',
+                        }} />
+                      <span style={{ display: isSel ? 'none' : 'inline' }}>
+                        {fmtDisplay(cell.value, rawGrid, st)}</span>
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+        <button onClick={() => setGrid(g => [...g, g[0].map(() => ({ value: '', style: {} }))])}
+          style={ssAddBtn}>＋ row</button>
+        <button onClick={() => setGrid(g => g.map(row => [...row, { value: '', style: {} }]))}
+          style={ssAddBtn}>＋ col</button>
+      </div>
+    </div>
+  )
+}
+const ssHead = { border: '1px solid #30363d', background: '#161b22', color: '#8b949e', fontSize: 11, padding: '2px 6px', textAlign: 'center' }
+const ssAddBtn = { fontSize: 11, padding: '3px 9px', border: '1px solid #30363d', background: '#161b22', color: '#8b949e', borderRadius: 5, cursor: 'pointer' }
+
 export const WIDGETS = {
   matrix_mul: MatrixMul,
   attention: Attention,
@@ -544,4 +701,5 @@ export const WIDGETS = {
   function_plot: FunctionPlot,
   composite: Composite,
   notebook: Notebook,
+  spreadsheet: Spreadsheet,
 }

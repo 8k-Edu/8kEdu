@@ -34,7 +34,7 @@ CONCEPT_SCHEMA = {
         "has_concept": {"type": "boolean"},
         "widget": {
             "type": "string",
-            "enum": ["matrix_mul", "attention", "softmax", "function_plot", "notebook", "none"],
+            "enum": ["matrix_mul", "attention", "softmax", "function_plot", "notebook", "spreadsheet", "none"],
         },
         "title": {"type": "string"},
         "explanation": {"type": "string"},
@@ -48,7 +48,12 @@ CONCEPT_SCHEMA = {
                 "logits": {"type": "array", "items": {"type": "number"}},
                 "temperature": {"type": "number"},
                 "expr": {"type": "string"},
-                "cells": {"type": "array", "items": {"type": "string"}},
+                # notebook uses cells: [python source strings]; spreadsheet uses cells: 2D array
+                # of cell values — same key, both shapes accepted since JSON schema properties
+                # can't hold two "cells" definitions.
+                "cells": {"type": "array", "items": {"anyOf": [{"type": "string"}, {"type": "array"}]}},
+                "features": {"type": "array", "items": {"type": "string"}},
+                "highlight": {"type": "object"},
                 "sliders": {
                     "type": "array",
                     "items": {
@@ -82,6 +87,10 @@ If the frame teaches a concept a student could MANIPULATE, emit a spec:
   Slider names are injected as global variables (floats — wrap int(x) as needed).
   params.cells is REQUIRED for notebook — 1-3 python strings that actually compute and
   print/plot the result. A notebook spec without cells is INVALID and will be discarded.
+- spreadsheet: an Excel/spreadsheet screen (a grid of cells) is shown → params
+  {cells: 2D array of the visible values (headers + a few real rows), features:
+  which of wrap/merge_center/orientation/bold/currency/percent this moment teaches,
+  highlight: {row,col} of the focal cell}. Use the ACTUAL text/numbers in the frame.
 
 Prefer notebook when the teacher is showing runnable code; prefer the simpler widgets when
 the concept is a single manipulable object.
@@ -100,10 +109,10 @@ widget="none" but put a direct, concrete answer to their question (grounded in t
 and what the teacher said) in the "explanation" field.
 
 Reply with ONLY a JSON object:
-{"has_concept": bool, "widget": "matrix_mul|attention|softmax|function_plot|none",
+{"has_concept": bool, "widget": "matrix_mul|attention|softmax|function_plot|notebook|spreadsheet|none",
  "title": str, "explanation": str (one sentence, why it matters), "params": {...}}"""
 
-ALLOWED = {"matrix_mul", "attention", "softmax", "function_plot", "notebook"}
+ALLOWED = {"matrix_mul", "attention", "softmax", "function_plot", "notebook", "spreadsheet"}
 
 # S_g — genre-conditioned system prompts. The artifact equation:
 #   A_i = M(S_g, m_i ⊕ {f_i..f_n} ⊕ Tr_i), cached on (video, i, g) and reused for every learner.
@@ -143,6 +152,14 @@ GENRE_PROMPTS = {
         "load volume, calorie/macro targets, pace or progression over weeks — with sliders for the "
         "viewer's bodyweight, goal, and schedule; defaults from the presenter's programming."
     ),
+    "spreadsheet": (
+        "This is a spreadsheet/Excel tutorial. Emit a `spreadsheet` widget: cells = a SMALL "
+        "focused excerpt of the grid on screen — at most 4 columns by 5 rows (a header row plus "
+        "a few real rows), exact values from the frame, pick the columns most relevant to the "
+        "moment. features = the actions this moment teaches (wrap, merge_center, orientation, "
+        "bold, currency, percent), highlight = {row,col} of the focal cell. The learner gets an "
+        "editable grid to try it."
+    ),
 }
 GENRE_KEYWORDS = {
     "ai_stem": ["matrix", "neural", "gradient", "attention", "token", "tensor", "model", "training"],
@@ -151,6 +168,7 @@ GENRE_KEYWORDS = {
     "how_to": ["how to", "step", "tutorial", "guide", "first", "then", "next", "make sure", "you'll need"],
     "cooking": ["recipe", "cup", "tablespoon", "oven", "bake", "ingredient", "dough", "minutes", "heat"],
     "fitness": ["workout", "reps", "sets", "muscle", "protein", "calorie", "exercise", "training"],
+    "spreadsheet": ["excel", "spreadsheet", "cell", "column", "row", "formula", "workbook", "sheet", "worksheet", "ribbon"],
 }
 
 
@@ -219,6 +237,10 @@ def valid(spec: dict | None) -> bool:
         return isinstance(lg, list) and len(lg) >= 2 and all(isinstance(v, (int, float)) for v in lg)
     if w == "function_plot":
         return isinstance(p.get("expr"), str) and bool(p["expr"].strip())
+    if w == "spreadsheet":
+        cells = p.get("cells")
+        return isinstance(cells, list) and len(cells) > 0 and all(
+            isinstance(row, list) and len(row) > 0 for row in cells)
     return True
 
 

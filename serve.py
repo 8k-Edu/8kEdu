@@ -153,6 +153,24 @@ def nearest_frame(video: str, t: float) -> dict:
     return min(frames_for(video), key=lambda f: abs(f["time"] - t))
 
 
+SS_MAX_ROWS, SS_MAX_COLS = 5, 4
+
+
+def _clamp_spreadsheet(spec: dict) -> dict:
+    """Small local models ignore the prompt's 'at most 4x5' hint, so enforce it here:
+    trim the grid to SS_MAX_ROWS x SS_MAX_COLS and drop an out-of-range highlight."""
+    if spec.get("widget") != "spreadsheet":
+        return spec
+    p = spec.get("params")
+    if not isinstance(p, dict) or not isinstance(p.get("cells"), list):
+        return spec
+    p["cells"] = [row[:SS_MAX_COLS] for row in p["cells"][:SS_MAX_ROWS] if isinstance(row, list)]
+    hi = p.get("highlight")
+    if isinstance(hi, dict) and (hi.get("row", 0) >= len(p["cells"]) or hi.get("col", 0) >= SS_MAX_COLS):
+        p["highlight"] = None
+    return spec
+
+
 @app.post("/api/widget")
 def make_widget(req: Ask):
     t_start = time.perf_counter()
@@ -213,6 +231,7 @@ def make_widget(req: Ask):
                   error="no widget found for this moment", t_total_ms=_ms(t_start))
         _fire_event(ev)
         return {"error": "no widget found for this moment", "raw": raw[:400]}
+    spec = _clamp_spreadsheet(spec)
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
@@ -310,6 +329,7 @@ def make_region_widget(req: RegionAsk):
                   error="couldn't read that region", t_total_ms=_ms(t_start))
         _fire_event(ev)
         return {"error": "couldn't read that region", "raw": raw[:300]}
+    spec = _clamp_spreadsheet(spec)
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
