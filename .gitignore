@@ -21,3 +21,8 @@ skills-lock.json
 
 # pnpm content-addressable store — never track
 .pnpm-store/
+
+# OS + build junk
+.DS_Store
+**/.DS_Store
+app/.vite/
