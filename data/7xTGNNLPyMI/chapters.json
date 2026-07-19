@@ -1,0 +1,122 @@
+[
+ {
+  "start": 0,
+  "end": 60,
+  "title": "introduction"
+ },
+ {
+  "start": 60,
+  "end": 467,
+  "title": "pretraining data (internet)"
+ },
+ {
+  "start": 467,
+  "end": 867,
+  "title": "tokenization"
+ },
+ {
+  "start": 867,
+  "end": 1211,
+  "title": "neural network I/O"
+ },
+ {
+  "start": 1211,
+  "end": 1561,
+  "title": "neural network internals"
+ },
+ {
+  "start": 1561,
+  "end": 1869,
+  "title": "inference"
+ },
+ {
+  "start": 1869,
+  "end": 2572,
+  "title": "GPT-2: training and inference"
+ },
+ {
+  "start": 2572,
+  "end": 3563,
+  "title": "Llama 3.1 base model inference"
+ },
+ {
+  "start": 3563,
+  "end": 3666,
+  "title": "pretraining to post-training"
+ },
+ {
+  "start": 3666,
+  "end": 4832,
+  "title": "post-training data (conversations)"
+ },
+ {
+  "start": 4832,
+  "end": 6106,
+  "title": "hallucinations, tool use, knowledge/working memory"
+ },
+ {
+  "start": 6106,
+  "end": 6416,
+  "title": "knowledge of self"
+ },
+ {
+  "start": 6416,
+  "end": 7271,
+  "title": "models need tokens to think"
+ },
+ {
+  "start": 7271,
+  "end": 7493,
+  "title": "tokenization revisited: models struggle with spelling"
+ },
+ {
+  "start": 7493,
+  "end": 7648,
+  "title": "jagged intelligence"
+ },
+ {
+  "start": 7648,
+  "end": 8082,
+  "title": "supervised finetuning to reinforcement learning"
+ },
+ {
+  "start": 8082,
+  "end": 8867,
+  "title": "reinforcement learning"
+ },
+ {
+  "start": 8867,
+  "end": 9727,
+  "title": "DeepSeek-R1"
+ },
+ {
+  "start": 9727,
+  "end": 10106,
+  "title": "AlphaGo"
+ },
+ {
+  "start": 10106,
+  "end": 11379,
+  "title": "reinforcement learning from human feedback (RLHF)"
+ },
+ {
+  "start": 11379,
+  "end": 11715,
+  "title": "preview of things to come"
+ },
+ {
+  "start": 11715,
+  "end": 11914,
+  "title": "keeping track of LLMs"
+ },
+ {
+  "start": 11914,
+  "end": 12106,
+  "title": "where to find LLMs"
+ },
+ {
+  "start": 12106,
+  "end": 12683,
+  "title": "grand summary"
+ }
+]

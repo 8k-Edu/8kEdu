@@ -1,0 +1,1027 @@
+[
+ {
+  "start": 0.56,
+  "end": 2.79,
+  "text": "hello all my name is krishak and welcome"
+ },
+ {
+  "start": 2.8,
+  "end": 5.59,
+  "text": "to my YouTube channel so guys uh in this"
+ },
+ {
+  "start": 5.6,
+  "end": 8.75,
+  "text": "specific video I have found this amazing"
+ },
+ {
+  "start": 8.76,
+  "end": 11.31,
+  "text": "website which will actually help you"
+ },
+ {
+  "start": 11.32,
+  "end": 12.95,
+  "text": "understand about Transformer completely"
+ },
+ {
+  "start": 12.96,
+  "end": 15.99,
+  "text": "in depth okay uh now why Transformers"
+ },
+ {
+  "start": 16.0,
+  "end": 17.87,
+  "text": "are important because I know everybody"
+ },
+ {
+  "start": 17.88,
+  "end": 19.87,
+  "text": "is interested in learning generative a I"
+ },
+ {
+  "start": 19.88,
+  "end": 21.95,
+  "text": "hope you are specifically learning and"
+ },
+ {
+  "start": 21.96,
+  "end": 23.51,
+  "text": "this is this topic is one of the"
+ },
+ {
+  "start": 23.52,
+  "end": 25.11,
+  "text": "prerequisite before you go ahead and"
+ },
+ {
+  "start": 25.12,
+  "end": 28.19,
+  "text": "start um generative AI when I probably"
+ },
+ {
+  "start": 28.2,
+  "end": 29.63,
+  "text": "talk about prerequisits I'm just not"
+ },
+ {
+  "start": 29.64,
+  "end": 30.91,
+  "text": "talking about Transformers but the"
+ },
+ {
+  "start": 30.92,
+  "end": 33.15,
+  "text": "entire NLP in deep learning right you"
+ },
+ {
+  "start": 33.16,
+  "end": 35.19,
+  "text": "need to definitely know how does RNN"
+ },
+ {
+  "start": 35.2,
+  "end": 38.91,
+  "text": "work how does lstm RNN work how does grn"
+ },
+ {
+  "start": 38.92,
+  "end": 40.99,
+  "text": "Works how do encoder decoder Works how"
+ },
+ {
+  "start": 41.0,
+  "end": 43.83,
+  "text": "does attention uh is all you need you"
+ },
+ {
+  "start": 43.84,
+  "end": 45.15,
+  "text": "basically need to understand about the"
+ },
+ {
+  "start": 45.16,
+  "end": 46.75,
+  "text": "research paper and many more things and"
+ },
+ {
+  "start": 46.76,
+  "end": 48.11,
+  "text": "finally you basically go ahead with the"
+ },
+ {
+  "start": 48.12,
+  "end": 50.19,
+  "text": "Transformer and most of the llm model"
+ },
+ {
+  "start": 50.2,
+  "end": 51.91,
+  "text": "has the basic architecture with respect"
+ },
+ {
+  "start": 51.92,
+  "end": 54.31,
+  "text": "to the Transformer right and if you"
+ },
+ {
+  "start": 54.32,
+  "end": 55.67,
+  "text": "probably go ahead and check my"
+ },
+ {
+  "start": 55.68,
+  "end": 57.79,
+  "text": "generative AI course with Lang chain"
+ },
+ {
+  "start": 57.8,
+  "end": 59.75,
+  "text": "here I have covered each and everything"
+ },
+ {
+  "start": 59.76,
+  "end": 62.31,
+  "text": "the prerequisite with respect to uh the"
+ },
+ {
+  "start": 62.32,
+  "end": 63.99,
+  "text": "Deep learning NLP the machine learning"
+ },
+ {
+  "start": 64.0,
+  "end": 66.59,
+  "text": "NLP and then we have probably gone ahead"
+ },
+ {
+  "start": 66.6,
+  "end": 68.11,
+  "text": "and we have implemented multiple"
+ },
+ {
+  "start": 68.12,
+  "end": 69.91,
+  "text": "Solutions not only that I've also"
+ },
+ {
+  "start": 69.92,
+  "end": 71.55,
+  "text": "started uploading videos with respect to"
+ },
+ {
+  "start": 71.56,
+  "end": 73.59,
+  "text": "langra and I'm still designing some"
+ },
+ {
+  "start": 73.6,
+  "end": 75.35,
+  "text": "amazing projects which can be added over"
+ },
+ {
+  "start": 75.36,
+  "end": 76.51,
+  "text": "here so all those things are"
+ },
+ {
+  "start": 76.52,
+  "end": 78.19,
+  "text": "specifically doing that right and if you"
+ },
+ {
+  "start": 78.2,
+  "end": 79.47,
+  "text": "have not checked it out please go ahead"
+ },
+ {
+  "start": 79.48,
+  "end": 80.71,
+  "text": "and check it out and if you really want"
+ },
+ {
+  "start": 80.72,
+  "end": 82.75,
+  "text": "to learn machine learning from Basics"
+ },
+ {
+  "start": 82.76,
+  "end": 84.63,
+  "text": "then I have my this udmi course which is"
+ },
+ {
+  "start": 84.64,
+  "end": 86.27,
+  "text": "complete machine learning NLP boot camp"
+ },
+ {
+  "start": 86.28,
+  "end": 88.95,
+  "text": "mlops and deployment here from NLP from"
+ },
+ {
+  "start": 88.96,
+  "end": 90.95,
+  "text": "machine learning to Advanced NLP"
+ },
+ {
+  "start": 90.96,
+  "end": 92.63,
+  "text": "techniques both in deep learning I have"
+ },
+ {
+  "start": 92.64,
+  "end": 95.67,
+  "text": "actually covered it now uh this is just"
+ },
+ {
+  "start": 95.68,
+  "end": 97.19,
+  "text": "one of the materials that I had actually"
+ },
+ {
+  "start": 97.2,
+  "end": 98.75,
+  "text": "prepared for my course and even in my"
+ },
+ {
+  "start": 98.76,
+  "end": 99.99,
+  "text": "YouTube channel I've taken this"
+ },
+ {
+  "start": 100.0,
+  "end": 102.11,
+  "text": "particular I've explained the about"
+ },
+ {
+  "start": 102.12,
+  "end": 104.55,
+  "text": "Transformers but this uh materials that"
+ },
+ {
+  "start": 104.56,
+  "end": 106.91,
+  "text": "you'll be seeing is completely in depth"
+ },
+ {
+  "start": 106.92,
+  "end": 109.47,
+  "text": "they are around 33 Pages which I've"
+ },
+ {
+  "start": 109.48,
+  "end": 111.79,
+  "text": "explained each and every working of this"
+ },
+ {
+  "start": 111.8,
+  "end": 114.03,
+  "text": "particular Transformer now additionally"
+ },
+ {
+  "start": 114.04,
+  "end": 115.47,
+  "text": "to this you know I've taken multiple"
+ },
+ {
+  "start": 115.48,
+  "end": 117.67,
+  "text": "examples also here but additionally to"
+ },
+ {
+  "start": 117.68,
+  "end": 120.11,
+  "text": "this I have also found out this amazing"
+ },
+ {
+  "start": 120.12,
+  "end": 122.47,
+  "text": "website which provides more thorough"
+ },
+ {
+  "start": 122.48,
+  "end": 123.83,
+  "text": "explanation with respect to"
+ },
+ {
+  "start": 123.84,
+  "end": 125.55,
+  "text": "visualization that is the reason I'm"
+ },
+ {
+  "start": 125.56,
+  "end": 127.27,
+  "text": "actually sharing it to you because I"
+ },
+ {
+  "start": 127.28,
+  "end": 129.43,
+  "text": "know everybody and many people have"
+ },
+ {
+  "start": 129.44,
+  "end": 130.91,
+  "text": "specifically asked me this particular"
+ },
+ {
+  "start": 130.92,
+  "end": 132.71,
+  "text": "question Krish do you have something"
+ },
+ {
+  "start": 132.72,
+  "end": 134.31,
+  "text": "related to visualization with respect to"
+ },
+ {
+  "start": 134.32,
+  "end": 136.07,
+  "text": "the Transformer how does the Transformer"
+ },
+ {
+  "start": 136.08,
+  "end": 137.83,
+  "text": "actually work right so that is the"
+ },
+ {
+  "start": 137.84,
+  "end": 139.47,
+  "text": "reason I'm actually coming up with this"
+ },
+ {
+  "start": 139.48,
+  "end": 141.83,
+  "text": "particular video uh this is just to help"
+ },
+ {
+  "start": 141.84,
+  "end": 143.63,
+  "text": "you out so that you can actually prepare"
+ },
+ {
+  "start": 143.64,
+  "end": 145.91,
+  "text": "well and this all explanation will be"
+ },
+ {
+  "start": 145.92,
+  "end": 147.23,
+  "text": "super important when you attend the"
+ },
+ {
+  "start": 147.24,
+  "end": 148.95,
+  "text": "interviews when you're probably learning"
+ },
+ {
+  "start": 148.96,
+  "end": 150.43,
+  "text": "about llms or when you're developing"
+ },
+ {
+  "start": 150.44,
+  "end": 152.19,
+  "text": "generative a application because that"
+ },
+ {
+  "start": 152.2,
+  "end": 154.35,
+  "text": "are the prerequisites now with respect"
+ },
+ {
+  "start": 154.36,
+  "end": 155.79,
+  "text": "to this Transformers here you'll be able"
+ },
+ {
+  "start": 155.8,
+  "end": 157.95,
+  "text": "to see all the explanation is also given"
+ },
+ {
+  "start": 157.96,
+  "end": 160.11,
+  "text": "step by step which is really good but"
+ },
+ {
+  "start": 160.12,
+  "end": 162.35,
+  "text": "I'm really really much excited with"
+ },
+ {
+  "start": 162.36,
+  "end": 164.19,
+  "text": "respect to this visualization now if you"
+ },
+ {
+  "start": 164.2,
+  "end": 165.91,
+  "text": "know about Transformers the first step"
+ },
+ {
+  "start": 165.92,
+  "end": 167.83,
+  "text": "basically whenever we have the words we"
+ },
+ {
+  "start": 167.84,
+  "end": 169.63,
+  "text": "perform to token embedding then we go"
+ },
+ {
+  "start": 169.64,
+  "end": 172.19,
+  "text": "ahead with positional en encoding and"
+ },
+ {
+  "start": 172.2,
+  "end": 173.75,
+  "text": "after we do this positional encoding why"
+ },
+ {
+  "start": 173.76,
+  "end": 175.43,
+  "text": "positional encoding is basically used"
+ },
+ {
+  "start": 175.44,
+  "end": 178.27,
+  "text": "because we need to order this particular"
+ },
+ {
+  "start": 178.28,
+  "end": 179.83,
+  "text": "words right which word has actually come"
+ },
+ {
+  "start": 179.84,
+  "end": 181.31,
+  "text": "come first which mod has actually come"
+ },
+ {
+  "start": 181.32,
+  "end": 183.27,
+  "text": "second so that is the reason you can"
+ },
+ {
+  "start": 183.28,
+  "end": 185.51,
+  "text": "actually see positions over here right"
+ },
+ {
+  "start": 185.52,
+  "end": 188.43,
+  "text": "then U after this you go ahead and uh"
+ },
+ {
+  "start": 188.44,
+  "end": 190.03,
+  "text": "train this multi-head self attention"
+ },
+ {
+  "start": 190.04,
+  "end": 194.99,
+  "text": "wherein you create this uh Q KV metrix"
+ },
+ {
+  "start": 195.0,
+  "end": 197.87,
+  "text": "right Q basically means query K"
+ },
+ {
+  "start": 197.88,
+  "end": 199.91,
+  "text": "basically means key and value basically"
+ },
+ {
+  "start": 199.92,
+  "end": 203.27,
+  "text": "means um the values uh value metrix"
+ },
+ {
+  "start": 203.28,
+  "end": 205.31,
+  "text": "itself right and here you specifically"
+ },
+ {
+  "start": 205.32,
+  "end": 207.11,
+  "text": "do this for 12 heads in the architecture"
+ },
+ {
+  "start": 207.12,
+  "end": 208.43,
+  "text": "in the research paper it is basically"
+ },
+ {
+  "start": 208.44,
+  "end": 210.35,
+  "text": "given 12 Heads This is just one of the"
+ },
+ {
+  "start": 210.36,
+  "end": 212.63,
+  "text": "head right so if you probably just go"
+ },
+ {
+  "start": 212.64,
+  "end": 214.47,
+  "text": "ahead and hover over here you can see"
+ },
+ {
+  "start": 214.48,
+  "end": 215.67,
+  "text": "actually how the calculation is"
+ },
+ {
+  "start": 215.68,
+  "end": 217.47,
+  "text": "basically done right and this is the"
+ },
+ {
+  "start": 217.48,
+  "end": 221.79,
+  "text": "formula that is applied e e ID W DJ plus"
+ },
+ {
+  "start": 221.8,
+  "end": 223.79,
+  "text": "BJ is equal to and you basically go"
+ },
+ {
+  "start": 223.8,
+  "end": 226.51,
+  "text": "ahead and calculate the qkv parameters"
+ },
+ {
+  "start": 226.52,
+  "end": 228.27,
+  "text": "right or metric and this will be very"
+ },
+ {
+  "start": 228.28,
+  "end": 230.91,
+  "text": "important because as soon as you go"
+ },
+ {
+  "start": 230.92,
+  "end": 233.31,
+  "text": "ahead and just search for data let's say"
+ },
+ {
+  "start": 233.32,
+  "end": 235.27,
+  "text": "if I go Ahad and hover over here right"
+ },
+ {
+  "start": 235.28,
+  "end": 237.03,
+  "text": "so here when I'm hovering over here two"
+ },
+ {
+  "start": 237.04,
+  "end": 238.47,
+  "text": "lines are basically getting highlighted"
+ },
+ {
+  "start": 238.48,
+  "end": 240.23,
+  "text": "one is data and the next word that is"
+ },
+ {
+  "start": 240.24,
+  "end": 242.67,
+  "text": "visualization so for this data and the"
+ },
+ {
+  "start": 242.68,
+  "end": 244.99,
+  "text": "next word visualization the correlated"
+ },
+ {
+  "start": 245.0,
+  "end": 247.31,
+  "text": "metrix what I can see is 084 right"
+ },
+ {
+  "start": 247.32,
+  "end": 248.79,
+  "text": "similarly with respect to all the other"
+ },
+ {
+  "start": 248.8,
+  "end": 250.59,
+  "text": "values you'll be able to see over here"
+ },
+ {
+  "start": 250.6,
+  "end": 252.03,
+  "text": "and this is how entirely it is trained"
+ },
+ {
+  "start": 252.04,
+  "end": 253.87,
+  "text": "and this is just one headed tension like"
+ },
+ {
+  "start": 253.88,
+  "end": 255.83,
+  "text": "that you have 12 headed tensions right"
+ },
+ {
+  "start": 255.84,
+  "end": 257.71,
+  "text": "so once this is done then you go to the"
+ },
+ {
+  "start": 257.72,
+  "end": 260.43,
+  "text": "next step in the next step you basically"
+ },
+ {
+  "start": 260.44,
+  "end": 262.67,
+  "text": "go ahead and create this multi-layered"
+ },
+ {
+  "start": 262.68,
+  "end": 264.99,
+  "text": "uh neural network so here you have this"
+ },
+ {
+  "start": 265.0,
+  "end": 267.31,
+  "text": "this is your residuals uh you can"
+ },
+ {
+  "start": 267.32,
+  "end": 269.11,
+  "text": "probably see the entire calculation how"
+ },
+ {
+  "start": 269.12,
+  "end": 270.71,
+  "text": "things are basically basically happening"
+ },
+ {
+  "start": 270.72,
+  "end": 272.11,
+  "text": "then you can see with respect to each"
+ },
+ {
+  "start": 272.12,
+  "end": 273.91,
+  "text": "and every token probabilities how it is"
+ },
+ {
+  "start": 273.92,
+  "end": 276.27,
+  "text": "basically computed and with respect to a"
+ },
+ {
+  "start": 276.28,
+  "end": 278.67,
+  "text": "word like data visualization empowers"
+ },
+ {
+  "start": 278.68,
+  "end": 280.95,
+  "text": "users to create so here your create"
+ },
+ {
+  "start": 280.96,
+  "end": 282.83,
+  "text": "output is basically coming up right"
+ },
+ {
+  "start": 282.84,
+  "end": 284.15,
+  "text": "other than than create you can also get"
+ },
+ {
+  "start": 284.16,
+  "end": 285.75,
+  "text": "visualized because the percentage of the"
+ },
+ {
+  "start": 285.76,
+  "end": 288.27,
+  "text": "softmax is very high right so like this"
+ },
+ {
+  "start": 288.28,
+  "end": 290.47,
+  "text": "you will be definitely able to see each"
+ },
+ {
+  "start": 290.48,
+  "end": 292.71,
+  "text": "and every visualization how things are"
+ },
+ {
+  "start": 292.72,
+  "end": 294.55,
+  "text": "actually happening over here how the dot"
+ },
+ {
+  "start": 294.56,
+  "end": 296.43,
+  "text": "product is basically happening how"
+ },
+ {
+  "start": 296.44,
+  "end": 298.07,
+  "text": "things are basically getting calculated"
+ },
+ {
+  "start": 298.08,
+  "end": 299.91,
+  "text": "inside this see after getting the dot"
+ },
+ {
+  "start": 299.92,
+  "end": 301.67,
+  "text": "product you do scaling masking and then"
+ },
+ {
+  "start": 301.68,
+  "end": 304.03,
+  "text": "you apply softmax plus Dropout right so"
+ },
+ {
+  "start": 304.04,
+  "end": 305.47,
+  "text": "many things are specifically happening"
+ },
+ {
+  "start": 305.48,
+  "end": 307.07,
+  "text": "step by step you'll be able to see it"
+ },
+ {
+  "start": 307.08,
+  "end": 309.19,
+  "text": "this and this you will only be able to"
+ },
+ {
+  "start": 309.2,
+  "end": 311.55,
+  "text": "understand when at least you know some"
+ },
+ {
+  "start": 311.56,
+  "end": 313.67,
+  "text": "working of the Transformers again the"
+ },
+ {
+  "start": 313.68,
+  "end": 315.31,
+  "text": "main reason of creating this particular"
+ },
+ {
+  "start": 315.32,
+  "end": 318.35,
+  "text": "video was to make you just provide some"
+ },
+ {
+  "start": 318.36,
+  "end": 320.27,
+  "text": "additional things so that you can learn"
+ },
+ {
+  "start": 320.28,
+  "end": 322.79,
+  "text": "this entire technique well right so one"
+ },
+ {
+  "start": 322.8,
+  "end": 324.11,
+  "text": "key thing that I will tell you while"
+ },
+ {
+  "start": 324.12,
+  "end": 325.47,
+  "text": "you're learning this please make sure"
+ },
+ {
+  "start": 325.48,
+  "end": 327.35,
+  "text": "that you learn along with this and you"
+ },
+ {
+  "start": 327.36,
+  "end": 329.07,
+  "text": "have to make sure you read all these"
+ },
+ {
+  "start": 329.08,
+  "end": 330.63,
+  "text": "things right if you're reading all these"
+ },
+ {
+  "start": 330.64,
+  "end": 332.31,
+  "text": "things trust me each and every step"
+ },
+ {
+  "start": 332.32,
+  "end": 333.63,
+  "text": "you'll be able to understand because"
+ },
+ {
+  "start": 333.64,
+  "end": 335.55,
+  "text": "here also everything is basically"
+ },
+ {
+  "start": 335.56,
+  "end": 337.11,
+  "text": "happening see here data visualization"
+ },
+ {
+  "start": 337.12,
+  "end": 338.99,
+  "text": "empowers users to this the first step is"
+ },
+ {
+  "start": 339.0,
+  "end": 340.55,
+  "text": "token emitting positional encoding you"
+ },
+ {
+  "start": 340.56,
+  "end": 341.87,
+  "text": "get some values then you perform"
+ },
+ {
+  "start": 341.88,
+  "end": 343.31,
+  "text": "tokenization positional encoding and you"
+ },
+ {
+  "start": 343.32,
+  "end": 345.15,
+  "text": "get the final emitting then you have the"
+ },
+ {
+  "start": 345.16,
+  "end": 346.75,
+  "text": "Transformer block where you create the"
+ },
+ {
+  "start": 346.76,
+  "end": 348.75,
+  "text": "multi-head attention where you have this"
+ },
+ {
+  "start": 348.76,
+  "end": 352.03,
+  "text": "key Cube uh uh key query key and value"
+ },
+ {
+  "start": 352.04,
+  "end": 354.27,
+  "text": "matrices and then you add with a bias"
+ },
+ {
+  "start": 354.28,
+  "end": 356.91,
+  "text": "you finally get this right so each token"
+ },
+ {
+  "start": 356.92,
+  "end": 358.67,
+  "text": "embedding Vector is transformed into"
+ },
+ {
+  "start": 358.68,
+  "end": 361.15,
+  "text": "query key and values these vectors are"
+ },
+ {
+  "start": 361.16,
+  "end": 363.55,
+  "text": "derived by multiplying ining Matrix with"
+ },
+ {
+  "start": 363.56,
+  "end": 366.51,
+  "text": "the learn Matrix from Q K and B right"
+ },
+ {
+  "start": 366.52,
+  "end": 368.39,
+  "text": "and it's just like a web search like how"
+ },
+ {
+  "start": 368.4,
+  "end": 370.63,
+  "text": "in YouTube we search something and it'll"
+ },
+ {
+  "start": 370.64,
+  "end": 372.55,
+  "text": "just go ahead and take that query search"
+ },
+ {
+  "start": 372.56,
+  "end": 374.39,
+  "text": "from all the keys and retri you the"
+ },
+ {
+  "start": 374.4,
+  "end": 376.31,
+  "text": "values right so all these things are"
+ },
+ {
+  "start": 376.32,
+  "end": 377.87,
+  "text": "there then you have this Mass self"
+ },
+ {
+  "start": 377.88,
+  "end": 379.27,
+  "text": "attention how things are basically"
+ },
+ {
+  "start": 379.28,
+  "end": 381.07,
+  "text": "happening step by step you just go ahead"
+ },
+ {
+  "start": 381.08,
+  "end": 382.71,
+  "text": "and read step by step and let me know"
+ },
+ {
+  "start": 382.72,
+  "end": 383.87,
+  "text": "whether you are able to understand or"
+ },
+ {
+  "start": 383.88,
+  "end": 386.71,
+  "text": "not yes other than that uh you know that"
+ },
+ {
+  "start": 386.72,
+  "end": 388.67,
+  "text": "I have lot of courses in Udi which are"
+ },
+ {
+  "start": 388.68,
+  "end": 390.75,
+  "text": "very affordable just $3.99 rupees you"
+ },
+ {
+  "start": 390.76,
+  "end": 391.95,
+  "text": "can go ahead and check it out in the"
+ },
+ {
+  "start": 391.96,
+  "end": 394.11,
+  "text": "description uh the best order of"
+ },
+ {
+  "start": 394.12,
+  "end": 395.83,
+  "text": "learning my course will be from"
+ },
+ {
+  "start": 395.84,
+  "end": 398.67,
+  "text": "mathematics then you have this um"
+ },
+ {
+  "start": 398.68,
+  "end": 400.71,
+  "text": "machine learning NLP then you have this"
+ },
+ {
+  "start": 400.72,
+  "end": 402.55,
+  "text": "generative AI then you have this data"
+ },
+ {
+  "start": 402.56,
+  "end": 404.35,
+  "text": "analy boot cam so you can go ahead and"
+ },
+ {
+  "start": 404.36,
+  "end": 406.11,
+  "text": "read with respect to this so yes this"
+ },
+ {
+  "start": 406.12,
+  "end": 407.47,
+  "text": "was it from my side I will see you in"
+ },
+ {
+  "start": 407.48,
+  "end": 410.56,
+  "text": "the next video thank you"
+ }
+]

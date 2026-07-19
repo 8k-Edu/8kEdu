@@ -1,0 +1,207 @@
+[
+ {
+  "start": 0.32,
+  "end": 6.0,
+  "text": "networks in under five minutes. Number one:&nbsp;&nbsp;"
+ },
+ {
+  "start": 6.0,
+  "end": 15.92,
+  "text": "is an input node layer, there is a hidden layer,&nbsp;&nbsp;"
+ },
+ {
+  "start": 16.48,
+  "end": 26.08,
+  "text": "networks reflect the behavior of the human brain,&nbsp;&nbsp;"
+ },
+ {
+  "start": 26.08,
+  "end": 30.64,
+  "text": "and solve common problems in the fields of AI and&nbsp;&nbsp;"
+ },
+ {
+  "start": 30.64,
+  "end": 37.04,
+  "text": "this as an artificial neural network, or an&nbsp;&nbsp;"
+ },
+ {
+  "start": 37.04,
+  "end": 44.08,
+  "text": "neural network that's operating in our heads. Now,&nbsp;&nbsp;"
+ },
+ {
+  "start": 44.08,
+  "end": 51.28,
+  "text": "linear regression model. That's number two.&nbsp;&nbsp;"
+ },
+ {
+  "start": 51.28,
+  "end": 56.48,
+  "text": "used to predict future events. The weights of the&nbsp;&nbsp;"
+ },
+ {
+  "start": 56.48,
+  "end": 62.72,
+  "text": "influence each input has on the output. So each&nbsp;&nbsp;"
+ },
+ {
+  "start": 62.72,
+  "end": 69.52,
+  "text": "or a threshold, and then an output. Now data is&nbsp;&nbsp;"
+ },
+ {
+  "start": 69.52,
+  "end": 76.56,
+  "text": "next in what is known as a feed forward network.&nbsp;&nbsp;"
+ },
+ {
+  "start": 77.12,
+  "end": 82.24,
+  "text": "what a single node in our neural network might&nbsp;&nbsp;"
+ },
+ {
+  "start": 82.24,
+  "end": 88.32,
+  "text": "decision to go or not is our predicted outcome&nbsp;&nbsp;"
+ },
+ {
+  "start": 88.32,
+  "end": 96.48,
+  "text": "three factors influencing our decision. Are the&nbsp;&nbsp;"
+ },
+ {
+  "start": 96.48,
+  "end": 105.2,
+  "text": "are pumping, so x1 equals 1, 1 for yes,  Is the&nbsp;&nbsp;"
+ },
+ {
+  "start": 105.2,
+  "end": 112.24,
+  "text": "0. And then let's consider is it shark-free out&nbsp;&nbsp;"
+ },
+ {
+  "start": 112.24,
+  "end": 118.56,
+  "text": "been reported. Now to each decision we assign a&nbsp;&nbsp;"
+ },
+ {
+  "start": 118.56,
+  "end": 124.88,
+  "text": "to 5. So let's say that the waves, we're going to&nbsp;&nbsp;"
+ },
+ {
+  "start": 124.88,
+  "end": 131.76,
+  "text": "give it a 5. And for the crowds, that's w2.&nbsp;&nbsp;"
+ },
+ {
+  "start": 132.4,
+  "end": 139.44,
+  "text": "And sharks, well, we'll give that a score of a&nbsp;&nbsp;"
+ },
+ {
+  "start": 139.44,
+  "end": 148.16,
+  "text": "formula to get the desired output. So yhat equals&nbsp;&nbsp;"
+ },
+ {
+  "start": 148.8,
+  "end": 161.76,
+  "text": "minus 3, that's our threshold, and that gives us&nbsp;&nbsp;"
+ },
+ {
+  "start": 161.76,
+  "end": 170.08,
+  "text": "output of this node is 1 -- we're going surfing.&nbsp;&nbsp;"
+ },
+ {
+  "start": 170.08,
+  "end": 174.01,
+  "text": "we can achieve different outcomes."
+ },
+ {
+  "start": 174.01,
+  "end": 183.36,
+  "text": "rely on training data to learn and improve their&nbsp;&nbsp;"
+ },
+ {
+  "start": 183.36,
+  "end": 188.64,
+  "text": "on labeled datasets to train the algorithm.&nbsp;&nbsp;"
+ },
+ {
+  "start": 188.64,
+  "end": 197.83,
+  "text": "accuracy using something called a cost function."
+ },
+ {
+  "start": 197.83,
+  "end": 203.2,
+  "text": "ensure the correctness of fit for any given&nbsp;&nbsp;"
+ },
+ {
+  "start": 203.2,
+  "end": 208.4,
+  "text": "its weights and biases to fit the training data&nbsp;&nbsp;"
+ },
+ {
+  "start": 208.4,
+  "end": 213.36,
+  "text": "allowing the model to determine the direction&nbsp;&nbsp;"
+ },
+ {
+  "start": 213.36,
+  "end": 219.6,
+  "text": "minimize the cost function. And then finally,&nbsp;&nbsp;"
+ },
+ {
+  "start": 219.6,
+  "end": 224.88,
+  "text": "networks beyond the feed forward neural network&nbsp;&nbsp;"
+ },
+ {
+  "start": 224.88,
+  "end": 230.96,
+  "text": "convolutional neural networks, known as CNNs, which&nbsp;&nbsp;"
+ },
+ {
+  "start": 230.96,
+  "end": 235.92,
+  "text": "for identifying patterns like image recognition.&nbsp;&nbsp;"
+ },
+ {
+  "start": 235.92,
+  "end": 242.48,
+  "text": "which are identified by their feedback loops and&nbsp;&nbsp;"
+ },
+ {
+  "start": 242.48,
+  "end": 248.16,
+  "text": "data to make predictions about future events like&nbsp;&nbsp;"
+ },
+ {
+  "start": 248.16,
+  "end": 253.02,
+  "text": "sales forecasting.  So, five things in five minutes.&nbsp;&nbsp;&nbsp;"
+ },
+ {
+  "start": 253.02,
+  "end": 256.02,
+  "text": "To learn more about neural networks, check out these videos."
+ },
+ {
+  "start": 256.02,
+  "end": 257.02,
+  "text": "Thanks for watching."
+ },
+ {
+  "start": 257.69,
+  "end": 261.26,
+  "text": "If you have&nbsp;any questions, please drop us a line below. And"
+ },
+ {
+  "start": 261.28,
+  "end": 267.84,
+  "text": "in the future, please Like and Subscribe."
+ }
+]

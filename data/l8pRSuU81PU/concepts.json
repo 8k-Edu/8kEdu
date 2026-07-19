@@ -1,0 +1,1587 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT\u20112 training loss visualization",
+  "explanation": "Visualizing the validation loss curve shows how model performance improves as it learns from scratch.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef dummy_training(layers, dim, epochs):\n    X = np.random.randn(1000, dim)\n    y = np.random.randn(1000, 1)\n    loss_history = []\n    for epoch in range(epochs):\n        pred = X @ np.random.randn(dim, 1) + np.random.randn(1000, 1)\n        loss = np.mean((pred - y)**2)\n        loss_history.append(loss)\n    return loss_history\n\ndef plot_loss(layers, dim, epochs):\n    history = dummy_training(layers, dim, epochs)\n    plt.figure(figsize=(6,4))\n    plt.plot(history, label='Validation loss')\n    plt.xlabel('Epoch')\n    plt.ylabel('Loss')\n    plt.title(f'Training loss (layers={layers}, dim={dim})')\n    plt.legend()\n    plt.show()\n\n# sliders injected as globals\nlayers = 12\nchannels = 768.0\nepochs = 20\nplot_loss(layers, channels, epochs)\n"
+   ],
+   "sliders": [
+    {
+     "name": "layers",
+     "type": "int",
+     "min": 1,
+     "max": 24,
+     "default": 12
+    },
+    {
+     "name": "channels",
+     "type": "float",
+     "min": 64,
+     "max": 2048,
+     "default": 768.0
+    },
+    {
+     "name": "epochs",
+     "type": "int",
+     "min": 1,
+     "max": 100,
+     "default": 20
+    }
+   ]
+  },
+  "time": 120.7,
+  "frame": "f_000120.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Load GPT-2 124M model and sample tokens",
+  "explanation": "Students can load the pretrained GPT-2 model and adjust sampling parameters to generate text, demonstrating how model size and temperature affect output.",
+  "params": {
+   "cells": [
+    "from transformers import GPT2LMHeadModel, GPT2Tokenizer\ntokenizer = GPT2Tokenizer.from_pretrained('gpt2')\nmodel = GPT2LMHeadModel.from_pretrained('gpt2')",
+    "prompt = 'The quick brown fox'\ninput_ids = tokenizer.encode(prompt, return_tensors='pt')\noutput = model.generate(input_ids, max_length=max_length, temperature=temperature, do_sample=True)\nprint(tokenizer.decode(output[0], skip_special_tokens=True))"
+   ],
+   "sliders": [
+    {
+     "name": "temperature",
+     "default": 0.7,
+     "min": 0.1,
+     "max": 1.5
+    },
+    {
+     "name": "max_length",
+     "default": 50,
+     "min": 1,
+     "max": 200
+    }
+   ]
+  },
+  "time": 241.4,
+  "frame": "f_000241.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Inspecting PyTorch Model State Dict Tensors",
+  "explanation": "Viewing the actual tensor shapes in the state dict lets you verify model dimensions and debug the architecture.",
+  "params": {
+   "cells": [
+    "import torch\n# Assuming the model class is defined earlier or imported\nfrom your_module import YourModel\nmodel = YourModel()\nstate_dict = model.state_dict()\nfor k, v in state_dict.items():\n    print(f\"{k}: {v.shape}\")"
+   ]
+  },
+  "time": 362.1,
+  "frame": "f_000362.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Position embedding values plotted as a function of position index",
+  "explanation": "Seeing the sinusoidal pattern of the flattened position embeddings helps students understand how each absolute position is encoded.",
+  "params": {
+   "expr": "np.sin(2 * np.pi * np.arange(start_idx, start_idx + length) / max_pos)",
+   "sliders": [
+    {
+     "name": "start_idx",
+     "type": "int",
+     "default": 0,
+     "min": 0,
+     "max": 1024
+    },
+    {
+     "name": "length",
+     "type": "int",
+     "default": 20,
+     "min": 1,
+     "max": 1024
+    },
+    {
+     "name": "max_pos",
+     "type": "float",
+     "default": 1024.0,
+     "min": 1.0,
+     "max": 2048.0
+    }
+   ]
+  },
+  "time": 482.9,
+  "frame": "f_000482.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Effect of Training on Model Curve Smoothness",
+  "explanation": "Demonstrates how an undertrained model yields jagged noisy curves that become smoother sinusoidal outputs as training reduces noise.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Slider parameters (global)\nsteps = 100          # number of training steps\nnoise_std = 0.5      # initial noise standard deviation\ndef generate_curve(steps, noise_std):\n    x = np.linspace(0, 2*np.pi, 200)\n    amp = np.random.uniform(0.5, 1.5)\n    phase = np.random.uniform(0, 2*np.pi)\n    y = amp * np.sin(x + phase) + np.random.normal(scale=noise_std, size=x.shape)\n    return x, y\n\n# Initial noisy plot\nx, y = generate_curve(steps, noise_std)\nplt.figure(figsize=(6,4))\nplt.plot(x, y, label='Noisy')\nplt.title('Random initialization (step {})'.format(steps))\nplt.legend()\nplt.show()\n\n# Simulate training: gradually reduce noise over steps\nfor i in range(steps):\n    noise_std *= 0.99   # simple decay\n    x, y = generate_curve(steps, noise_std)\n    plt.clf()\n    plt.plot(x, y, color='blue')\n    plt.title('After {} steps'.format(i+1))\n    plt.show()\n\n# Final smooth curve (no noise)\nx_final, y_final = generate_curve(steps, 0.0)\nplt.figure(figsize=(6,4))\nplt.plot(x_final, y_final, label='Smooth sinusoid')\nplt.title('Final model output')\nplt.legend()\nplt.show()"
+   ],
+   "sliders": {
+    "steps": 100,
+    "noise_std": 0.5
+   }
+  },
+  "time": 603.6,
+  "frame": "f_000603.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT-2 text generation via pipeline",
+  "explanation": "Students can adjust the prompt, token limit, and number of samples to see how different coherent completions are produced.",
+  "params": {
+   "cells": [
+    "prefix = \"hello I'm a language model, \"\nmax_length = 30\nnum_seq = 5\nfrom transformers import pipeline\npipe = pipeline(\"text-generation\", model=\"gpt2\")\noutputs = pipe(prefix, max_length=max_length, num_return_sequences=num_seq)\nfor i, out in enumerate(outputs):\n    print(f\"{i+1}: {out['generated_text']}\")"
+   ],
+   "sliders": [
+    "max_length",
+    "num_seq"
+   ]
+  },
+  "time": 724.3,
+  "frame": "f_000724.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT-2 Model Architecture and Text Generation",
+  "explanation": "Students can load GPT\u20112 weights and experiment with sampling parameters to generate coherent text, illustrating how decoder\u2011only transformers work.",
+  "params": {
+   "cells": [
+    "import numpy as np\n# Load placeholder GPT\u20112 weights (numpy array)\nweights = np.load('gpt2_weights.npy')\n\ndef forward(x):\n    # simple matrix multiplication mimicking a transformer layer\n    return x @ weights",
+    "prompt = \"Hello world\"  # default prompt text\n temperature = 0.7   # slider for sampling temperature (float)\n max_length = 50     # slider for generation length (int)\n def sample(logits, T):\n     exp_logits = np.exp(logits / T)\n     probs = exp_logits / exp_logits.sum(axis=-1, keepdims=True)\n     return np.random.choice(len(exp_logits), p=probs)\n # dummy input vector (shape compatible with weights)\nx = np.array([1.0, 2.0, 3.0])\n logits = forward(x)\n text = \"\"\n for _ in range(max_length):\n     nxt = sample(logits, temperature)\n     text += str(nxt) + \" \"\n print(\"Generated:\", text)"
+   ],
+   "sliders": [
+    "temperature",
+    "max_length"
+   ]
+  },
+  "time": 845.0,
+  "frame": "f_000845.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Token Embedding Lookup",
+  "explanation": "Demonstrates how token embedding vectors are stored as a tensor and accessed by indexing rows.",
+  "params": {
+   "cells": [
+    "import numpy as np",
+    "vocab_size = 10",
+    "embed_dim = 8",
+    "embedding_matrix = np.random.randn(vocab_size, embed_dim).astype(np.float32)",
+    "token_ids = [0, 1, 5]",
+    "selected_embeddings = embedding_matrix[token_ids]",
+    "print('Selected shape:', selected_embeddings.shape)",
+    "print(selected_embeddings)"
+   ],
+   "sliders": [
+    "vocab_size (int, default=10)",
+    "embed_dim (int, default=8)"
+   ]
+  },
+  "time": 965.7,
+  "frame": "f_000965.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "GELU Approximate Activation Function Plot",
+  "explanation": "The plot visualizes the smoothed GELU activation, illustrating how its formulation arises from stochastic reasoning and provides an intuitive view of its behavior compared to ReLU.",
+  "params": {
+   "expr": "gelu(x)",
+   "sliders": [
+    "x"
+   ]
+  },
+  "time": 1327.9,
+  "frame": "f_001327.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Compact GPT\u20112 Implementation Demo",
+  "explanation": "Shows a concise 100\u2011line GPT\u20112 implementation that lets you set model parameters and generate text, replacing a 2,000\u2011line Hugging Face file.",
+  "params": {
+   "cells": [
+    "import numpy as np\nfrom IPython.display import display, Markdown\nclass DummyGPT2:\n    def __init__(self, block_size):\n        self.block_size = block_size\n    def generate(self, prompt, max_new=50):\n        # placeholder generation: repeat prompt and add random tokens\n        return prompt + \" \" + \"\".join(np.random.choice(['a','b','c'], size=max_new))",
+    "import ipywidgets as widgets\nblock_size_slider = widgets.IntSlider(value=124, min=1, max=512, description='Block size')\ntoken_count_slider = widgets.IntSlider(value=50, min=1, max=200, description='New tokens')\ndef run_demo(block_size, new_tokens):\n    model = DummyGPT2(block_size)\n    out = model.generate(\"Hello\", max_new=new_tokens)\n    display(Markdown(f\"**Generated:** {out}\"))\nwidgets.interact(run_demo, block_size=block_size_slider, new_tokens=token_count_slider)"
+   ]
+  },
+  "time": 1690.0,
+  "frame": "f_001690.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT-2 Model Construction and Weight Transposition",
+  "explanation": "Understanding how tensors are handled and transposed in GPT\u20112 helps students see the difference between PyTorch and TensorFlow weight layouts.",
+  "params": {
+   "cells": [
+    "# Load a pretrained GPT-2 model and display its configuration",
+    "from transformers import GPT2Config, GPT2LMHeadModel\nimport torch\n\n# Slider definitions (global variables)\n# n_layer: number of transformer layers\n# n_head: number of attention heads\n# n_embd: embedding dimension\n# transpose_weights: whether to transpose the loaded weights\nn_layer = 12\nn_head = 12\nn_embd = 768\ntranspose_weights = True\n\nconfig = GPT2Config(vocab_size=50257, n_positions=1024,\n                    n_ctx=1024, n_layer=n_layer, n_head=n_head,\n                    n_embd=n_embd)\nmodel = GPT2LMHeadModel(config)\n\nif transpose_weights:\n    # Manually transpose the weight matrices that are stored transposed in TF checkpoints\n    for name, param in model.named_parameters():\n        if 'wte' in name or 'wpe' in name or 'h' in name and '.attn' in name:\n            param.data = param.data.t()\n\n# Print shapes of a few key tensors\nprint('config n_layer:', config.n_layer)\nprint('config n_head:', config.n_head)\nprint('config n_embd:', config.n_embd)\nprint('model wte shape:', model.transformer.wte.weight.shape)\n",
+    "# Generate a dummy input and run a forward pass to show attention weights\ninput_ids = torch.randint(0, config.vocab_size, (1, 8))\nwith torch.no_grad():\n    outputs = model(input_ids)\n    # Extract the first attention weight matrix from the first layer\n    attn_weights = outputs.attentions[0][0].squeeze().cpu().numpy()\nimport matplotlib.pyplot as plt\nplt.imshow(attn_weights, aspect='auto', cmap='viridis')\nplt.title('Attention Weight Visualization')\nplt.colorbar()\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "n_layer",
+     "type": "int",
+     "min": 2,
+     "max": 48,
+     "default": 12
+    },
+    {
+     "name": "n_head",
+     "type": "int",
+     "min": 1,
+     "max": 64,
+     "default": 12
+    },
+    {
+     "name": "n_embd",
+     "type": "int",
+     "min": 64,
+     "max": 2048,
+     "default": 768
+    },
+    {
+     "name": "transpose_weights",
+     "type": "bool",
+     "default": true
+    }
+   ]
+  },
+  "time": 1810.7,
+  "frame": "f_001810.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Broadcasting position embeddings to token embeddings",
+  "explanation": "Shows how position embeddings are broadcast across sequence rows for efficient batch processing on GPU.",
+  "params": {
+   "sliders": [
+    "Z",
+    "T",
+    "B"
+   ],
+   "cells": [
+    "import torch\nZ = 0\nT = 10\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\npositions = torch.arange(Z, T, device=device).unsqueeze(0)  # shape (1, T)",
+    "import torch\nB = 4\ntoken_embeddings = torch.randn(B, T, 8, device=device)\nposition_embeddings = torch.arange(Z, T, device=device).unsqueeze(0).unsqueeze(-1)  # shape (1, T, 1)\nresult = token_embeddings + position_embeddings\nprint(result.shape)"
+   ]
+  },
+  "time": 1931.4,
+  "frame": "f_001931.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT-2 token encoding and tensor formation",
+  "explanation": "Shows how a text string is turned into integer tokens and reshaped into the input tensor X for a language model.",
+  "params": {
+   "cells": [
+    "tokenizer = {}\n\ndef encode_string(text):\n    words = text.split()\n    return [i+1 for i, _ in enumerate(words)]\n\n# Example string producing eight tokens\n example = \"one two three four five six seven eight\"\n tokens_list = encode_string(example)\n print(\"Tokens list:\", tokens_list)  # [1, 2, 3, 4, 5, 6, 7, 8]",
+    "import ipywidgets as widgets\n reps = widgets.IntSlider(min=1, max=10, value=5, description='reps')\n",
+    "import numpy as np\n tokens_np = np.array(tokens_list, dtype=np.int32)\n X = np.tile(tokens_np, (reps.value, 1))\n print(\"Shape of X:\", X.shape)\n print(\"X array:\\n\", X)"
+   ]
+  },
+  "time": 2172.9,
+  "frame": "f_002172.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "MPS backend and device placement demonstration",
+  "explanation": "Illustrates how to leverage Apple Silicon GPU (MPS) for faster model inference compared to CPU.",
+  "params": {
+   "cells": [
+    "import torch\nprint('Torch version:', torch.__version__)\nprint('MPS available:', torch.backends.mps.is_available())"
+   ],
+   "sliders": {}
+  },
+  "time": 2655.7,
+  "frame": "f_002655.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Load tiny Shakespeare dataset",
+  "explanation": "Provides the raw text needed to train and debug the language model.",
+  "params": {
+   "cells": [
+    "with open('input.txt', 'r') as f:\n    data = f.read()\nsubset = data[:1000]\nprint(subset[:100])"
+   ],
+   "sliders": {}
+  },
+  "time": 2776.5,
+  "frame": "f_002776.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Batch token tensor creation (B x T)",
+  "explanation": "It matters because Transformers require input in a batch dimension, so arranging tokens into a 2\u2011D B\u00d7T tensor enables parallel processing of multiple sequences.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\n# Slider parameters (B = batch size, T = max sequence length)\nB = 4   # you can change B\nT = 6   # you can change T\n\n# Create a list of token ids (first B*T integers)\ntokens = list(range(B * T))\n\n# Reshape into a 2\u2011D batch tensor\nbatch = np.array(tokens).reshape(B, T)\nprint(\"Batch shape:\", batch.shape)\nprint(batch)\n\n# Optional: visualize with matplotlib\nimport matplotlib.pyplot as plt\nplt.imshow(batch, aspect='auto', cmap='viridis')\nplt.title('Token batch (B x T)')\nplt.colorbar()\nplt.show()",
+    "# Verify that flattening recovers the original list\nflat = batch.ravel().tolist()\nprint(\"Flattened length:\", len(flat))\nprint(\"Matches original tokens?\", flat == list(range(B * T)))\n\n# Show the tensor as a NumPy array (torch would be similar)\nprint(\"Tensor dtype:\", batch.dtype)\nprint(\"Tensor memory layout:\", batch.flags['C_CONTIGUOUS'])"
+   ],
+   "sliders": [
+    "B",
+    "T"
+   ]
+  },
+  "time": 2897.2,
+  "frame": "f_002897.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Transformer loss calculation demo",
+  "explanation": "It demonstrates how to compute the cross\u2011entropy loss from model logits and target labels, which is essential for debugging training dynamics.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\nvocab_size = 50257\nbatch_size = 4\nseq_len = 32\n\n# simulate token ids (input)\ninput_ids = np.random.randint(0, vocab_size, size=(batch_size, seq_len), dtype=np.int64)\n\n# dummy model: produce random logits of shape (batch, seq_len, vocab_size)\nlogits = np.random.randn(batch_size, seq_len, vocab_size).astype(np.float32)\n\nprint(\"input_ids shape:\", input_ids.shape)\nprint(\"logits shape:\", logits.shape)",
+    "def softmax(x):\n    e_x = np.exp(x - np.max(x, axis=1, keepdims=True))\n    return e_x / np.sum(e_x, axis=1, keepdims=True)\n\n# labels are integer class indices per position, shape (batch, seq_len)\nlabels = np.random.randint(0, vocab_size, size=(batch_size, seq_len), dtype=np.int64)\n\nlogits_flat = logits.reshape(-1, vocab_size)\nlabels_flat = labels.reshape(-1)\n\nprobs = softmax(logits_flat)\nlog_probs = np.log(probs[np.arange(len(labels_flat)), labels_flat] + 1e-12)\n\nloss = -np.mean(log_probs)\nprint(\"loss:\", loss)"
+   ]
+  },
+  "time": 3138.6,
+  "frame": "f_003138.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Cross Entropy Loss at Initialization",
+  "explanation": "A notebook lets students adjust logits and instantly see the cross\u2011entropy loss, confirming the expected ~10.8 initialization value.",
+  "params": {
+   "cells": [
+    "import numpy as np\\n\\ndef softmax(x):\\n    e_x = np.exp(x - np.max(x, axis=1, keepdims=True))\\n    return e_x / e_x.sum(axis=1, keepdims=True)\\n\\ndef cross_entropy(logits, target):\\n    probs = softmax(logits)\\n    return -np.log(probs[0, target])\\n",
+    "import ipywidgets as widgets\\nfrom IPython.display import display\\n\\nlogit_slider = widgets.FloatSlider(value=0.0, min=-5, max=5, step=0.1, description='Logit')\\n\\ndef update_loss(change):\\n    logits = np.array([change['new'], 0.0])\\n    loss = cross_entropy(logits, 0)\\n    print(f\"Loss: {loss:.4f}\")\\n\\nwidgets.interactive(update_loss, new=logit_slider)\\n"
+   ],
+   "sliders": [
+    "logit"
+   ]
+  },
+  "time": 3380.0,
+  "frame": "f_003380.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "RMSprop optimizer black-box demonstration",
+  "explanation": "Seeing how an adaptive per\u2011parameter optimizer works lets students experiment with learning\u2011rate and decay to speed up training of language models.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\n# simple linear model y = w*x + b\nw = np.random.randn()\nb = 0.0\n\ndef forward(x):\n    return w * x + b\n\ndef mse_loss(y_pred, y_true):\n    return np.mean((y_pred - y_true) ** 2)",
+    "lr = 1e-3   # learning rate slider\nweight_decay = 0.0   # weight decay slider\ndef rmsprop_step(param, grad, lr, alpha=0.9, eps=1e-8):\n    if not hasattr(rmsprop_step, \"exp_avg\"):\n        rmsprop_step.exp_avg = np.zeros_like(param)\n    rmsprop_step.exp_avg = alpha * rmsprop_step.exp_avg + (1 - alpha) * grad**2\n    update = lr * grad / (np.sqrt(rmsprop_step.exp_avg) + eps)\n    param -= weight_decay * param + update\n\n# dummy data\nX = np.array([1.0, 2.0, 3.0])\ny_true = np.array([2.0, 4.0, 6.0])\n\ny_pred = forward(X)\nloss = mse_loss(y_pred, y_true)\ndw = 2 * np.mean((y_pred - y_true) * X)\ndb = 2 * np.mean(y_pred - y_true)\nprint(\"Before step:\", w, b, \"loss:\", loss)\nrmsprop_step(w, dw, lr)\nrmsprop_step(b, db, lr)\nprint(\"After step:\", w, b, \"loss:\", loss)"
+   ],
+   "sliders": [
+    "lr",
+    "weight_decay"
+   ]
+  },
+  "time": 3500.8,
+  "frame": "f_003500.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Device placement and tensor movement in PyTorch",
+  "explanation": "It demonstrates how to correctly move tensors and models to the same GPU device, preventing device mismatch errors.",
+  "params": {
+   "cells": [
+    "import torch\n\n# Choose the first GPU if available, otherwise CPU\ndevice = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')\nprint(f\"Using device: {device}\")\n\n# Create a tensor on CPU\nx_cpu = torch.tensor([1.0, 2.0, 3.0])\nprint(\"x_cpu device:\", x_cpu.device)\n\n# Move the tensor to the selected device\nx_gpu = x_cpu.to(device)\nprint(\"x_gpu device:\", x_gpu.device)",
+    "import torch.nn as nn\n\n# Define a simple model on the same device\nmodel = nn.Linear(3, 1).to(device)\nprint(\"Model parameters device:\", next(model.parameters()).device)\n\n# Input tensor on CPU, move to device before forward pass\nz_cpu = torch.randn(5, 3)\nz_gpu = z_cpu.to(device)\noutput = model(z_gpu)\nprint(\"Output shape:\", output.shape)"
+   ],
+   "sliders": []
+  },
+  "time": 3621.5,
+  "frame": "f_003621.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "DataLoader batch size and sequence length",
+  "explanation": "Adjusting B (batch size) and T (sequence length) lets students see how many batches are produced per epoch, directly impacting training efficiency.",
+  "params": {
+   "cells": [
+    "import pathlib\n\n# Read the entire text file\ntext = pathlib.Path('input.txt').read_text()\n# Simple whitespace tokenization\ntokens = text.split()\nprint(f\"Total tokens: {len(tokens)}\")",
+    "# Compute batches per epoch using slider variables B and T\nbatches_per_epoch = len(tokens) // (B * T)\nprint(f\"Batches per epoch: {batches_per_epoch}\")"
+   ],
+   "sliders": {
+    "B": 32.0,
+    "T": 16.0
+   }
+  },
+  "time": 3742.2,
+  "frame": "f_003742.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Weight Tying in a BERT-like Language Model",
+  "explanation": "Sharing the embedding weight with the language model head reduces parameters and can improve training, which is demonstrated by manipulating tensor dimensions and running a forward pass.",
+  "params": {
+   "cells": [
+    "import torch\nimport torch.nn as nn\nclass WeightTiedModel(nn.Module):\n    def __init__(self, vocab_size, hidden_dim):\n        super().__init__()\n        self.wte = nn.Embedding(vocab_size, hidden_dim)\n        self.lm_head = nn.Linear(hidden_dim, vocab_size)\n        # tie weights\n        self.lm_head.weight = self.wte.weight\n    def forward(self, x):\n        emb = self.wte(x)\n        logits = self.lm_head(emb)\n        return logits\n",
+    "vocab_size = 30528\nhidden_dim = 768\nseq_len = 8\nx = torch.randint(0, vocab_size, (1, seq_len))\nmodel = WeightTiedModel(vocab_size, hidden_dim)\noutput = model(x)\nprint('logits shape:', output.shape)\nprint('first 5 logits:', output[0, :5].tolist())"
+   ],
+   "sliders": [
+    {
+     "name": "vocab_size",
+     "type": "float",
+     "default": 30528
+    },
+    {
+     "name": "hidden_dim",
+     "type": "float",
+     "default": 768
+    },
+    {
+     "name": "seq_len",
+     "type": "float",
+     "default": 8
+    }
+   ]
+  },
+  "time": 4345.8,
+  "frame": "f_004345.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPT weight initialization parameters",
+  "explanation": "Setting the correct standard deviation for token and position embeddings ensures proper initialization, which stabilizes training and improves model performance.",
+  "params": {
+   "cells": [
+    "# Cell 1: Define embedding initialization with sliders\nimport numpy as np\n\ndef init_embedding(vocab_size, dim, std):\n    return np.random.normal(0.0, std, size=(vocab_size, dim))\n\n# Sliders (user can adjust)\ntoken_std = 0.02  # default standard deviation for token embeddings\npos_std = 0.01    # default standard deviation for position embeddings\ndim = 768\nvocab_size = 50257\nseq_len = 128\n\nwte_weights = init_embedding(vocab_size, dim, token_std)\nwpe_weights = init_embedding(seq_len, dim, pos_std)\nprint(\"Token embedding weight mean:\", wte_weights.mean())\nprint(\"Position embedding weight mean:\", wpe_weights.mean())"
+   ],
+   "sliders": [
+    {
+     "name": "token_std",
+     "label": "Token embedding std dev",
+     "default": 0.02,
+     "min": 0.0,
+     "max": 0.1,
+     "step": 0.001
+    },
+    {
+     "name": "pos_std",
+     "label": "Position embedding std dev",
+     "default": 0.01,
+     "min": 0.0,
+     "max": 0.1,
+     "step": 0.001
+    }
+   ]
+  },
+  "time": 4466.5,
+  "frame": "f_004466.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "LayerNorm Default Initialization Calculator",
+  "explanation": "It lets the student adjust the number of incoming features to see how the standard deviation of layer norm's default initialization (1/\u221afeatures) varies, matching the teacher's discussion of GPT\u20112 defaults.",
+  "params": {
+   "cells": [
+    "import math\n# Default feature dimension for GPT\u20112 (e.g., 768)\nnum_features = 768\nstd_dev = 1 / math.sqrt(num_features)\nprint(f\"Std dev (default) for {num_features} features: {std_dev:.5f}\")"
+   ],
+   "sliders": [
+    {
+     "name": "num_features",
+     "type": "float",
+     "min": 100,
+     "max": 2000,
+     "step": 10,
+     "value": 768
+    }
+   ]
+  },
+  "time": 4587.2,
+  "frame": "f_004587.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Residual Stream Variance Growth Simulation",
+  "explanation": "It shows how repeatedly adding random contributions to a residual stream causes its variance to grow unless compensated by a scaling factor.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\nfrom ipywidgets import IntSlider, FloatSlider, interact\n\ndef run_sim(steps=100, scale=0.1):\n    dim = 768\n    residual = np.zeros(dim)\n    stds = []\n    for i in range(steps):\n        residual += np.random.randn(dim) * scale\n        stds.append(residual.std())\n    plt.figure(figsize=(6,4))\n    plt.plot(stds)\n    plt.title(f'Residual std after {steps} additions (scale={scale})')\n    plt.xlabel('Step')\n    plt.ylabel('Std Dev')\n    plt.show()\n\n# UI\ninteract(run_sim,\n         steps=IntSlider(min=1, max=500, step=1, value=100, description='Steps')),\n         scale=FloatSlider(min=0.01, max=2.0, step=0.01, value=0.1, description='Scale'))"
+   ],
+   "sliders": [
+    "steps",
+    "scale"
+   ]
+  },
+  "time": 4707.9,
+  "frame": "f_004707.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "STD Scaling by Residual Layers",
+  "explanation": "Adjusting the standard deviation based on layer count avoids initialization conflicts and improves training stability.",
+  "params": {
+   "expr": "0.02 * 0.5 / Math.sqrt(2 * config_layers)",
+   "sliders": {
+    "config_layers": 4
+   }
+  },
+  "time": 4828.6,
+  "frame": "f_004828.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Train GPT-2 on Lambda Cloud",
+  "explanation": "Students can set reproducible seeds, adjust training hyperparameters, and see loss curves to speed up GPT\u20112 training on the eight A100 GPUs.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n# Set seed for reproducibility (teacher's requirement)\nseed = 42\nnp.random.seed(seed)\n\n# Dummy data loader parameters (sliders will set these)\nbatch_size = 32\nepochs = 5\n\nlosses = []\nfor epoch in range(epochs):\n    # Simulate a training step (replace with real GPT\u20112 forward/backward)\n    loss = np.random.rand() * (1 - epoch / epochs)  # decreasing loss\n    losses.append(loss)\n    print(f'Epoch {epoch+1}/{epochs} - loss: {loss:.4f}')\n\n# Plot training loss\nplt.plot(losses, marker='o')\nplt.title('Training Loss Curve')\nplt.xlabel('Epoch')\nplt.ylabel('Loss')\nplt.grid(True)\nplt.show()",
+    "# Real seed setting (if torch were available) \u2013 kept for completeness\nimport random\nrandom.seed(seed)"
+   ],
+   "sliders": [
+    {
+     "name": "epochs",
+     "type": "float",
+     "min": 1,
+     "max": 20,
+     "step": 1,
+     "default": 5
+    },
+    {
+     "name": "batch_size",
+     "type": "float",
+     "min": 8,
+     "max": 64,
+     "step": 8,
+     "default": 32
+    }
+   ]
+  },
+  "time": 4949.3,
+  "frame": "f_004949.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Torch Data Type Precision and Memory Usage",
+  "explanation": "Shows how tensor precision (float16 vs float32 vs float64) impacts memory consumption, highlighting why lower precision is beneficial for deep learning.",
+  "params": {
+   "cells": [
+    "import torch, numpy as np\\n\\ndef mem_usage(bits, shape=(4,4)):\\n    dtype_map = {16: np.float16, 32: np.float32, 64: np.float64}\\n    elem_size = dtype_map[int(bits)].itemsize\\n    n = np.prod(shape)\\n    return n * elem_size / 1e6\\n\\nprint(\"Memory usage (MB):\", mem_usage(32))",
+    "import ipywidgets as w\\nfrom IPython.display import display, Markdown\\n\\ndef show_mem(bits):\\n    shape = (4,4)\\n    dtype_map = {16: np.float16, 32: np.float32, 64: np.float64}\\n    elem_size = dtype_map[int(bits)].itemsize\\n    mem_mb = np.prod(shape) * elem_size / 1e6\\n    display(Markdown(\"**Memory usage:** \" + str(mem_mb) + \" MB (shape=\" + str(shape) + \", dtype=\" + str(int(bits)) + \"-bit)\"))\\n\\nbits_slider = w.FloatSlider(value=32, min=16, max=64, step=16, description='Bits:', continuous_update=False)\\nw.interactive(show_mem, bits=bits_slider)"
+   ],
+   "sliders": [
+    "bits"
+   ]
+  },
+  "time": 5070.1,
+  "frame": "f_005070.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Precision and Performance Trade\u2011off in Deep Learning",
+  "explanation": "Adjusting numeric precision lets students see how lower bit widths affect compute throughput while preserving model training stability.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\ndef compute_perf(bits):\n    # linear scaling: 8 bits => 10 TFLOPs (from the table)\n    return (bits / 8) * 10.0",
+    "import matplotlib.pyplot as plt\nfrom ipywidgets import interact, FloatSlider\n\ndef plot_perf(bits):\n    tf = compute_perf(bits)\n    plt.figure()\n    plt.plot([8], [tf], 'o')\n    plt.xlabel('Bit width')\n    plt.ylabel('TFLOPs (approx)')\n    plt.title(f'Approx. TFLOPs for {bits} bits')\n    plt.grid(True)\n    plt.show()\n    print(f'{bits} bits -> {tf:.2f} TFLOPs')\n\ninteract(plot_perf, bits=FloatSlider(min=8, max=16, step=1, value=8))"
+   ],
+   "sliders": [
+    "bits"
+   ]
+  },
+  "time": 5190.8,
+  "frame": "f_005190.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "TensorFloat32 (TF32) mixed\u2011precision matrix multiplication",
+  "explanation": "It illustrates how TF32 performs matrix multiply with FP32 accumulation, letting students adjust input matrices to see the effect of mixed precision on performance.",
+  "params": {
+   "a": [
+    [
+     1,
+     2,
+     3
+    ],
+    [
+     4,
+     5,
+     6
+    ]
+   ],
+   "b": [
+    [
+     7,
+     8
+    ],
+    [
+     9,
+     10
+    ],
+    [
+     11,
+     12
+    ]
+   ]
+  },
+  "time": 5432.2,
+  "frame": "f_005432.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Mixed Precision Training Speed vs Accuracy Tradeoff",
+  "explanation": "The concept demonstrates how using lower\u2011precision (tf32) arithmetic speeds up training while only slightly affecting accuracy, which can be explored by adjusting hyperparameters and timing the computation.",
+  "params": {
+   "cells": [
+    "# Parameters (sliders)\nbatch_size = 16.0          # slider for batch size\n tf32_enabled = 1.0        # slider: 0 = fp32, 1 = tf32\n use_fp32 = tf32_enabled == 0.0\n\n import numpy as np, time\n\n def dummy_forward():\n     x = np.random.randn(batch_size, 1024).astype(np.float32)\n     w = np.random.randn(1024, 1024).astype(np.float32)\n     if use_fp32:\n         return (x @ w).astype(np.float32)\n     else:\n         # simulate tf32 truncation by casting to float16 then back\n         return (x.astype(np.float16) @ w.astype(np.float16)).astype(np.float32)\n\n n_iter = 100\n start = time.time()\n for _ in range(n_iter):\n     dummy_forward()\n end = time.time()\n print(f\"Time for {n_iter} iterations: {end - start:.4f}s\")",
+    "# Plot iteration time for fp32 vs tf32\n import matplotlib.pyplot as plt\n # Simulated times reflecting ~8x speedup with tf32\n times_fp32 = 0.10   # seconds per iteration (fp32)\n times_tf32 = 0.0125 # seconds per iteration (tf32)\n labels = [\"fp32\", \"tf32\"]\n values = [times_fp32, times_tf32]\n plt.bar(labels, values, color=[\"steelblue\", \"orange\"])\n plt.ylabel(\"Time per iteration (s)\")\n plt.title(\"Effect of tf32 precision on iteration time\")\n plt.show()"
+   ],
+   "sliders": [
+    "batch_size",
+    "tf32_enabled"
+   ]
+  },
+  "time": 5552.9,
+  "frame": "f_005552.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "GPU synchronization and training loop timing",
+  "explanation": "Adjusting batch size lets you see how GPU memory usage and iteration time change, illustrating the impact of data synchronization.",
+  "params": {
+   "cells": [
+    "# Setup model, data loader with adjustable batch size\nimport torch, time, matplotlib.pyplot as plt\nbatch_size = 20  # default value, will be linked to slider\n# dummy dataset\nx = torch.randn(1000, 784)\ny = torch.randint(0, 10, (1000,))\ndataset = torch.utils.data.TensorDataset(x, y)\nloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)\nmodel = torch.nn.Linear(784, 10)\noptimizer = torch.optim.SGD(model.parameters(), lr=0.01)",
+    "# Training loop measuring per-iteration time and GPU memory\nfor epoch in range(5):\n    start = time.time()\n    for xb, yb in loader:\n        optimizer.zero_grad()\n        logits = model(xb)\n        loss = torch.nn.functional.cross_entropy(logits, yb)\n        loss.backward()\n        optimizer.step()\n    torch.cuda.synchronize()  # wait for GPU to finish\n    iter_time_ms = (time.time() - start) * 1000 / len(loader)\n    gpu_mem_gb = torch.cuda.memory_allocated() / 1e9\n    print(f\"epoch {epoch} loss {loss.item():.4f} iter_time {iter_time_ms:.2f} ms gpu_mem {gpu_mem_gb:.2f} GB\")",
+    "# Plot iteration time vs batch size (vary slider)\nbatch_sizes = [8, 16, 32, 64]\ntimes = []\nfor bs in batch_sizes:\n    loader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=False)\n    model = torch.nn.Linear(784, 10)\n    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)\n    start = time.time()\n    for xb, yb in loader:\n        optimizer.zero_grad()\n        logits = model(xb)\n        loss = torch.nn.functional.cross_entropy(logits, yb)\n        loss.backward()\n        optimizer.step()\n    torch.cuda.synchronize()\n    avg_time = (time.time() - start) * 1000 / len(loader)\n    times.append(avg_time)\nplt.figure(figsize=(6,4))\nplt.plot(batch_sizes, times, marker='o')\nplt.xlabel('Batch size')\nplt.ylabel('Avg iteration time (ms)')\nplt.title('Iteration time vs batch size')\nplt.grid(True)\nplt.show()"
+   ],
+   "sliders": [
+    "batch_size"
+   ]
+  },
+  "time": 5673.6,
+  "frame": "f_005673.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Token throughput calculator",
+  "explanation": "Shows how many tokens per second are processed, letting you adjust token count and time to see the resulting throughput.",
+  "params": {
+   "cells": [
+    "import time\n\ndef compute_throughput(tokens, secs):\n    return tokens / secs\n\n# default values for interactive exploration\ntokens = 163000\nseconds = 1.0\n\nthroughput = compute_throughput(tokens, seconds)\nprint(f\"Throughput: {throughput:.2f} tokens per second\")"
+   ],
+   "sliders": {
+    "tokens": 163000,
+    "seconds": 1.0
+   }
+  },
+  "time": 5794.3,
+  "frame": "f_005794.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Demonstrating bfloat16 vs float32 tensor dtypes",
+  "explanation": "Shows that a single line of code changes activation tensors to bfloat16 while keeping model parameters in float32, illustrating mixed\u2011precision handling.",
+  "params": {
+   "cells": [
+    "import torch\nx = torch.randn(2, 3, dtype=torch.float32)\nprint('Original dtype:', x.dtype)",
+    "y = x.to(torch.bfloat16)\nprint('After conversion dtype:', y.dtype)"
+   ],
+   "sliders": []
+  },
+  "time": 6277.2,
+  "frame": "f_006277.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Log\u2011Softmax Precision Demo",
+  "explanation": "Shows that log\u2011softmax loss calculations stay in float32 while other model parts use reduced precision, illustrating the speed\u2011precision trade\u2011off discussed.",
+  "params": {
+   "cells": [
+    "import numpy as np\nscale = 1.0  # default value; adjust via UI slider\nlogit = scale * np.array([2.0, -1.0, 0.5])\nlog_softmax = logit - np.max(logit)\nprint('log_softmax:', log_softmax)",
+    "import matplotlib.pyplot as plt\nprobabilities = np.exp(log_softmax) / np.sum(np.exp(log_softmax))\nplt.bar(range(len(probabilities)), probabilities)\nplt.title('Probabilities after log_softmax')\nplt.show()"
+   ]
+  },
+  "time": 6397.9,
+  "frame": "f_006397.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "torch.compile speedup demonstration",
+  "explanation": "Compiling a model with torch.compile can dramatically reduce inference time per iteration.",
+  "params": {
+   "cells": [
+    "import torch, time\nmodel = torch.nn.Linear(5, 2)\nprint('Model shape:', model.weight.shape)",
+    "x = torch.randn(100, 5)\ny = torch.randn(100, 2)\nt0 = time.time()\nfor _ in range(10): model(x)\nprint('Time without compile:', time.time() - t0)",
+    "model_compiled = torch.compile(model)\nt0 = time.time()\nfor _ in range(10): model_compiled(x)\nprint('Time with compile:', time.time() - t0)"
+   ]
+  },
+  "time": 6518.6,
+  "frame": "f_006518.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Cube computation with GPU/CPU memory",
+  "explanation": "Students can adjust input size and value to see how cubing operates and how data moves between CPU RAM and GPU HBM.",
+  "params": {
+   "cells": [
+    "import numpy as np\nsize = int(size_slider)  # number of elements\nvalue = float(value_slider)  # scalar value\narr = np.full(size, value)\ncubed = arr ** 3\nprint('Input:', arr)\nprint('Cubed:', cubed)",
+    "import matplotlib.pyplot as plt\nplt.bar(range(size), arr, label='Input')\nplt.bar(range(size), cubed, label='Cubed')\nplt.legend()\nplt.show()"
+   ],
+   "sliders": [
+    "size_slider",
+    "value_slider"
+   ]
+  },
+  "time": 6760.1,
+  "frame": "f_006760.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Kernel Fusion Example",
+  "explanation": "Demonstrates how fusing elementwise operations into a single kernel reduces GPU memory round trips.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\n# Define input tensors\na = np.random.randn(4, 4)\nb = np.random.randn(4, 4)\n\n# Naive approach: separate elementwise operations\nc_naive = np.power(a, 3) + np.power(b, 2)\nprint('Naive result shape:', c_naive.shape)\n\n# Fused kernel (single computation of the same expression)\nc_fused = np.power(a, 3) + np.power(b, 2)\nprint('Fused result shape:', c_fused.shape)\nprint('Results equal?', np.allclose(c_naive, c_fused))"
+   ],
+   "sliders": []
+  },
+  "time": 6880.8,
+  "frame": "f_006880.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Matrix multiplication in GPU tensor cores",
+  "explanation": "Understanding how tensor cores perform matrix multiplication helps students grasp the hardware acceleration that powers modern AI and high\u2011performance computing.",
+  "params": {
+   "a": [
+    [
+     1,
+     2
+    ],
+    [
+     3,
+     4
+    ]
+   ],
+   "b": [
+    [
+     5,
+     6
+    ],
+    [
+     7,
+     8
+    ]
+   ]
+  },
+  "time": 7001.5,
+  "frame": "f_007001.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Flash Attention Softmax Calculation",
+  "explanation": "Enables efficient streaming softmax computation for attention mechanisms.",
+  "params": {
+   "logits": [
+    0.1,
+    -0.2,
+    0.3,
+    0.5
+   ]
+  },
+  "time": 7484.4,
+  "frame": "f_007484.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Matrix multiplication speed vs dimension",
+  "explanation": "Adjusting matrix dimensions like 64 or 128 changes computation time while the operation remains identical, highlighting optimization potential.",
+  "params": {
+   "a": [
+    [
+     1,
+     2,
+     3
+    ],
+    [
+     4,
+     5,
+     6
+    ]
+   ],
+   "b": [
+    [
+     7,
+     8
+    ],
+    [
+     9,
+     10
+    ],
+    [
+     11,
+     12
+    ]
+   ]
+  },
+  "time": 7605.1,
+  "frame": "f_007605.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax logits must be driven to negative infinity for unused tokens",
+  "explanation": "The network needs to push the logits of rarely used tokens toward negative infinity so their softmax probabilities become effectively zero.",
+  "params": {
+   "logits": [
+    0.2365,
+    -0.0489,
+    0.0175,
+    -0.0012,
+    -0.0045,
+    0.0011,
+    -0.0067,
+    0.0034,
+    -0.0021,
+    0.0009
+   ]
+  },
+  "time": 7967.2,
+  "frame": "f_007967.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Performance Speedup Calculator",
+  "explanation": "Shows how a compile optimization reduces step time, letting students adjust initial and compiled times to see the speedup factor.",
+  "params": {
+   "sliders": [
+    {
+     "name": "initial_time_ms",
+     "type": "float",
+     "default": 1000,
+     "min": 100,
+     "max": 5000,
+     "step": 10
+    },
+    {
+     "name": "compiled_time_ms",
+     "type": "float",
+     "default": 93,
+     "min": 1,
+     "max": 500,
+     "step": 1
+    }
+   ],
+   "cells": [
+    "speedup = initial_time_ms / compiled_time_ms",
+    "print(f'Speedup factor: {speedup:.2f}x')"
+   ]
+  },
+  "time": 8087.9,
+  "frame": "f_008087.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Adam Optimizer Hyperparameters (betas and epsilon)",
+  "explanation": "Changing the betas and epsilon values lets you control the optimizer's adaptive behavior, which directly impacts training stability and convergence.",
+  "params": {
+   "cells": [
+    "import numpy as np\nprint('Context length:', context_length)\nprint('Beta1:', beta1, 'Beta2:', beta2, 'Epsilon:', epsilon)"
+   ],
+   "sliders": [
+    "context_length",
+    "beta1",
+    "beta2",
+    "epsilon"
+   ]
+  },
+  "time": 8208.7,
+  "frame": "f_008208.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Cosine Decay Learning Rate Schedule with Warmup",
+  "explanation": "Visualizing the learning rate curve shows how an initial linear warmup transitions into a cosine decay, stabilizing training dynamics.",
+  "params": {
+   "expr": "initial_lr * (x < warmup_steps ? (1 - x / warmup_steps) : 0.5 * (1 + Math.cos(Math.PI * (x - warmup_steps) / (total_steps - warmup_steps))))",
+   "sliders": [
+    "initial_lr",
+    "warmup_steps",
+    "total_steps"
+   ]
+  },
+  "time": 8450.1,
+  "frame": "f_008450.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Learning Rate Scheduler Interactive",
+  "explanation": "Adjusting the learning rate lets you control model training dynamics, crucial for convergence and performance.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef cosine_lr(epoch, max_lr, total_epochs):\n    return max_lr * 0.5 * (1 + np.cos(np.pi * epoch / total_epochs))\n\nepochs = np.arange(total_epochs)\nlr_values = cosine_lr(epochs, max_lr, total_epochs)\nplt.plot(epochs, lr_values)\nplt.xlabel('Epoch')\nplt.ylabel('Learning Rate')\nplt.title('Cosine Learning Rate Schedule')\nplt.show()",
+    "epoch = int(current_epoch)  # slider value\nlr = cosine_lr(epoch, max_lr, total_epochs)\nprint(f'Epoch {epoch}: Learning Rate = {lr:.2e}')"
+   ],
+   "sliders": {
+    "max_lr": 30000.0,
+    "total_epochs": 100.0,
+    "current_epoch": 0.0
+   }
+  },
+  "time": 8570.8,
+  "frame": "f_008570.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Cosine Learning Rate Schedule with Warmup",
+  "explanation": "It lets students visualize and adjust the learning rate curve that governs model training dynamics.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Slider parameters (defaults shown)\nmax_lr = 6e4          # maximum learning rate after warmup\nwarmup_steps = 500    # steps for linear warmup\ninitial_lr = 1e-6     # very low starting LR (not zero)\ntotal_steps = 10000   # total training steps\n\n# Compute learning rate schedule\nlr_schedule = []\nfor step in range(total_steps):\n    if step < warmup_steps:\n        lr = initial_lr + (max_lr - initial_lr) * (step / warmup_steps)\n    else:\n        progress = (step - warmup_steps) / (total_steps - warmup_steps)\n        cosine_decay = 0.5 * (1 + np.cos(np.pi * progress))\n        lr = max_lr * (0.1 + 0.9 * cosine_decay)  # decay from 10% to 100%\n    lr_schedule.append(lr)\n\nlr_schedule = np.array(lr_schedule)",
+    "plt.figure(figsize=(8,4))\nplt.plot(lr_schedule, label='Learning Rate')\nplt.xlabel('Step')\nplt.ylabel('LR')\nplt.title('Cosine LR Schedule with Warmup')\nplt.legend()\nplt.grid(True)\nplt.show()",
+    "print(\"First 5 learning rates:\", lr_schedule[:5])"
+   ],
+   "sliders": [
+    {
+     "name": "max_lr",
+     "default": 60000.0,
+     "min": 0,
+     "max": 100000.0
+    },
+    {
+     "name": "warmup_steps",
+     "default": 500,
+     "min": 0,
+     "max": 2000
+    },
+    {
+     "name": "initial_lr",
+     "default": 1e-06,
+     "min": 1e-09,
+     "max": 0.001
+    },
+    {
+     "name": "total_steps",
+     "default": 10000,
+     "min": 0,
+     "max": 50000
+    }
+   ]
+  },
+  "time": 8691.5,
+  "frame": "f_008691.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Weight Decay Optimizer Configuration",
+  "explanation": "Implementing weight decay lets the model regularize its weights, preventing overfitting during training.",
+  "params": {
+   "cells": [
+    "import torch\\nimport torch.nn as nn\\nimport torch.optim as optim\\nimport matplotlib.pyplot as plt\\n%matplotlib inline\\n\\n# Slider definitions (defaults)\\nweight_decay = 0.1   # default from speaker\\nlearning_rate = 1e-3\\nepochs = 5\\n\\n# Dummy data\\nx = torch.randn(100, 1)\\ny = x * 2 + 0.5 + torch.randn_like(x) * 0.1\\n\\n# Simple model\\ndef simple_model():\\n    return nn.Linear(1, 1)\\n\\nmodel = simple_model()\\noptimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)\\n\\n# Training loop\\nlosses = []\\nfor i in range(epochs):\\n    optimizer.zero_grad()\\n    preds = model(x)\\n    loss = nn.MSELoss()(preds, y)\\n    loss.backward()\\n    optimizer.step()\\n    losses.append(loss.item())\\n\\n# Plot\\nplt.plot(losses)\\nplt.title('Training Loss with Weight Decay')\\nplt.xlabel('Epoch')\\nplt.ylabel('MSE Loss')\\nplt.show()"
+   ],
+   "sliders": {
+    "weight_decay": 0.1,
+    "learning_rate": 0.001,
+    "epochs": 5
+   }
+  },
+  "time": 8933.0,
+  "frame": "f_008932.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Weight Decay Parameter Selection in Transformer Model",
+  "explanation": "Identifying which parameters\u2014embeddings and matrix\u2011multiplication weights versus layer\u2011norm scales\u2014receive weight decay guides proper regularization in transformer training.",
+  "params": {
+   "cells": [
+    "d_model = 512\\n nhead = 8\\n dim_feedforward = 2048",
+    "linear1_params = dim_feedforward * d_model + dim_feedforward\\n linear2_params = d_model * dim_feedforward + d_model\\n decayed_params = linear1_params + linear2_params\\n print(f\"Decayed parameters (matrix\u2011multiplication weights): {decayed_params}\")\\n print(f\"LayerNorm parameters (scale & bias): {4*d_model}\")"
+   ],
+   "sliders": [
+    {
+     "name": "d_model",
+     "value": 512
+    },
+    {
+     "name": "nhead",
+     "value": 8
+    },
+    {
+     "name": "dim_feedforward",
+     "value": 2048
+    }
+   ]
+  },
+  "time": 9053.7,
+  "frame": "f_009053.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Optimizer Configuration & Kernel Fusion Calculator",
+  "explanation": "Kernel fusion reduces overhead in optimizer updates, so visualizing how decay and non\u2011decay tensors affect total parameters helps students grasp its performance impact.",
+  "params": {
+   "cells": [
+    "from ipywidgets import FloatSlider, interactive\n\ndef show(decay, non_decay):\n    total = decay + non_decay\n    ratio = decay / total if total>0 else 0\n    print(f\"Total tensors: {total}\")\n    print(f\"Decay proportion: {ratio:.1%}\")\n\ninteractive(show,\n            decay=FloatSlider(value=50, min=0, max=200, description='Decay tensors'),\n            non_decay=FloatSlider(value=98, min=0, max=200, description='Non-decay tensors'))"
+   ]
+  },
+  "time": 9174.4,
+  "frame": "f_009174.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Transformer hyperparameter impact on training loss",
+  "explanation": "Adjusting model size, learning rate, and batch size lets you see how they affect training loss, matching the teacher\u2019s description of larger networks using lower LR and larger batches.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Slider definitions (global variables)\nmodel_size = 0.5   # model size in millions, default 500M\nlearning_rate = 2e-4  # default learning rate from table\nbatch_size = 256      # default batch size from table\n\ndef compute_loss(model_m, lr, bs):\n    base = 6.0\n    loss = base * (model_m/0.125)**(-0.2) * (lr/0.001)**(0.5) * (bs/64)**(-0.3)\n    return loss\n\nloss = compute_loss(model_size, learning_rate, batch_size)\nprint(f'Estimated loss: {loss:.3f}')\n\n# Plot loss vs model size for a few hyperparameter settings\nmodel_sizes = np.linspace(0.125, 2.0, 200)\nlr_vals = [0.001, 0.0005]\nbs_vals = [64, 256]\n\nplt.figure(figsize=(6,4))\nfor lr in lr_vals:\n    for bs in bs_vals:\n        losses = [compute_loss(m, lr, bs) for m in model_sizes]\n        plt.plot(model_sizes, losses, label=f'LR={lr:.3e}, BS={bs}')\nplt.xlabel('Model size (millions)')\nplt.ylabel('Estimated loss')\nplt.title('Loss vs Model Size')\nplt.legend()\nplt.grid(True)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "model_size",
+     "default": 0.5,
+     "min": 0.125,
+     "max": 2.0,
+     "step": 0.01
+    },
+    {
+     "name": "learning_rate",
+     "default": 0.0002,
+     "min": 1e-06,
+     "max": 0.001,
+     "step": 1e-06
+    },
+    {
+     "name": "batch_size",
+     "default": 256.0,
+     "min": 32.0,
+     "max": 4096.0,
+     "step": 1.0
+    }
+   ]
+  },
+  "time": 9295.1,
+  "frame": "f_009295.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Gradient Accumulation for Simulating Large Batch Sizes",
+  "explanation": "It lets students adjust batch parameters to see how gradient accumulation simulates a .5\u202fmillion batch on limited GPU memory.",
+  "params": {
+   "cells": [
+    "total_batch_size = 2**int(total_batch_power)  # ~0.5 million",
+    "print(f\"Simulated batch size: {total_batch_size}\")"
+   ],
+   "sliders": [
+    {
+     "name": "total_batch_power",
+     "default": 19.0
+    },
+    {
+     "name": "micro_batch_size",
+     "default": 8.0
+    }
+   ]
+  },
+  "time": 9415.8,
+  "frame": "f_009415.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Training loop with 32 forward\u2011backward repeats",
+  "explanation": "The inner loop repeats the forward and backward passes 32 times per micro step, which dominates training time.",
+  "params": {
+   "cells": [
+    "# Parameters\nrepeat_count = 32  # forward/backward passes per micro step\nmicro_steps = 1        # micro steps per outer iteration",
+    "forward_backward_ms = 100  # ms per forward/backward (teacher estimate)\ntotal_passes = repeat_count * micro_steps\ntotal_time_ms = total_passes * forward_backward_ms\nprint(f\"Total passes: {total_passes}\")\nprint(f\"Estimated time: {total_time_ms} ms ({total_time_ms/1000:.2f}s)\")",
+    "import matplotlib.pyplot as plt\nsteps = list(range(1, micro_steps+1))\ntimes = [forward_backward_ms] * len(steps)\nplt.bar(steps, times)\nplt.xlabel('Micro step')\nplt.ylabel('Time (ms)')\nplt.title('Time per micro step')\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "repeat_count",
+     "label": "Forward/backward repeats",
+     "min": 1,
+     "max": 100,
+     "step": 1,
+     "default": 32
+    },
+    {
+     "name": "micro_steps",
+     "label": "Micro steps per outer iteration",
+     "min": 1,
+     "max": 5,
+     "step": 1,
+     "default": 1
+    }
+   ]
+  },
+  "time": 9536.5,
+  "frame": "f_009536.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Simple Linear Regression with MSE Loss and Gradient",
+  "explanation": "Learners can tweak slope and intercept, see how mean squared error over four points changes, observe gradients, and visualize the regression line.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Four example points for simple regression\nx = np.array([-3., 0., 1., 4.])\ny = np.array([-3., 0., 1., 4.])",
+    "def compute(w, b):\n    preds = w * x + b\n    loss = np.mean((preds - y) ** 2)\n    dw = (2 / len(x)) * np.sum(x * (preds - y))\n    db = (2 / len(x)) * np.sum(preds - y)\n    return loss, dw, db\n\n# Current parameters (will be changed by sliders)\nloss, dw, db = compute(w, b)\nprint(f\"Loss: {loss:.4f}, dL/dw: {dw:.4f}, dL/db: {db:.4f}\")",
+    "plt.scatter(x, y, color='blue', label='data')\nplt.plot(x, w*x + b, color='red', label='fit')\nplt.xlabel('x')\nplt.ylabel('y')\nplt.legend()\nplt.show()"
+   ],
+   "sliders": [
+    "w",
+    "b"
+   ]
+  },
+  "time": 9657.2,
+  "frame": "f_009657.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Loss scaling normalizer",
+  "explanation": "Dividing the loss by a quarter corrects the missing normalizer, ensuring gradients are properly scaled.",
+  "params": {
+   "cells": [
+    "import ipywidgets as widgets\\nfrom IPython.display import display\\n\\n# Slider for loss scaling factor (default 0.25)\\nfactor = widgets.FloatSlider(value=0.25, min=0.01, max=1.0, step=0.01, description='Factor:')\\ndisplay(factor)\\n\\ndef compute(w, x, y):\\n    pred = w * x\\n    loss = (pred - y) ** 2\\n    grad = 2 * (pred - y) * x\\n    # Apply scaling factor to loss before backpropagation\\n    scaled_loss = loss * factor.value\\n    scaled_grad = grad * factor.value\\n    return scaled_loss, scaled_grad\\n\\n# Example values\\nx = 3.0\\n y = 5.0\\n w = 1.0\\n scaled_loss, scaled_grad = compute(w, x, y)\\n print('Factor:', factor.value)\\n print('Scaled loss:', scaled_loss)\\n print('Scaled gradient:', scaled_grad)",
+    "import matplotlib.pyplot as plt\\n\\nfactors = [0.05, 0.1, 0.2, 0.25, 0.5, 1.0]  # scaling factors\\nbase_loss = 4.0  # (w*x - y)^2 with w=1, x=3, y=5\\nlosses = [base_loss * f for f in factors]\\nplt.figure()\\nplt.plot(factors, losses, marker='o')\\nplt.title('Loss after scaling factor')\\nplt.xlabel('Scaling factor')\\nplt.ylabel('Loss')\\nplt.grid(True)\\nplt.show()"
+   ],
+   "sliders": [
+    "factor"
+   ]
+  },
+  "time": 9778.0,
+  "frame": "f_009777.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Gradient Accumulation and Loss Scaling",
+  "explanation": "It lets you simulate larger batch sizes by accumulating gradients over multiple steps while keeping the effective learning rate unchanged.",
+  "params": {
+   "cells": [
+    "# Global variable for accumulation steps (will be updated by slider)\\naccum_steps = 4\\n\\ndef scaled_loss(total_loss):\\n    return total_loss / accum_steps\\n\\n# Slider widget for accumulation steps\\nimport ipywidgets as w\\nsteps_slider = w.IntSlider(min=1, max=10, value=4, description='Steps')\\nw.display(steps_slider)\\n\\ndef _update_acc_steps(change):\\n    global accum_steps\\n    accum_steps = change['new']\\nsteps_slider.observe(_update_acc_steps)\\n",
+    "# Example computation and printout\\ntotal_loss_example = 0.8\\nprint('Total loss:', total_loss_example)\\nscaled = scaled_loss(total_loss_example)\\nprint('Scaled loss (divided by steps):', scaled)"
+   ],
+   "sliders": [
+    {
+     "name": "accum_steps",
+     "type": "int",
+     "min": 1,
+     "max": 10,
+     "default": 4,
+     "description": "Accumulation steps"
+    }
+   ]
+  },
+  "time": 9898.7,
+  "frame": "f_009898.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Distributed Data Parallel Training Configuration",
+  "explanation": "Adjust the number of GPUs used for DDP to see how parallelism affects training setup.",
+  "params": {
+   "cells": [
+    "# Use the global slider variable `num_gpus`\nprint(f\"Distributed training configured for {num_gpus} GPUs\")"
+   ],
+   "sliders": {
+    "num_gpus": {
+     "type": "range",
+     "min": 1,
+     "max": 16,
+     "step": 1,
+     "default": 8
+    }
+   }
+  },
+  "time": 10019.4,
+  "frame": "f_010019.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "DDP Process Rank and World Size",
+  "explanation": "Students can manipulate the world size and their process rank to see how distributed training processes are identified.",
+  "params": {
+   "cells": [
+    "print(f\"World size = {world_size}, My rank = {rank}\")",
+    "import matplotlib.pyplot as plt\nplt.bar(range(world_size), [1]*world_size)\nplt.title(\"Process Ranks\")\nplt.xlabel(\"Rank\")\nplt.show()"
+   ],
+   "sliders": [
+    "world_size",
+    "rank"
+   ]
+  },
+  "time": 10140.1,
+  "frame": "f_010140.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Distributed DataLoader Setup for Multi\u2011process Training",
+  "explanation": "Adjusting rank and size sliders lets students see how a dataset is split so each process loads its own unique chunk, preventing duplicate data loading in DDP.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\n# Dummy dataset: 20 items\ndata = list(range(20))\n\ndef get_subset(rank, size, data):\n    # Split indices roughly equally across processes\n    indices = np.array_split(np.arange(len(data)), size)[rank]\n    return [data[i] for i in indices]\n\n# Example: show subset for a given rank and size\nrank = 0\nsize = 2\nsubset = get_subset(rank, size, data)\nprint(f\"Rank {rank} (size {size}) gets items: {subset}\")",
+    "import matplotlib.pyplot as plt\n\ndef plot_subsets(data, rank, size):\n    subsets = [get_subset(r, size, data) for r in range(size)]\n    labels = [f\"Rank {r}\" for r in range(size)]\n    values = [len(s) for s in subsets]\n    plt.bar(labels, values)\n    plt.ylabel(\"Number of items\")\n    plt.title(\"Data split across processes\")\n    plt.show()\n\nplot_subsets(data, rank=0, size=2)",
+    "size = 4\nfor r in range(size):\n    print(f\"Rank {r} gets: {get_subset(r, size, data)}\")"
+   ],
+   "sliders": {
+    "rank": "int(0)",
+    "size": "int(2)"
+   }
+  },
+  "time": 10623.0,
+  "frame": "f_010622.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Parallel GPT Model Creation with Fixed Seeds",
+  "explanation": "Students can adjust the number of processes and random seed to see how identical models are instantiated and compiled in parallel.",
+  "params": {
+   "sliders": {
+    "n_processes": {
+     "type": "int",
+     "min": 1,
+     "max": 16,
+     "default": 8
+    },
+    "seed": {
+     "type": "int",
+     "min": 0,
+     "max": 10000,
+     "default": 1234
+    }
+   },
+   "cells": [
+    "import numpy as np\n\ndef make_model(seed, device_id):\n    # Dummy model: 10x10 array representing weights\n    return np.zeros((10, 10))\n\nmodels = []\nfor i in range(n_processes):\n    models.append(make_model(seed, i))",
+    "print(f'Created {len(models)} identical models on devices 0..{n_processes-1}')"
+   ]
+  },
+  "time": 10743.7,
+  "frame": "f_010743.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Gradient Accumulation with torch.no_sync for Efficient DDP Training",
+  "explanation": "Gradient accumulation with torch.no_sync lets you add up DDP gradients over multiple steps without costly per\u2011step synchronization, improving efficiency in distributed training.",
+  "params": {
+   "cells": [
+    "# Cell 1: Imports and model definition\nimport torch\nclass SimpleNet(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.fc = torch.nn.Linear(10, 1)\nmodel = SimpleNet()\noptimizer = torch.optim.SGD(model.parameters(), lr=0.01)\n\n# Dummy data loader (list of batches)\nbatches = [torch.randn(32, 10) for _ in range(5)]  # 5 mini\u2011batches\n",
+    "# Cell 2: Gradient accumulation loop using torch.no_sync\ndef accumulate_gradients(model, optimizer, data, num_steps):\n    optimizer.zero_grad()\n    for i in range(num_steps):\n        inputs = data[i]\n        targets = torch.randn_like(inputs)  # dummy target\n        output = model(inputs)\n        loss = torch.nn.functional.mse_loss(output, targets)\n        with torch.no_sync():  # disable gradient sync across DDP processes\n            loss.backward()\n    optimizer.step()  # apply accumulated gradients after last step\n    return loss.item()\n",
+    "# Cell 3: Run the accumulation and report result\nnum_steps = 5  # total mini\u2011batches to accumulate over\ntotal_loss = accumulate_gradients(model, optimizer, batches, num_steps)\nprint(f\"Accumulated loss after {num_steps} steps: {total_loss:.4f}\")\n"
+   ],
+   "sliders": {
+    "num_steps": 5,
+    "batch_size": 32
+   }
+  },
+  "time": 10985.1,
+  "frame": "f_010985.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Gradient Synchronization Toggle",
+  "explanation": "It demonstrates how manually toggling a flag changes when gradients are averaged across ranks, illustrating the effect of custom backward sync control.",
+  "params": {
+   "sliders": [
+    {
+     "name": "sync_last_step",
+     "type": "bool",
+     "default": false,
+     "description": "Enable sync only on the last step"
+    },
+    {
+     "name": "num_ranks",
+     "type": "int",
+     "default": 2,
+     "min": 1,
+     "max": 5,
+     "description": "Number of training ranks"
+    }
+   ],
+   "cells": [
+    "import numpy as np\n\n# number of ranks from slider\nnum_ranks = int(num_ranks)\n# create dummy gradient tensors for each rank (shape 3x4)\ngrads = [np.random.randn(3, 4) for _ in range(num_ranks)]",
+    "import numpy as np\n\nis_last_step = int(sync_last_step)  # slider 0/1\nif is_last_step:\n    avg_grad = np.mean(grads, axis=0)\nelse:\n    total = np.zeros((3, 4))\n    for g in grads:\n        total += g\n    avg_grad = total\nprint(\"Result (average gradient):\", avg_grad)"
+   ]
+  },
+  "time": 11105.8,
+  "frame": "f_011105.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Distributed Tensor Averaging Demo",
+  "explanation": "Illustrates how averaging a tensor across all ranks synchronizes values in distributed training.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport ipywidgets as w\nfrom IPython.display import display, clear_output\n\ntensor_len = w.IntSlider(min=1, max=200, step=1, value=50, description='Length')\nworld_size = w.IntSlider(min=1, max=4, step=1, value=2, description='World size')\nout = w.Output()\n\ndef show_result(change):\n    clear_output(wait=True)\n    display(tensor_len, world_size, out)\n    lum = np.random.randn(tensor_len.value)\n    avg_val = lum.mean()\n    lum[:] = avg_val\n    print(f\"Tensor length: {tensor_len.value}, World size: {world_size.value}\")\n    print(\"All elements set to average:\", avg_val)\n\ntensor_len.observe(show_result, names='value')\nworld_size.observe(show_result, names='value')\ndisplay(out)"
+   ],
+   "sliders": [
+    "tensor_len",
+    "world_size"
+   ]
+  },
+  "time": 11226.5,
+  "frame": "f_011226.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "FineWeb Edu Dataset Exploration",
+  "explanation": "Understanding the composition and scale of the FineWeb Edu dataset is crucial for evaluating how educational content influences model training metrics.",
+  "params": {
+   "cells": [
+    "from datasets import load_dataset\nimport matplotlib.pyplot as plt\n\ndef main():\n    # Load the fine_web_edu training split\n    ds = load_dataset(\"fine_web_edu\", split=\"train\")\n    print(f\"Dataset size: {len(ds)}\")\n    # Compute token lengths (assuming each example is a string)\n    lengths = [len(text) for text in ds]\n    avg_len = sum(lengths) / len(lengths)\n    print(f\"Average tokens per example: {avg_len:.2f}\")\n    # Plot histogram of token lengths\n    plt.hist(lengths, bins=50)\n    plt.title(\"Token Length Distribution (FineWeb Edu)\")\n    plt.xlabel(\"Number of tokens\")\n    plt.ylabel(\"Frequency\")\n    plt.show()\n\nif __name__ == \"__main__\":\n    main()",
+    "from datasets import load_dataset\nimport matplotlib.pyplot as plt\n\ndef plot_example_lengths():\n    ds = load_dataset(\"fine_web_edu\", split=\"train\")\n    lengths = [len(text) for text in ds]\n    avg_len = sum(lengths) / len(lengths)\n    print(f\"Average tokens per example: {avg_len:.2f}\")\n    plt.hist(lengths, bins=30)\n    plt.title(\"FineWeb Edu Token Length Histogram\")\n    plt.xlabel(\"Tokens\")\n    plt.ylabel(\"Count\")\n    plt.show()\n\nplot_example_lengths()"
+   ],
+   "sliders": []
+  },
+  "time": 11588.7,
+  "frame": "f_011588.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Batch size and gradient accumulation calculator",
+  "explanation": "Adjusting the batch size lets students see if it fits GPU memory and whether gradient accumulation is needed for faster pre\u2011training.",
+  "params": {
+   "cells": [
+    "import numpy as np\n",
+    "batch_size = 64  # default from speaker\n",
+    "# total elements processed per GPU (speaker: 64 * 124)\ntotal_elements = batch_size * 124\n",
+    "print(f\"Total elements: {total_elements}\")"
+   ],
+   "sliders": {
+    "batch_size": 64
+   }
+  },
+  "time": 12071.6,
+  "frame": "f_012071.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Model Evaluation on Validation Split with Loss Visualization",
+  "explanation": "Running the notebook lets students train a model, evaluate it on a validation set, and visualize loss curves by adjusting hyperparameters.",
+  "params": {
+   "cells": [
+    "# Cell 1: Imports and dummy data\nimport numpy as np\nimport matplotlib.pyplot as plt\nnp.random.seed(42)\nX_train = np.random.randn(1000, 20).astype(np.float32)\ny_train = np.random.randint(0, 2, 1000).astype(np.int64)\nX_val = np.random.randn(200, 20).astype(np.float32)\ny_val = np.random.randint(0, 2, 200).astype(np.int64)\n\n# Model parameters (simple logistic regression)\nW = np.zeros((20, 2), dtype=np.float32)\nb = np.zeros((2,), dtype=np.float32)\n\ndef one_hot(labels):\n    n = len(labels)\n    oh = np.zeros((n, 2), dtype=np.float32)\n    oh[np.arange(n), labels] = 1.0\n    return oh\n\ndef cross_entropy(logits, targets):\n    # logits: (N, 2) raw scores\n    exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))\n    probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)\n    N = targets.shape[0]\n    loss = -np.mean(np.log(probs[range(N), targets] + 1e-12))\n    return loss\n\ndef train_one_epoch(lr, batch_sz):\n    global W, b\n    # shuffle training indices each epoch\n    idx = np.arange(len(X_train))\n    np.random.shuffle(idx)\n    for start in range(0, len(X_train), batch_sz):\n        end = start + batch_sz\n        xb = X_train[idx[start:end]]\n        yb = y_train[idx[start:end]]\n        logits = xb @ W + b\n        loss = cross_entropy(logits, yb)\n        # simple SGD update (approximation)\n        grad_W = (logits - one_hot(yb).T) @ xb / batch_sz\n        grad_b = np.mean(logits - one_hot(yb), axis=0)\n        W -= lr * grad_W\n        b -= lr * grad_b\n    return loss",
+    "# Cell 2: Evaluation on validation split\nimport numpy as np\n\ndef evaluate():\n    logits = X_val @ W + b\n    preds = (logits >= 0).astype(int)\n    acc = np.mean(preds == y_val)\n    # compute validation loss using one\u2011hot targets for consistency\n    oh_val = one_hot(y_val)\n    val_loss = cross_entropy(logits, oh_val)\n    return acc, val_loss",
+    "# Cell 3: Training loop with sliders and loss plot\n# Sliders are injected as global variables (learning_rate, epochs, batch_size)\nimport matplotlib.pyplot as plt\ntrain_losses = []\nval_losses = []\nval_accuracies = []\n\nfor epoch in range(1, epochs + 1):\n    loss = train_one_epoch(learning_rate, batch_size)\n    train_losses.append(loss)\n    acc, val_loss = evaluate()\n    val_losses.append(val_loss)\n    val_accuracies.append(acc)\n    print(f'Epoch {epoch:02d} | Train loss: {loss:.4f} | Val loss: {val_loss:.4f} | Val acc: {acc*100:.2f}%')\n\n# Plot training and validation loss\nplt.figure(figsize=(8,5))\nplt.plot(train_losses, label='Train loss')\nplt.plot(val_losses, label='Val loss')\nplt.xlabel('Epoch')\nplt.ylabel('Loss')\nplt.title('Training vs Validation Loss')\nplt.legend()\nplt.show()",
+    "# Cell 4: Optional \u2013 plot validation accuracy (can be added if desired)\n# plt.figure(figsize=(8,5))\n# plt.plot(val_accuracies, label='Val accuracy', color='green')\n# plt.xlabel('Epoch')\n# plt.ylabel('Accuracy')\n# plt.title('Validation Accuracy over Epochs')\n# plt.legend()\n# plt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "learning_rate",
+     "default": 0.001,
+     "min": 1e-05,
+     "max": 0.01,
+     "step": 0.0001
+    },
+    {
+     "name": "epochs",
+     "default": 10,
+     "min": 1,
+     "max": 50,
+     "step": 1
+    },
+    {
+     "name": "batch_size",
+     "default": 32,
+     "min": 8,
+     "max": 128,
+     "step": 8
+    }
+   ]
+  },
+  "time": 12192.3,
+  "frame": "f_012192.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Custom RNG Generator for Sampling",
+  "explanation": "Creating a dedicated generator object lets you control random sampling outside the training loop, ensuring each rank uses its own seed and avoiding interference with the global RNG state.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef demo():\n    # Use global sliders 'seed' and 'n'\n    rng = np.random.default_rng(seed)\n    probs = np.array([0.2, 0.3, 0.5])  # example probabilities summing to 1\n    counts = rng.multinomial(n, probs)\n    print(\"Counts:\", counts)\n    plt.hist(counts, bins=range(len(probs)+1), edgecolor='black')\n    plt.title('Multinomial Sample Counts')\n    plt.xlabel('Category')\n    plt.ylabel('Count')\n    plt.show()"
+   ],
+   "sliders": [
+    "seed",
+    "n"
+   ]
+  },
+  "time": 12433.7,
+  "frame": "f_012433.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Sentence Completion Classification Validation Set Explorer",
+  "explanation": "Students can manipulate class percentages to explore how the validation set distribution changes and verify totals.",
+  "params": {
+   "cells": [
+    "import pandas as pd\\nimport numpy as np\\n# Dummy data for demonstration\\ncategories = ['Planning a career', 'Shopping online', 'Getting the grades', 'Borrowing money', 'Cleaning home', 'Working hard']\\npercentages = [5, 13, 12, 13, 14.1, 3]  # from figure\\n# Create a DataFrame\\ndf = pd.DataFrame({'Category': categories, 'Percentage': percentages})\\nprint(df)",
+    "import numpy as np\\nplanning_career = 5.0\\nshopping_online = 13.0\\ngetting_grades = 12.0\\nborrowing_money = 13.0\\ncleaning_home = 14.1\\nworking_hard = 3.0\\n# Verify they sum to ~100\\ntotal = planning_career + shopping_online + getting_grades + borrowing_money + cleaning_home + working_hard\\nprint('Total percentages:', total)",
+    "import matplotlib.pyplot as plt\\ncategories = ['Planning a career', 'Shopping online', 'Getting the grades', 'Borrowing money', 'Cleaning home', 'Working hard']\\npercentages = [5, 13, 12, 13, 14.1, 3]\\nplt.bar(categories, percentages)\\nplt.ylabel('Percentage')\\nplt.title('Category Distribution')\\nplt.show()"
+   ],
+   "sliders": {
+    "planning_career": 5.0,
+    "shopping_online": 13.0,
+    "getting_grades": 12.0,
+    "borrowing_money": 13.0,
+    "cleaning_home": 14.1,
+    "working_hard": 3.0
+   }
+  },
+  "time": 12554.4,
+  "frame": "f_012554.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Human vs Model Accuracy Comparison",
+  "explanation": "Show how model accuracy has improved over time relative to human baseline using interactive sliders.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\nhuman = human_accuracy\nmodel = model_accuracy\nlabels = ['Human', 'Model']\nvalues = [human, model]\nplt.bar(labels, values)\nplt.ylabel('Accuracy (%)')\nplt.title('Human vs Model Accuracy')\nplt.show()\nprint(f'Improvement: {model - human:.2f}%')"
+   ],
+   "sliders": [
+    "human_accuracy",
+    "model_accuracy"
+   ]
+  },
+  "time": 12675.1,
+  "frame": "f_012675.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax over multiple-choice options",
+  "explanation": "The model computes a probability distribution over the four answer choices using softmax, enabling it to pick the highest-probability option as the correct answer.",
+  "params": {
+   "logits": [
+    2.0,
+    1.0,
+    0.5,
+    0.2
+   ]
+  },
+  "time": 12916.6,
+  "frame": "f_012916.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Training Loop with Periodic Validation Loss Evaluation",
+  "explanation": "It demonstrates how to periodically evaluate and log validation loss during training, enabling interactive monitoring of model performance.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef mse(pred, true):\n    return np.mean((pred - true) ** 2)",
+    "# Dummy data\nX = np.random.randn(100, 1)\ny = 2 * X + 1 + 0.1 * np.random.randn(100)\n\n# Slider for evaluation interval (default 250)\ninterval = 250\n\nweights = np.random.randn()\nbias = np.random.randn()\ntrain_losses = []\nval_losses = []\n\nfor step in range(1000):\n    preds = weights * X + bias\n    loss = mse(preds, y)\n    train_losses.append(loss)\n    # Simple gradient descent for linear model\n    grad_w = 2 * np.mean((preds - y) * X)\n    grad_b = 2 * np.mean(preds - y)\n    weights -= 0.01 * grad_w\n    bias -= 0.01 * grad_b\n    if step % interval == 0 or step == 999:\n        val_pred = weights * X + bias\n        val_loss = mse(val_pred, y)\n        val_losses.append(val_loss)\n        print(f\"step {step:4d} | train loss {loss:.4f} | val loss {val_loss:.4f}\")\n\n# Plot training and validation loss\nplt.figure(figsize=(6, 4))\nplt.plot(train_losses, label='train')\nplt.plot(val_losses, label='validation')\nplt.xlabel('iteration')\nplt.ylabel('MSE')\nplt.legend()\nplt.title('Training vs Validation Loss')\nplt.show()"
+   ],
+   "sliders": [
+    "interval"
+   ]
+  },
+  "time": 13158.0,
+  "frame": "f_013157.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Training loss and accuracy visualization",
+  "explanation": "The notebook lets the viewer parse the training log and plot train vs. validation loss and accuracy, making it easy to monitor model progress over billions of tokens.",
+  "params": {
+   "cells": [
+    "import numpy as np, matplotlib.pyplot as plt\\n\\ndef visualize(log_path):\\n    train_loss, val_loss = [], []\\n    train_acc, val_acc = [], []\\n    with open(log_path) as f:\\n        for line in f:\\n            if 'train loss' in line:\\n                train_loss.append(float(line.split(':')[1].split()[0]))\\n            elif 'val loss' in line:\\n                val_loss.append(float(line.split(':')[1].split()[0]))\\n            elif 'train acc' in line:\\n                train_acc.append(float(line.split(':')[1].split()[0]))\\n            elif 'val acc' in line:\\n                val_acc.append(float(line.split(':')[1].split()[0]))\\n    plt.figure(figsize=(10,4))\\n    plt.subplot(1,2,1)\\n    plt.plot(train_loss, label='train')\\n    plt.plot(val_loss, label='val')\\n    plt.legend()\\n    plt.title('Loss')\\n    plt.subplot(1,2,2)\\n    plt.plot(train_acc, label='train')\\n    plt.plot(val_acc, label='val')\\n    plt.legend()\\n    plt.title('Accuracy')\\n    plt.show()\\n\\nvisualize('training_log.txt')"
+   ]
+  },
+  "time": 13399.4,
+  "frame": "f_013399.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Token Efficiency vs Training Loss",
+  "explanation": "A slider lets the learner vary token count and instantly see how loss changes, illustrating that fewer tokens can match GPT\u20112's performance.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef simulate_loss(tokens):\n    # Simulate training steps proportional to token count (scaled for demo)\n    steps = int(tokens * 1e6)\n    # Loss decreases with more tokens, plus a small random noise term\n    loss = 1.0 / np.sqrt(tokens + 1) + 0.02 * np.random.randn(steps)\n    return loss",
+    "tokens_val = tokens  # use the global slider variable defined below\nloss_vals = simulate_loss(tokens_val)\nplt.figure(figsize=(6,4))\nplt.plot(loss_vals)\nplt.title(f\"Training Loss vs Steps (Tokens={int(tokens_val)}B)\")\nplt.xlabel(\"Step\")\nplt.ylabel(\"Loss\")\nplt.show()",
+    "print(f\"Simulated training with {int(tokens)}B tokens \u2013 final loss: {loss_vals[-1]:.4f}\")"
+   ],
+   "sliders": [
+    "tokens = FloatSlider(min=0, max=300, step=1, value=10, description='Token count (B):')"
+   ]
+  },
+  "time": 13520.1,
+  "frame": "f_013520.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Training Curve Explorer",
+  "explanation": "Adjust the number of epochs to see how loss evolves, mirroring the teacher's 40\u202fbillion\u2011token, four\u2011epoch experiment.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\nimport ipywidgets as widgets\n\ndef plot_loss(epochs):\n    steps = np.arange(epochs)\n    loss = np.exp(-steps / (epochs * 0.5 + 1e-6))\n    plt.figure(figsize=(6,4))\n    plt.plot(steps, loss)\n    plt.xlabel('Epoch')\n    plt.ylabel('Loss')\n    plt.title(f'Loss vs Epochs ({epochs})')\n    plt.show()\n\nwidgets.interact(plot_loss,\n                 epochs=widgets.IntSlider(min=1, max=20, value=4, description='Epochs'))"
+   ]
+  },
+  "time": 13761.6,
+  "frame": "f_013761.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Side-by-side comparison of PyTorch vs Cuda GPT2 forward pass",
+  "explanation": "Demonstrates that the CUDA implementation yields identical results to the reference PyTorch code while running significantly faster.",
+  "params": {
+   "cells": [
+    "import numpy as np, time\n\nseq_len = 10\nhidden_dim = 768\nx_np = np.random.randn(seq_len, hidden_dim).astype(np.float32)\n\ndef pytorch_impl(x):\n    weight = np.random.randn(hidden_dim, hidden_dim).astype(np.float32)\n    return x @ weight\n\ndef llmc_impl(x):\n    weight = np.random.randn(hidden_dim, hidden_dim).astype(np.float32)\n    return x @ weight",
+    "t0 = time.time()\n y1 = pytorch_impl(x_np)\n t1 = time.time()\n print(\"pytorch elapsed:\", t1 - t0)\n\n t0 = time.time()\n y2 = llmc_impl(x_np)\n t1 = time.time()\n print(\"llmc elapsed:\", t1 - t0)\n print(\"outputs close:\", np.allclose(y1, y2))"
+   ],
+   "sliders": {}
+  },
+  "time": 14244.4,
+  "frame": "f_014244.jpg"
+ }
+]

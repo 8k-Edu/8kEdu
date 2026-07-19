@@ -1,0 +1,86 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Rental Property Down Payment Calculator",
+  "explanation": "This calculator helps determine the down payment needed to buy a rental property, enabling viewers to plan their investment based on actual property costs and financing parameters shown in the video's tax and real estate guide context",
+  "params": {
+   "cells": [
+    "def calculate_down_payment(house_price, down_payment_percent):\n    return house_price * (down_payment_percent / 100)\n\n# Example values from the video\nhouse_price = 250000\n# Default down payment percentage shown in video\ndown_payment_percent = 20\n\n# Calculate required down payment\nrequired_down_payment = calculate_down_payment(house_price, down_payment_percent)\nprint(f\"Required down payment for ${house_price} property: ${required_down_payment}\")"
+   ],
+   "sliders": [
+    {
+     "name": "house_price",
+     "min": 100000,
+     "max": 1000000,
+     "value": 250000
+    },
+    {
+     "name": "down_payment_percent",
+     "min": 0,
+     "max": 100,
+     "value": 20
+    }
+   ]
+  },
+  "time": 30,
+  "frame": "f_000030.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "FHA Rental Property Calculator",
+  "explanation": "This calculator helps determine monthly cash flow and total costs for an FHA rental property with 3.5% down payment, including mortgage insurance and the one-year occupancy requirement, allowing users to adjust key financial inputs to see their impact on profitability and financing needs for real estate investors with limited capital",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef calculate_fha_rental_costs(house_price, down_payment_percent, interest_rate, mortgage_insurance_rate, years, property_tax_rate, rental_income):\n    down_payment = house_price * (down_payment_percent / 100)\n    loan_amount = house_price - down_payment\n    monthly_interest_rate = interest_rate / 12 / 100\n    monthly_mortgage = loan_amount * (monthly_interest_rate * (1 + monthly_interest_rate)**years) / ((1 + monthly_interest_rate)**years - 1)\n    monthly_mortgage_insurance = loan_amount * (mortgage_insurance_rate / 100)\n    monthly_tax = house_price * (property_tax_rate / 100) / 12\n    total_monthly_cost = monthly_mortgage + monthly_mortgage_insurance + monthly_tax\n    monthly_cash_flow = rental_income - total_monthly_cost\n    return monthly_cash_flow, total_monthly_cost\n\n# Default values from speaker\nhouse_price = 250000\ndown_payment_percent = 3.5\ninterest_rate = 6.5\nmortgage_insurance_rate = 0.85\nyears = 30\nproperty_tax_rate = 1.2\nrental_income = 2000\n\n# Calculate results\ncash_flow, total_cost = calculate_fha_rental_costs(house_price, down_payment_percent, interest_rate, mortgage_insurance_rate, years, property_tax_rate, rental_income)\n\n# Print results\nprint(f\"Down Payment: ${down_payment:.0f}\")\nprint(f\"Loan Amount: ${loan_amount:.0f}\")\nprint(f\"Monthly Mortgage: ${monthly_mortgage:.2f}\")\nprint(f\"Monthly Mortgage Insurance: ${monthly_mortgage_insurance:.2f}\")\nprint(f\"Monthly Property Tax: ${monthly_tax:.2f}\")\nprint(f\"Total Monthly Cost: ${total_cost:.2f}\")\nprint(f\"Monthly Cash Flow: ${cash_flow:.2f}\")\n\n# Plot cash flow over time\nmonths = np.arange(1, years*12 + 1)\ncash_flow_series = [cash_flow] * (years*12)\nplt.figure(figsize=(10, 5))\nplt.plot(months, cash_flow_series, 'b-', linewidth=2)\nplt.title('Projected Monthly Cash Flow for FHA Rental Property')\nplt.xlabel('Months')\nplt.ylabel('Cash Flow ($)')\nplt.grid(True)\nplt.axhline(y=0, color='r', linestyle='--')\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "house_price",
+     "min": 50000,
+     "max": 1000000,
+     "value": 250000
+    },
+    {
+     "name": "down_payment_percent",
+     "min": 0.5,
+     "max": 20,
+     "value": 3.5
+    },
+    {
+     "name": "interest_rate",
+     "min": 3.0,
+     "max": 8.0,
+     "value": 6.5
+    },
+    {
+     "name": "mortgage_insurance_rate",
+     "min": 0.1,
+     "max": 2.0,
+     "value": 0.85
+    },
+    {
+     "name": "years",
+     "min": 1,
+     "max": 30,
+     "value": 30
+    },
+    {
+     "name": "property_tax_rate",
+     "min": 0.5,
+     "max": 3.0,
+     "value": 1.2
+    },
+    {
+     "name": "rental_income",
+     "min": 500,
+     "max": 10000,
+     "value": 2000
+    }
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ }
+]

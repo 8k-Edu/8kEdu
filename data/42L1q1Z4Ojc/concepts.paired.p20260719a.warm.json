@@ -1,0 +1,368 @@
+[
+ {
+  "time": 0,
+  "frame": "f_000000.jpg",
+  "title": "Self-Attention Query-Key Interaction",
+  "params": {
+   "k": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ],
+   "q": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ]
+  },
+  "widget": "attention",
+  "explanation": "Self-attention computes similarity scores between queries (Q) and keys (K) to determine how much focus each token should place on other tokens in the sequence.",
+  "has_concept": true,
+  "recursive_reuse": {
+   "concept": "self-attention",
+   "confidence": 1.0,
+   "source_video": "kCc8FmEb1nY",
+   "source_time": 4885.9
+  }
+ },
+ {
+  "time": 120,
+  "frame": "f_000120.jpg",
+  "title": "Self-Attention Query-Key Interaction",
+  "params": {
+   "k": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ],
+   "q": [
+    [
+     1.0,
+     0.2,
+     -0.5
+    ],
+    [
+     0.1,
+     0.9,
+     1.2
+    ],
+    [
+     -0.4,
+     0.8,
+     0.1
+    ],
+    [
+     0.6,
+     -0.3,
+     0.8
+    ]
+   ]
+  },
+  "widget": "attention",
+  "explanation": "Self-attention computes similarity scores between queries (Q) and keys (K) to determine how much focus each token should place on other tokens in the sequence.",
+  "has_concept": true,
+  "recursive_reuse": {
+   "concept": "self-attention",
+   "confidence": 1.0,
+   "source_video": "kCc8FmEb1nY",
+   "source_time": 4885.9
+  }
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention concept",
+  "explanation": "The frame explains how multi-head attention splits the 512-dimensional token representations into parallel attention heads for more efficient processing",
+  "params": {
+   "q": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ]
+  },
+  "time": 210,
+  "frame": "f_000210.jpg"
+ },
+ {
+  "time": 320,
+  "frame": "f_000320.jpg",
+  "title": "Multi-Head Self-Attention: Single Head Query-Key Matching",
+  "params": {
+   "k": [
+    [
+     0.3,
+     0.6,
+     0.1,
+     -0.4
+    ],
+    [
+     0.2,
+     -0.1,
+     0.8,
+     0.5
+    ],
+    [
+     0.9,
+     0.3,
+     -0.2,
+     0.1
+    ]
+   ],
+   "q": [
+    [
+     0.1,
+     0.8,
+     -0.5,
+     0.2
+    ],
+    [
+     0.5,
+     -0.3,
+     0.9,
+     0.1
+    ],
+    [
+     -0.2,
+     0.4,
+     0.1,
+     0.7
+    ]
+   ]
+  },
+  "widget": "attention",
+  "explanation": "In multi-head attention, each head operates on a lower-dimensional subspace to compute attention weights by taking the dot product of queries (Q) and keys (K).",
+  "has_concept": true,
+  "recursive_reuse": {
+   "concept": "multi-head-attention",
+   "confidence": 1.0,
+   "source_video": "kCc8FmEb1nY",
+   "source_time": 5002.3
+  }
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention visualization",
+  "explanation": "The diagram illustrates how a transformer processes a sentence through four independent attention heads, each specializing in different linguistic aspects like grammar, long-range dependencies, subject focus, and positional patterns before concatenation and linear transformation",
+  "params": {
+   "q": [
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ]
+   ]
+  },
+  "time": 530,
+  "frame": "f_000530.jpg"
+ }
+]

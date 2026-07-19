@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8kEdu — YouTube video to interactive learning dashboard</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; }
+      body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+      input[type="number"] { width: 52px; background: #161b22; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 4px; text-align: center; font-size: 13px; }
+      input[type="range"] { accent-color: #2f81f7; }
+      button { cursor: pointer; }
+      #player-box { position: relative; width: 100%; aspect-ratio: 16/9; }
+      #player-box iframe, #player-box > div {
+        position: absolute; inset: 0; width: 100% !important; height: 100% !important;
+      }
+      .tl-tick { cursor: pointer; }
+      .tl-tick:hover { opacity: 1 !important; height: 22px !important; }
+      @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

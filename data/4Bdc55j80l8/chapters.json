@@ -1,0 +1,42 @@
+[
+ {
+  "start": 0,
+  "end": 216,
+  "title": "Intro"
+ },
+ {
+  "start": 216,
+  "end": 288,
+  "title": "Input Embedding"
+ },
+ {
+  "start": 288,
+  "end": 381,
+  "title": "4. Encoder Layer"
+ },
+ {
+  "start": 381,
+  "end": 508,
+  "title": "3. Multi-headed Attention"
+ },
+ {
+  "start": 508,
+  "end": 642,
+  "title": "Residual Connection, Layer Normalization & Pointwise Feed Forward"
+ },
+ {
+  "start": 642,
+  "end": 651,
+  "title": "Ouput Embeddding & Positional Encoding"
+ },
+ {
+  "start": 651,
+  "end": 799,
+  "title": "Decoder Multi-Headed Attention 1"
+ },
+ {
+  "start": 799,
+  "end": 901,
+  "title": "Linear Classifier"
+ }
+]

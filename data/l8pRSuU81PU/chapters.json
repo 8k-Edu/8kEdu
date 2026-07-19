@@ -1,0 +1,157 @@
+[
+ {
+  "start": 0,
+  "end": 219,
+  "title": "intro: Let\u2019s reproduce GPT-2 (124M)"
+ },
+ {
+  "start": 219,
+  "end": 827,
+  "title": "exploring the GPT-2 (124M) OpenAI checkpoint"
+ },
+ {
+  "start": 827,
+  "end": 1688,
+  "title": "SECTION 1: implementing the GPT-2 nn.Module"
+ },
+ {
+  "start": 1688,
+  "end": 1860,
+  "title": "loading the huggingface/GPT-2 parameters"
+ },
+ {
+  "start": 1860,
+  "end": 2011,
+  "title": "implementing the forward pass to get logits"
+ },
+ {
+  "start": 2011,
+  "end": 2222,
+  "title": "sampling init, prefix tokens, tokenization"
+ },
+ {
+  "start": 2222,
+  "end": 2507,
+  "title": "sampling loop"
+ },
+ {
+  "start": 2507,
+  "end": 2750,
+  "title": "sample, auto-detect the device"
+ },
+ {
+  "start": 2750,
+  "end": 3173,
+  "title": "let\u2019s train: data batches (B,T) \u2192 logits (B,T,C)"
+ },
+ {
+  "start": 3173,
+  "end": 3402,
+  "title": "cross entropy loss"
+ },
+ {
+  "start": 3402,
+  "end": 3720,
+  "title": "optimization loop: overfit a single batch"
+ },
+ {
+  "start": 3720,
+  "end": 3974,
+  "title": "data loader lite"
+ },
+ {
+  "start": 3974,
+  "end": 4427,
+  "title": "parameter sharing wte and lm_head"
+ },
+ {
+  "start": 4427,
+  "end": 4938,
+  "title": "model initialization: std 0.02, residual init"
+ },
+ {
+  "start": 4938,
+  "end": 5294,
+  "title": "SECTION 2: Let\u2019s make it fast. GPUs, mixed precision, 1000ms"
+ },
+ {
+  "start": 5294,
+  "end": 5978,
+  "title": "Tensor Cores, timing the code, TF32 precision, 333ms"
+ },
+ {
+  "start": 5978,
+  "end": 6495,
+  "title": "float16, gradient scalers, bfloat16, 300ms"
+ },
+ {
+  "start": 6495,
+  "end": 7218,
+  "title": "torch.compile, Python overhead, kernel fusion, 130ms"
+ },
+ {
+  "start": 7218,
+  "end": 7614,
+  "title": "flash attention, 96ms"
+ },
+ {
+  "start": 7614,
+  "end": 8095,
+  "title": "nice/ugly numbers. vocab size 50257 \u2192 50304, 93ms"
+ },
+ {
+  "start": 8095,
+  "end": 8466,
+  "title": "SECTION 3: hyperpamaters, AdamW, gradient clipping"
+ },
+ {
+  "start": 8466,
+  "end": 8781,
+  "title": "learning rate scheduler: warmup + cosine decay"
+ },
+ {
+  "start": 8781,
+  "end": 9249,
+  "title": "batch size schedule, weight decay, FusedAdamW, 90ms"
+ },
+ {
+  "start": 9249,
+  "end": 10012,
+  "title": "gradient accumulation"
+ },
+ {
+  "start": 10012,
+  "end": 11421,
+  "title": "distributed data parallel (DDP)"
+ },
+ {
+  "start": 11421,
+  "end": 12190,
+  "title": "datasets used in GPT-2, GPT-3, FineWeb (EDU)"
+ },
+ {
+  "start": 12190,
+  "end": 12503,
+  "title": "validation data split, validation loss, sampling revive"
+ },
+ {
+  "start": 12503,
+  "end": 13385,
+  "title": "evaluation: HellaSwag, starting the run"
+ },
+ {
+  "start": 13385,
+  "end": 14181,
+  "title": "SECTION 4: results in the morning! GPT-2, GPT-3 repro"
+ },
+ {
+  "start": 14181,
+  "end": 14379,
+  "title": "shoutout to llm.c, equivalent but faster code in raw C/CUDA"
+ },
+ {
+  "start": 14379,
+  "end": 14486,
+  "title": "summary, phew, build-nanogpt github repo"
+ }
+]

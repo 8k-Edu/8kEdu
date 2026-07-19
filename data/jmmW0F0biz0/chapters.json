@@ -1,0 +1,22 @@
+[
+ {
+  "start": 0,
+  "end": 5,
+  "title": "<Untitled Chapter 1>"
+ },
+ {
+  "start": 5,
+  "end": 219,
+  "title": "Neural Networks Are Composed of Node Layers"
+ },
+ {
+  "start": 219,
+  "end": 235,
+  "title": "Five There Are Multiple Types of Neural Networks"
+ },
+ {
+  "start": 235,
+  "end": 271,
+  "title": "Recurrent Neural Networks"
+ }
+]

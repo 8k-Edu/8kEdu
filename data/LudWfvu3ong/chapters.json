@@ -1,0 +1,47 @@
+[
+ {
+  "start": 0,
+  "end": 19,
+  "title": "The Telephone Game Problem"
+ },
+ {
+  "start": 19,
+  "end": 77,
+  "title": "The Attention Revolution"
+ },
+ {
+  "start": 77,
+  "end": 168,
+  "title": "Query, Key, Value: The Trinity"
+ },
+ {
+  "start": 168,
+  "end": 229,
+  "title": "The Mathematical Foundation"
+ },
+ {
+  "start": 229,
+  "end": 283,
+  "title": "The Elegant Properties"
+ },
+ {
+  "start": 283,
+  "end": 361,
+  "title": "Multi-Head Attention: Multiple Perspectives"
+ },
+ {
+  "start": 361,
+  "end": 405,
+  "title": "Positional Encoding: Restoring Order"
+ },
+ {
+  "start": 405,
+  "end": 448,
+  "title": "From Translation to ChatGPT"
+ },
+ {
+  "start": 448,
+  "end": 470,
+  "title": "The Attention Revolution"
+ }
+]

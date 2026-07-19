@@ -1,0 +1,23 @@
+data/*/video.*
+data/*/frames/
+data/pyodide-dist/
+data/pyodide
+.env
+serve.log
+nohup.out
+.venv/
+node_modules/
+__pycache__/
+dist/
+
+# claude-code plugin skill machinery (per-user, not source)
+.agents/
+.claude/skills/
+skills-lock.json
+
+# never commit env backups
+.env.bak*
+.env.*.bak
+
+# pnpm content-addressable store — never track
+.pnpm-store/

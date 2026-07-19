@@ -1,0 +1,607 @@
+"""Analyze keyframes + transcript → interactive concept specs.
+
+Usage:
+  uv run analyze.py --backend mlx [--limit N]          # local, in-process (M4 Max)
+  uv run analyze.py --backend vllm [--limit N]         # local vllm-mlx server (Apple Silicon)
+  uv run analyze.py --backend openai [--limit N]       # vLLM pod / any OpenAI-compat server
+
+Env (openai backend):
+  KEDU_BASE_URL  endpoint, e.g. http://<pod>:8000/v1
+  KEDU_MODEL     served model name
+Env (vllm backend):
+  VLLM_BASE_URL     local vllm-mlx endpoint (default http://localhost:8000/v1)
+  VLLM_MODEL        served MLX repo, e.g. mlx-community/Qwen2.5-VL-7B-Instruct-4bit
+Outputs: <data>/concepts.json
+"""
+
+import argparse
+import base64
+import hashlib
+import json
+import os
+import re
+import time
+from pathlib import Path
+
+MLX_MODEL = os.environ.get("KEDU_MLX_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit")
+
+# max_tokens for the vision spec. Default preserves the prior 6000 so a reasoning-model vision
+# backend isn't truncated; set KEDU_MAX_TOKENS lower (e.g. 1024) for a plain VLM like Qwen-VL.
+KEDU_MAX_TOKENS = int(os.environ.get("KEDU_MAX_TOKENS", "6000"))
+
+CONCEPT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "has_concept": {"type": "boolean"},
+        "widget": {
+            "type": "string",
+            "enum": ["matrix_mul", "attention", "softmax", "function_plot", "notebook", "spreadsheet", "none"],
+        },
+        "title": {"type": "string"},
+        "explanation": {"type": "string"},
+        "params": {
+            "type": "object",
+            "properties": {
+                "a": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                "b": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                "q": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                "k": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                "logits": {"type": "array", "items": {"type": "number"}},
+                "temperature": {"type": "number"},
+                "expr": {"type": "string"},
+                # notebook uses cells: [python source strings]; spreadsheet uses cells: 2D array
+                # of cell values — same key, both shapes accepted since JSON schema properties
+                # can't hold two "cells" definitions.
+                "cells": {"type": "array", "items": {"anyOf": [{"type": "string"}, {"type": "array"}]}},
+                "features": {"type": "array", "items": {"type": "string"}},
+                "highlight": {"type": "object"},
+                "sliders": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "min": {"type": "number"},
+                            "max": {"type": "number"},
+                            "value": {"type": "number"},
+                        },
+                        "required": ["name", "min", "max", "value"],
+                    },
+                },
+            },
+        },
+    },
+    "required": ["has_concept", "widget", "title", "explanation", "params"],
+}
+
+SYSTEM = """You turn lecture stills into interactive widget specs. You see one frame from a
+technical lecture plus what the teacher said around that moment.
+
+If the frame teaches a concept a student could MANIPULATE, emit a spec:
+- matrix_mul: a matrix multiplication is shown/discussed → params {a, b} (2D number arrays)
+- attention: queries/keys/attention weights → params {q, k} (2D arrays, same col count)
+- softmax: logits→probabilities / sampling / temperature → params {logits} (numbers)
+- function_plot: a plottable function/curve → params {expr (JS, in x + slider names), sliders}
+- notebook: CODE is visible in the frame, or the concept needs real computation/simulation
+  → params {cells: [python source strings], sliders}. Python runs in-browser with numpy and
+  matplotlib (plt.show() to display). Translate the frame's code faithfully (torch → numpy).
+  Slider names are injected as global variables (floats — wrap int(x) as needed).
+  params.cells is REQUIRED for notebook — 1-3 python strings that actually compute and
+  print/plot the result. A notebook spec without cells is INVALID and will be discarded.
+- spreadsheet: an Excel/spreadsheet screen (a grid of cells) is shown → params
+  {cells: 2D array of the visible values (headers + a few real rows), features:
+  which of wrap/merge_center/orientation/bold/currency/percent this moment teaches,
+  highlight: {row,col} of the focal cell}. Use the ACTUAL text/numbers in the frame.
+
+Prefer notebook when the teacher is showing runnable code; prefer the simpler widgets when
+the concept is a single manipulable object.
+
+For ADVICE/FINANCE/TUTORIAL videos (real estate, investing, business): the manipulable
+concept is the CALCULATION behind the claim. Emit a notebook calculator — sliders for the
+numbers the viewer would change (price, down payment %, interest rate, rent, years, fees),
+cells that compute the outcome (monthly payment, cash flow, compound growth) and plot it.
+Ground every default in the numbers the speaker actually uses.
+Use the ACTUAL numbers visible in the frame when readable; otherwise small didactic values
+faithful to the moment (2x3 matrices, 4 logits). Matrices <= 4x4.
+If the frame is just the speaker, prose slides, or code with no manipulable math:
+has_concept=false, widget="none".
+If the student asked a QUESTION that doesn't map to a manipulable widget, still set
+widget="none" but put a direct, concrete answer to their question (grounded in the frame
+and what the teacher said) in the "explanation" field.
+
+Reply with ONLY a JSON object:
+{"has_concept": bool, "widget": "matrix_mul|attention|softmax|function_plot|notebook|spreadsheet|none",
+ "title": str, "explanation": str (one sentence, why it matters), "params": {...}}"""
+
+ALLOWED = {"matrix_mul", "attention", "softmax", "function_plot", "notebook", "spreadsheet"}
+
+# S_g — genre-conditioned system prompts. The artifact equation:
+#   A_i = M(S_g, m_i ⊕ {f_i..f_n} ⊕ Tr_i), cached on (video, i, g) and reused for every learner.
+# Genre picks the lens the model reads the frame through (taxonomy grows toward 20-100 genres).
+GENRE_PROMPTS = {
+    "ai_stem": (
+        "This is an AI/STEM lecture. Favor matrix_mul/attention/softmax for the linear-algebra "
+        "moments, function_plot for curves, notebook whenever code is on screen. Reproduce the "
+        "speaker's tensors and shapes exactly; translate torch to numpy faithfully."
+    ),
+    "finance": (
+        "This is a finance/markets video. The manipulable concept is the CALCULATION behind each "
+        "claim — emit notebook calculators with sliders for the numbers a viewer would change "
+        "(principal, rate, years, fees, allocation) and cells that compute and plot the outcome "
+        "(compound growth, cash flow, drawdown). Ground defaults in the speaker's actual numbers."
+    ),
+    "real_estate": (
+        "This is a real-estate video. Every claim hides a calculator: mortgage payment, PMI, "
+        "down-payment %, rent-vs-buy, appreciation vs opportunity cost, sell-vs-hold. Emit "
+        "notebook calculators with sliders for those inputs, defaults from the speaker's numbers."
+    ),
+    "how_to": (
+        "This is a how-to / tutorial video. The manipulable concept is the PROCEDURE and the "
+        "numbers behind it — quantities, ratios, times, settings, costs. Emit notebook widgets "
+        "that let the viewer plug in THEIR situation: a scaling calculator (scale a recipe / "
+        "materials to a different batch size or budget), a step checklist with the actual steps, "
+        "or a plan that recomputes times/amounts as sliders change. Use the exact quantities the "
+        "presenter states as defaults."
+    ),
+    "cooking": (
+        "This is a cooking video. Emit a recipe scaler: sliders for servings and key ingredients, "
+        "cells that recompute every ingredient amount and the total time/cost, defaults from the "
+        "recipe as stated. Convert units faithfully (cups↔grams where shown)."
+    ),
+    "fitness": (
+        "This is a fitness / health video. Emit calculators for the numbers stated — sets×reps×"
+        "load volume, calorie/macro targets, pace or progression over weeks — with sliders for the "
+        "viewer's bodyweight, goal, and schedule; defaults from the presenter's programming."
+    ),
+    "spreadsheet": (
+        "This is a spreadsheet/Excel tutorial. Emit a `spreadsheet` widget: cells = a SMALL "
+        "focused excerpt of the grid on screen — at most 4 columns by 5 rows (a header row plus "
+        "a few real rows), exact values from the frame, pick the columns most relevant to the "
+        "moment. features = the actions this moment teaches (wrap, merge_center, orientation, "
+        "bold, currency, percent), highlight = {row,col} of the focal cell. The learner gets an "
+        "editable grid to try it."
+    ),
+}
+GENRE_KEYWORDS = {
+    "ai_stem": ["matrix", "neural", "gradient", "attention", "token", "tensor", "model", "training"],
+    "finance": ["invest", "stock", "market", "portfolio", "dollar", "inflation", "interest rate", "economy"],
+    "real_estate": ["house", "mortgage", "down payment", "rent", "property", "real estate", "closing"],
+    "how_to": ["how to", "step", "tutorial", "guide", "first", "then", "next", "make sure", "you'll need"],
+    "cooking": ["recipe", "cup", "tablespoon", "oven", "bake", "ingredient", "dough", "minutes", "heat"],
+    "fitness": ["workout", "reps", "sets", "muscle", "protein", "calorie", "exercise", "training"],
+    "spreadsheet": ["excel", "spreadsheet", "cell", "column", "row", "formula", "workbook", "sheet", "worksheet", "ribbon"],
+}
+
+
+def detect_genre(cues: list[dict]) -> str:
+    """Cheap g = G(Tr) — keyword vote over the first ~10 minutes of transcript."""
+    text = " ".join(c["text"] for c in cues[:600]).lower()
+    scores = {g: sum(text.count(k) for k in kws) for g, kws in GENRE_KEYWORDS.items()}
+    best = max(scores, key=scores.get)
+    return best if scores[best] >= 3 else "general"
+
+
+def compose_system(genre: str) -> str:
+    """base ⊕ S_g, pure — the per-request form used by the server (no global mutation).
+    'general'/unknown keeps the base prompt as-is."""
+    block = GENRE_PROMPTS.get(genre)
+    if not block:
+        return SYSTEM
+    return SYSTEM.replace(
+        "Reply with ONLY a JSON object:",
+        f"GENRE LENS ({genre}): {block}\n\nReply with ONLY a JSON object:")
+
+
+def apply_genre(genre: str) -> str:
+    """Compose SYSTEM = base ⊕ S_g in place for the offline CLI run (called once)."""
+    global SYSTEM
+    SYSTEM = compose_system(genre)
+    return genre
+
+
+def transcript_window(cues: list[dict], t: float, radius: float = 30.0) -> str:
+    return " ".join(c["text"] for c in cues if t - radius <= c["start"] <= t + radius)[:1500]
+
+
+def extract_json(text: str) -> dict | None:
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return None
+
+
+def valid(spec: dict | None) -> bool:
+    if not spec or not spec.get("has_concept"):
+        return False
+    if spec.get("widget") not in ALLOWED:
+        return False
+    p = spec.get("params")
+    if not (isinstance(p, dict) and len(p) > 0):
+        return False
+    def mat(x):
+        return (isinstance(x, list) and x and all(
+            isinstance(r, list) and r and all(isinstance(v, (int, float)) for v in r) for r in x))
+
+    w = spec["widget"]
+    if w == "notebook":
+        cells = p.get("cells")
+        return isinstance(cells, list) and len(cells) > 0 and all(isinstance(c, str) and c.strip() for c in cells)
+    if w == "matrix_mul":
+        return mat(p.get("a")) and mat(p.get("b")) and len(p["a"][0]) == len(p["b"])
+    if w == "attention":
+        return mat(p.get("q")) and mat(p.get("k")) and len(p["q"][0]) == len(p["k"][0])
+    if w == "softmax":
+        lg = p.get("logits")
+        return isinstance(lg, list) and len(lg) >= 2 and all(isinstance(v, (int, float)) for v in lg)
+    if w == "function_plot":
+        return isinstance(p.get("expr"), str) and bool(p["expr"].strip())
+    if w == "spreadsheet":
+        cells = p.get("cells")
+        return isinstance(cells, list) and len(cells) > 0 and all(
+            isinstance(row, list) and len(row) > 0 for row in cells)
+    return True
+
+
+# ---------- backends ----------
+
+def _jpeg_bytes(frame: Path, max_px: int | None) -> bytes:
+    """JPEG bytes for the frame, downscaled so the long edge is <= max_px. A 1280x720
+    frame carries ~6x the visual tokens of a 512-wide one, and the VLM call scales with
+    that — see the perf baseline. max_px=None returns the original bytes untouched."""
+    if not max_px:
+        return frame.read_bytes()
+    from PIL import Image
+    import io
+    img = Image.open(frame)
+    if max(img.size) <= max_px:
+        return frame.read_bytes()
+    img.thumbnail((max_px, max_px))
+    buf = io.BytesIO()
+    img.convert("RGB").save(buf, format="JPEG", quality=85)
+    return buf.getvalue()
+
+
+class MlxBackend:
+    def __init__(self):
+        from mlx_vlm import load, generate  # lazy: heavy import
+        from mlx_vlm.prompt_utils import apply_chat_template
+        from mlx_vlm.utils import load_config
+        self._generate = generate
+        self._apply = apply_chat_template
+        self.model, self.processor = load(MLX_MODEL)
+        self.config = load_config(MLX_MODEL)
+        self.model_name = MLX_MODEL
+        self.call_count = 0
+
+    def ask(self, frame: Path, context: str, max_px: int | None = None, system: str | None = None) -> str:
+        src = frame
+        tmp = None
+        if max_px:
+            import tempfile
+            data = _jpeg_bytes(frame, max_px)
+            if len(data) != frame.stat().st_size:
+                fd, name = tempfile.mkstemp(suffix=".jpg")
+                Path(name).write_bytes(data)
+                os.close(fd)
+                src = tmp = Path(name)
+        try:
+            prompt = self._apply(
+                self.processor, self.config,
+                f'{system or SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
+                num_images=1,
+            )
+            self.call_count += 1
+            out = self._generate(
+                self.model, self.processor, prompt, image=[str(src)],
+                max_tokens=800, temperature=0.1, verbose=False,
+            )
+            return out.text if hasattr(out, "text") else str(out)
+        finally:
+            if tmp:
+                tmp.unlink(missing_ok=True)
+
+
+class OpenAIBackend:
+    """Any OpenAI-compatible endpoint: vLLM pod, LM Studio, Gemini, OpenRouter…"""
+
+    def __init__(self, base_url: str, api_key: str, model: str):
+        from openai import OpenAI
+        self.model = model
+        self.model_name = model
+        self.call_count = 0
+        # Bound every call and disable SDK retries. vllm-mlx keeps generating for a client
+        # that has gone away, so an untimed client is how a slow request cascades into a
+        # 100s+ pileup under load; a timeout closes the socket → the server cancels it.
+        self.client = OpenAI(
+            base_url=base_url, api_key=api_key,
+            timeout=float(os.environ.get("KEDU_TIMEOUT", "60")),
+            max_retries=0,
+        )
+
+    def ask(self, frame: Path, context: str, max_px: int | None = None, system: str | None = None) -> str:
+        img = base64.standard_b64encode(_jpeg_bytes(frame, max_px)).decode()
+        messages = [
+            {"role": "system", "content": system or SYSTEM},
+            {"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img}"}},
+                {"type": "text", "text": f'Teacher is saying: "{context}"\n\nEmit the concept spec JSON.'},
+            ]},
+        ]
+        # strictest → loosest: schema (vLLM guided decoding) → json mode → plain.
+        # Reasoning models (e.g. Nemotron Omni on LM Studio) can return the answer only in
+        # reasoning_content and leave `content` EMPTY under structured-output — so treat an
+        # empty content as a miss and fall through to the next (looser) format.
+        last = None
+        for fmt in (
+            {"type": "json_schema", "json_schema": {"name": "concept", "schema": CONCEPT_SCHEMA}},
+            {"type": "json_object"},
+            None,
+        ):
+            try:
+                self.call_count += 1
+                resp = self.client.chat.completions.create(
+                    model=self.model, messages=messages, temperature=0.1,
+                    max_tokens=KEDU_MAX_TOKENS,  # thinking models spend reasoning tokens from this budget
+                    **({"response_format": fmt} if fmt else {}),
+                )
+                content = (resp.choices[0].message.content or "").strip()
+                if content:
+                    return content
+            except Exception as e:
+                last = e
+        if last:
+            raise last
+        return ""
+
+
+def load_dotenv() -> None:
+    """Tiny .env loader — no dependency, values never printed."""
+    env = Path(__file__).parent / ".env"
+    if not env.exists():
+        return
+    for line in env.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, _, v = line.partition("=")
+            os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+
+CLOUD_BACKENDS = {"gemini", "openai", "openrouter"}
+
+
+def make_backend(name: str):
+    """local: mlx (in-process) · lmstudio · vllm (local servers) — BYOK: gemini · openai (generic/vLLM)."""
+    load_dotenv()
+    # cost guard: cloud vision (Gemini/OpenAI) is OFF unless explicitly allowed.
+    # a runaway batch over hundreds of frames is how a bill explodes.
+    if name in CLOUD_BACKENDS and os.environ.get("KEDU_ALLOW_CLOUD") != "1":
+        raise SystemExit(
+            f"cloud backend '{name}' is BLOCKED (cost guard).\n"
+            f"Local backends (mlx / lmstudio) are free and unrestricted.\n"
+            f"To deliberately spend on cloud vision, set KEDU_ALLOW_CLOUD=1 for this one run."
+        )
+    if name == "mlx":
+        return MlxBackend()
+    if name == "lmstudio":
+        return OpenAIBackend(
+            base_url=os.environ.get("KEDU_BASE_URL", "http://127.0.0.1:1234/v1"),
+            api_key="lm-studio",
+            model=os.environ.get("KEDU_MODEL", "qwen2.5-vl-7b-instruct"),
+        )
+    if name == "vllm":  # local vllm-mlx server, OpenAI-compatible — own config, local ⇒ no cost guard
+        return OpenAIBackend(
+            base_url=os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1"),
+            api_key=os.environ.get("VLLM_API_KEY", "none"),
+            model=os.environ.get("VLLM_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit"),
+        )
+    if name == "gemini":
+        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not key:
+            raise SystemExit("gemini backend needs GEMINI_API_KEY (or GOOGLE_API_KEY)")
+        return OpenAIBackend(
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            api_key=key,
+            model=os.environ.get("KEDU_MODEL", "gemini-3-pro-preview"),
+        )
+    if name == "openrouter":
+        key = os.environ.get("OPENROUTER_API_KEY")
+        if not key:
+            raise SystemExit("openrouter backend needs OPENROUTER_API_KEY")
+        return openrouter_backend(key)
+    # generic BYOK / vLLM pod
+    return OpenAIBackend(
+        base_url=os.environ.get("KEDU_BASE_URL", "http://localhost:8000/v1"),
+        api_key=os.environ.get("KEDU_API_KEY", "none"),
+        model=os.environ.get("KEDU_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct"),
+    )
+
+
+def openrouter_backend(api_key: str, model: str | None = None):
+    """OpenRouter (OpenAI-compatible) vision backend. Used per-request by the server, where
+    the credit system — not the CLI KEDU_ALLOW_CLOUD guard — meters the spend."""
+    return OpenAIBackend(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+        model=model or os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
+    )
+
+
+BACKEND_CHOICES = ["mlx", "lmstudio", "vllm", "gemini", "openai", "openrouter"]
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--backend", choices=BACKEND_CHOICES, default="mlx")
+    ap.add_argument("--data", default="data")
+    ap.add_argument("--video", default="", help="video id → data/<id>")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--start", type=int, default=0, help="skip first N frames")
+    ap.add_argument("--out-name", default="concepts.json",
+                    help="output filename (use e.g. concepts.mlx.json for eval runs)")
+    ap.add_argument("--genre", default="auto",
+                    help=f"system-prompt lens: auto|general|{'|'.join(GENRE_PROMPTS)}")
+    ap.add_argument("--recursive-topic", default="",
+                    help="persistent concept-graph topic, e.g. ai_stem")
+    ap.add_argument("--recursive-mode", choices=["off", "cold", "warm"], default="off")
+    ap.add_argument("--experiment-id", default="")
+    ap.add_argument("--run-kind", choices=["live", "paired"], default="live")
+    ap.add_argument("--defer-admission", action="store_true",
+                    help="do not add warm target specs to recursive memory")
+    ap.add_argument("--exploration-rate", type=float, default=0.125)
+    ap.add_argument("--max-px", type=int, default=0)
+    args = ap.parse_args()
+    data = Path(args.data) / args.video if args.video else Path(args.data)
+
+    cues = json.loads((data / "transcript.json").read_text())
+    all_frames = json.loads((data / "frames.json").read_text())
+    frames = all_frames
+    frames = frames[args.start:]
+    if args.limit:
+        frames = frames[: args.limit]
+
+    genre = apply_genre(detect_genre(cues) if args.genre == "auto" else args.genre)
+    prompt_hash = hashlib.sha256(SYSTEM.encode()).hexdigest()[:12]
+    print(f"genre lens: {genre}")
+    backend = make_backend(args.backend)
+
+    recursive = None
+    plans = [{"kind": "explore", "frame": frame, "context": transcript_window(cues, frame["time"]),
+              "node": None, "score": 0.0} for frame in frames]
+    if args.recursive_topic:
+        from agent import kg
+        recursive = kg
+        if args.recursive_mode == "warm":
+            plans = kg.plan_frames(args.recursive_topic, cues, frames, args.exploration_rate)
+            print(f"recursive warm plan: {len(plans)}/{len(frames)} frames, "
+                  f"{sum(1 for plan in plans if plan['kind'] == 'reuse')} retrieved")
+
+    sweep_max_px = args.max_px or None
+    concurrency = int(os.environ.get("KEDU_CONCURRENCY", "1"))
+    # Concurrency only helps a server that batches in-flight requests (vllm-mlx
+    # --continuous-batching); mlx is in-process and lmstudio's concurrency is its own concern.
+    if concurrency > 1 and args.backend != "vllm":
+        print(f"(KEDU_CONCURRENCY={concurrency} ignored for '{args.backend}'; only vllm batches)")
+        concurrency = 1
+    if concurrency > 1 and not sweep_max_px:
+        sweep_max_px = 768  # OOM guard: N concurrent full-res images blow the Metal KV cache
+        print("(downscaling to 768px for the concurrent sweep — OOM guard)")
+
+    def process(i: int, plan: dict) -> tuple:
+        fr = plan["frame"]
+        try:
+            if recursive and plan["kind"] == "reuse":
+                spec = recursive.reusable_spec(plan)
+                if spec and valid(spec):
+                    spec["time"] = fr["time"]
+                    spec["frame"] = fr["file"]
+                    return ("reuse", i, plan, spec)
+            raw = backend.ask(data / "frames" / fr["file"], plan["context"], max_px=sweep_max_px)
+        except Exception as e:  # one bad frame must not kill the run — surfaced in the summary
+            return ("error", i, plan, str(e))
+        spec = extract_json(raw)
+        if valid(spec):
+            spec["time"] = fr["time"]
+            spec["frame"] = fr["file"]
+            return ("ok", i, plan, spec)
+        return ("none", i, plan, None)
+
+    def show(status: str, i: int, plan: dict, payload) -> None:
+        head = f"[{i+1}/{len(plans)}] {plan['frame']['time']:>7.1f}s"
+        if status == "reuse":
+            print(f"{head}  ↻ {payload['widget']}: {payload.get('title', '')[:60]}")
+        elif status == "ok":
+            print(f"{head}  ✓ {payload['widget']}: {payload.get('title', '')[:60]}")
+        elif status == "none":
+            print(f"{head}  – no concept")
+        else:
+            print(f"{head}  ! {payload}")
+
+    started = time.perf_counter()
+    results: list = [None] * len(plans)
+    if concurrency > 1 and len(plans) > 1:
+        # The server is warmed at startup (scripts/serve-vllm.sh), so no cold-kernel burst here.
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futs = {pool.submit(process, i, plan): i for i, plan in enumerate(plans)}
+            for fut in as_completed(futs):
+                r = fut.result()
+                results[r[1]] = r
+                show(*r)
+    else:
+        for i, plan in enumerate(plans):
+            r = process(i, plan)
+            results[i] = r
+            show(*r)
+
+    concepts = [r[3] for r in results if r and r[0] in ("reuse", "ok")]
+    widgets_reused = sum(1 for r in results if r and r[0] == "reuse")
+    frame_attempts = sum(1 for r in results if r and r[0] in ("ok", "none", "error"))
+    vlm_calls = int(getattr(backend, "call_count", frame_attempts))
+    errors = sum(1 for r in results if r and r[0] == "error")
+
+    merged = []
+    for c in concepts:
+        if merged and merged[-1]["widget"] == c["widget"] and c["time"] - merged[-1]["time"] < 90:
+            continue
+        merged.append(c)
+
+    (data / args.out_name).write_text(json.dumps(merged, indent=1))
+    print(f"done: {len(merged)} concepts (of {len(concepts)} raw) → {data}/{args.out_name}")
+    elapsed = time.perf_counter() - started
+    fps = len(plans) / elapsed if elapsed else 0.0
+    print(f"swept {len(plans)} in {elapsed:.1f}s ({fps:.2f}/s, concurrency={concurrency}, "
+          f"max_px={sweep_max_px}, vlm={vlm_calls}, reused={widgets_reused}, errors={errors})")
+    if errors and not concepts:  # total failure → fail loud so the curator's check=True catches it
+        raise SystemExit(f"all {len(plans)} frames errored — check the vllm-mlx server / timeout")
+
+    if recursive and args.recursive_mode != "off":
+        elapsed_ms = round((time.perf_counter() - started) * 1000)
+        recursive.log_processing_run(args.recursive_topic, {
+            "experiment_id": args.experiment_id or f"live-{args.video}-{int(time.time())}",
+            "mode": f"{args.run_kind}_{args.recursive_mode}",
+            "video_id": args.video,
+            "source_videos": sorted({
+                exemplar.get("video_id")
+                for plan in plans if plan.get("node")
+                for exemplar in plan["node"].get("exemplars", [])
+                if exemplar.get("video_id")
+            }),
+            "frames_total": len(frames),
+            "frames_analyzed": len(plans),
+            "vlm_calls": vlm_calls,
+            "widgets_new": max(0, len(merged) - widgets_reused),
+            "widgets_reused": widgets_reused,
+            "novel_concepts": max(0, len(merged) - widgets_reused),
+            "known_concepts": widgets_reused,
+            "build_ms": elapsed_ms,
+            "yield": round(len(merged) / max(1, len(plans)), 3),
+            "concept_recall": None,
+            "retrieval_precision": None,
+            "model": getattr(backend, "model_name", args.backend),
+            "prompt_version": prompt_hash,
+            "metadata": {
+                "measurement": "executed paired condition" if args.run_kind == "paired" else "executed live run",
+                "output": args.out_name,
+                "backend": args.backend,
+                "genre": genre,
+                "prompt_hash": prompt_hash,
+                "max_px": sweep_max_px,
+                "jpeg_quality": 85,
+                "max_tokens": KEDU_MAX_TOKENS,
+                "temperature": 0.1,
+                "exploration_rate": args.exploration_rate,
+                "concurrency": concurrency,
+                "frames_attempted": frame_attempts,
+                "elapsed_ms": elapsed_ms,
+                "admission_deferred": bool(args.defer_admission),
+            },
+        })
+        if args.recursive_mode == "warm" and not args.defer_admission:
+            recursive.ingest_specs(args.recursive_topic, args.video, merged)
+
+
+if __name__ == "__main__":
+    main()

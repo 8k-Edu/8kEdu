@@ -1,0 +1,563 @@
+[
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-attention in Transformer architecture",
+  "explanation": "Self-attention is the core mechanism that allows the encoder and decoder to weigh the importance of different positions in the input sequence during processing",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.5
+    ],
+    [
+     0.5,
+     1.0
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     0.5
+    ],
+    [
+     0.5,
+     1.0
+    ]
+   ],
+   "temperature": 1.0
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Self-attention visualization for sentence ambiguity",
+  "explanation": "The concept teaches how self-attention computes word relationships to resolve ambiguity in language, demonstrated through attention scores for 'binoculars'.",
+  "params": {
+   "q": [
+    [
+     0.2,
+     0.5,
+     0.3,
+     0.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.5,
+     0.5
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.5,
+     0.5
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.5,
+     0.5
+    ],
+    [
+     0.5,
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ]
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention concept",
+  "explanation": "The frame illustrates how multi-head attention processes multiple token perspectives simultaneously, which a single attention map cannot capture, making it essential for understanding complex relationships in sequences like the three-token example shown with 512-dimensional embeddings each, requiring attention parameters q and k for computation",
+  "params": {
+   "q": [
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "k": [
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   ]
+  },
+  "time": 180,
+  "frame": "f_000180.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention with independent heads",
+  "explanation": "The model uses multiple attention heads to capture different perspectives on the same input at the same computational cost as a single large attention mechanism",
+  "params": {
+   "q": [
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "k": [
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   ],
+   "sliders": [
+    {
+     "name": "head_count",
+     "min": 1,
+     "max": 8,
+     "value": 4
+    }
+   ]
+  },
+  "time": 270,
+  "frame": "f_000270.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention computation",
+  "explanation": "The teacher explains how multi-head attention splits large query, key, and value matrices into smaller dimensional slices for computational efficiency, which is visualized in the frame with matrix dimensions and head count parameters",
+  "params": {
+   "q": [
+    [
+     1,
+     2,
+     3,
+     4
+    ],
+    [
+     5,
+     6,
+     7,
+     8
+    ],
+    [
+     9,
+     10,
+     11,
+     12
+    ]
+   ],
+   "k": [
+    [
+     1,
+     2,
+     3,
+     4
+    ],
+    [
+     5,
+     6,
+     7,
+     8
+    ],
+    [
+     9,
+     10,
+     11,
+     12
+    ]
+   ],
+   "sliders": [
+    {
+     "name": "num_heads",
+     "min": 1,
+     "max": 10,
+     "value": 4
+    },
+    {
+     "name": "dim_per_head",
+     "min": 1,
+     "max": 1024,
+     "value": 128
+    }
+   ]
+  },
+  "time": 370,
+  "frame": "f_000370.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Linear layer blending concatenated perspectives",
+  "explanation": "The final linear layer blends the concatenated perspectives to produce the unified output while maintaining 512 dimensions",
+  "params": {
+   "cells": [
+    "import numpy as np",
+    "import matplotlib.pyplot as plt",
+    "def linear_layer(x):",
+    "    \"\"\"Apply a 512x512 linear transformation to the input.\"\"\"",
+    "    W = np.random.randn(512, 512) * 0.01",
+    "    b = np.zeros(512)",
+    "    return x @ W + b",
+    "x = np.random.randn(3, 512).reshape(-1, 512)  # Simulate concatenated 512-dim vector",
+    "y = linear_layer(x)  # Apply the final linear layer",
+    "plt.plot(y[0])  # Plot first dimension",
+    "plt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "dim1",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim2",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim3",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim4",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim5",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim6",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim7",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    },
+    {
+     "name": "dim8",
+     "min": 0,
+     "max": 1000,
+     "value": 512
+    }
+   ],
+   "features": [
+    "concatenate",
+    "linear_layer",
+    "512x512"
+   ]
+  },
+  "time": 460,
+  "frame": "f_000460.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-Head Attention Mechanism",
+  "explanation": "The model analyzes the sentence from multiple perspectives simultaneously using independent attention heads, which is the core concept of multi-head attention in transformers",
+  "params": {
+   "q": [
+    [
+     1.0,
+     0.5,
+     0.2
+    ],
+    [
+     0.8,
+     1.0,
+     0.3
+    ],
+    [
+     0.5,
+     0.7,
+     1.0
+    ],
+    [
+     0.2,
+     0.3,
+     0.8
+    ]
+   ],
+   "k": [
+    [
+     1.0,
+     0.5,
+     0.2
+    ],
+    [
+     0.8,
+     1.0,
+     0.3
+    ],
+    [
+     0.5,
+     0.7,
+     1.0
+    ],
+    [
+     0.2,
+     0.3,
+     0.8
+    ]
+   ]
+  },
+  "time": 500,
+  "frame": "f_000500.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Multi-head attention mechanism",
+  "explanation": "Multi-head attention allows the model to process multiple perspectives of the input simultaneously, preserving ambiguous meanings by running attention heads in parallel before merging their outputs through a linear layer, which solves language ambiguity without increasing computational cost compared to a single full-head attention mechanism with equivalent total dimensionality",
+  "params": {
+   "q": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "k": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ]
+  },
+  "time": 590,
+  "frame": "f_000590.jpg"
+ }
+]

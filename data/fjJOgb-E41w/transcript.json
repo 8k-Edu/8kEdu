@@ -1,0 +1,447 @@
+[
+ {
+  "start": 0.03,
+  "end": 1.87,
+  "text": "Hi. I'm Sanjana Reddy,"
+ },
+ {
+  "start": 1.87,
+  "end": 5.3,
+  "text": "Advanced Solutions Lab."
+ },
+ {
+  "start": 6.0,
+  "end": 8.77,
+  "text": "currently around generative"
+ },
+ {
+  "start": 8.97,
+  "end": 12.93,
+  "text": "including new vertex AI features"
+ },
+ {
+  "start": 13.27,
+  "end": 17.73,
+  "text": "Gen AI API."
+ },
+ {
+  "start": 18.17,
+  "end": 22.33,
+  "text": "session is to give you a solid footing"
+ },
+ {
+  "start": 22.67,
+  "end": 27.43,
+  "text": "that make all the Gen AI magic possible."
+ },
+ {
+  "start": 28.17,
+  "end": 31.83,
+  "text": "the attention mechanism"
+ },
+ {
+  "start": 32.0,
+  "end": 37.43,
+  "text": "and which is core to the LEM models."
+ },
+ {
+  "start": 38.4,
+  "end": 41.0,
+  "text": "in English sentence"
+ },
+ {
+  "start": 41.03,
+  "end": 44.83,
+  "text": "the cat ate the mouse to French."
+ },
+ {
+  "start": 44.9,
+  "end": 47.03,
+  "text": "You could use an encoder decoder."
+ },
+ {
+  "start": 47.43,
+  "end": 51.37,
+  "text": "that is used to translate sentences."
+ },
+ {
+  "start": 51.97,
+  "end": 55.53,
+  "text": "at a time"
+ },
+ {
+  "start": 55.53,
+  "end": 57.7,
+  "text": "and translates it at each time step."
+ },
+ {
+  "start": 58.27,
+  "end": 62.07,
+  "text": "sometimes the words in the source language"
+ },
+ {
+  "start": 62.07,
+  "end": 65.23,
+  "text": "language."
+ },
+ {
+  "start": 65.63,
+  "end": 67.13,
+  "text": "Here's an example."
+ },
+ {
+  "start": 67.13,
+  "end": 70.1,
+  "text": "Take the sentence Black cat ate the mouse."
+ },
+ {
+  "start": 70.67,
+  "end": 73.83,
+  "text": "the first English word is black."
+ },
+ {
+  "start": 74.43,
+  "end": 76.5,
+  "text": "However, in the translation,"
+ },
+ {
+  "start": 76.5,
+  "end": 81.3,
+  "text": "which means cat in English."
+ },
+ {
+  "start": 81.87,
+  "end": 84.93,
+  "text": "more on"
+ },
+ {
+  "start": 84.93,
+  "end": 87.63,
+  "text": "the word cat instead of the word black?"
+ },
+ {
+  "start": 87.93,
+  "end": 91.7,
+  "text": "step to improve the translation."
+ },
+ {
+  "start": 91.73,
+  "end": 96.67,
+  "text": "mechanism to the encoder decoder."
+ },
+ {
+  "start": 97.47,
+  "end": 101.33,
+  "text": "that allows the neural network"
+ },
+ {
+  "start": 101.47,
+  "end": 105.1,
+  "text": "of an input sequence."
+ },
+ {
+  "start": 105.93,
+  "end": 110.5,
+  "text": "to different parts of the input sequence"
+ },
+ {
+  "start": 110.83,
+  "end": 114.9,
+  "text": "receiving the highest weights."
+ },
+ {
+  "start": 115.77,
+  "end": 120.17,
+  "text": "based encoder decoder looks like."
+ },
+ {
+  "start": 120.77,
+  "end": 123.7,
+  "text": "as input"
+ },
+ {
+  "start": 124.27,
+  "end": 128.43,
+  "text": "and passes it on to the next time step."
+ },
+ {
+  "start": 129.93,
+  "end": 131.17,
+  "text": "In the end,"
+ },
+ {
+  "start": 131.17,
+  "end": 134.77,
+  "text": "is passed on to the decoder."
+ },
+ {
+  "start": 135.93,
+  "end": 139.1,
+  "text": "state"
+ },
+ {
+  "start": 139.4,
+  "end": 143.47,
+  "text": "and translates it to the target language."
+ },
+ {
+  "start": 144.43,
+  "end": 147.7,
+  "text": "from the traditional sequence"
+ },
+ {
+  "start": 147.7,
+  "end": 149.7,
+  "text": "to sequence model in two ways."
+ },
+ {
+  "start": 150.33,
+  "end": 154.73,
+  "text": "a lot more data to the decoder."
+ },
+ {
+  "start": 155.4,
+  "end": 159.1,
+  "text": "just passing the final hidden state number"
+ },
+ {
+  "start": 159.1,
+  "end": 162.53,
+  "text": "three to the decoder, the encoder passes"
+ },
+ {
+  "start": 162.53,
+  "end": 165.0,
+  "text": "all the hidden states from each time step."
+ },
+ {
+  "start": 166.03,
+  "end": 168.53,
+  "text": "This gives the decoder more context"
+ },
+ {
+  "start": 168.73,
+  "end": 170.97,
+  "text": "beyond just the final hidden state."
+ },
+ {
+  "start": 171.67,
+  "end": 176.4,
+  "text": "information to translate the sentence."
+ },
+ {
+  "start": 176.8,
+  "end": 181.17,
+  "text": "mechanism brings is adding"
+ },
+ {
+  "start": 181.17,
+  "end": 185.5,
+  "text": "before producing its output."
+ },
+ {
+  "start": 186.6,
+  "end": 188.6,
+  "text": "Let's take a look at what these steps are"
+ },
+ {
+  "start": 190.13,
+  "end": 190.73,
+  "text": "to focus"
+ },
+ {
+  "start": 190.73,
+  "end": 193.43,
+  "text": "the most relevant parts of the input."
+ },
+ {
+  "start": 193.8,
+  "end": 197.1,
+  "text": "The decoder does the following."
+ },
+ {
+  "start": 197.1,
+  "end": 201.93,
+  "text": "of encoder states that it has received."
+ },
+ {
+  "start": 202.93,
+  "end": 205.57,
+  "text": "Each encoder Hidden State is associated"
+ },
+ {
+  "start": 205.57,
+  "end": 208.27,
+  "text": "with a certain word in the input sentence."
+ },
+ {
+  "start": 208.73,
+  "end": 211.53,
+  "text": "it gives each hidden state a score."
+ },
+ {
+  "start": 212.4,
+  "end": 215.57,
+  "text": "each hidden state by its"
+ },
+ {
+  "start": 215.57,
+  "end": 218.7,
+  "text": "soft-max score as shown here."
+ },
+ {
+  "start": 218.7,
+  "end": 222.53,
+  "text": "hidden states with the highest scores"
+ },
+ {
+  "start": 223.13,
+  "end": 226.33,
+  "text": "hidden states with low scores."
+ },
+ {
+  "start": 227.13,
+  "end": 229.57,
+  "text": "together,"
+ },
+ {
+  "start": 229.8,
+  "end": 232.5,
+  "text": "Network works."
+ },
+ {
+  "start": 233.03,
+  "end": 237.27,
+  "text": "some of the notations on this slide."
+ },
+ {
+  "start": 237.93,
+  "end": 241.77,
+  "text": "the attention rate at each time step."
+ },
+ {
+  "start": 242.37,
+  "end": 245.67,
+  "text": "the hidden state of the encoder RNN"
+ },
+ {
+  "start": 245.67,
+  "end": 249.0,
+  "text": "at each time step h subscript"
+ },
+ {
+  "start": 249.0,
+  "end": 252.47,
+  "text": "the hidden state of the decoder"
+ },
+ {
+  "start": 252.47,
+  "end": 256.83,
+  "text": "step. With the attention mechanism"
+ },
+ {
+  "start": 257.0,
+  "end": 261.13,
+  "text": "translation is clearly visible"
+ },
+ {
+  "start": 261.13,
+  "end": 264.17,
+  "text": "in the attention diagram and ate"
+ },
+ {
+  "start": 264.53,
+  "end": 267.0,
+  "text": "translates as two words, a mange,"
+ },
+ {
+  "start": 267.27,
+  "end": 270.33,
+  "text": "in French. We can see the attention network"
+ },
+ {
+  "start": 270.37,
+  "end": 273.93,
+  "text": "ate for two time steps."
+ },
+ {
+  "start": 274.93,
+  "end": 275.93,
+  "text": "During the attention"
+ },
+ {
+  "start": 275.93,
+  "end": 280.73,
+  "text": "and the H4 vector"
+ },
+ {
+  "start": 280.73,
+  "end": 285.1,
+  "text": "a four for this time step."
+ },
+ {
+  "start": 285.67,
+  "end": 288.13,
+  "text": "This is the weighted sum."
+ },
+ {
+  "start": 288.13,
+  "end": 290.4,
+  "text": "We then concatenate H4"
+ },
+ {
+  "start": 290.4,
+  "end": 292.97,
+  "text": "and a 4 into one vector."
+ },
+ {
+  "start": 294.0,
+  "end": 298.3,
+  "text": "through a feedforward neural network."
+ },
+ {
+  "start": 298.73,
+  "end": 300.83,
+  "text": "One train jointly with the model"
+ },
+ {
+  "start": 301.4,
+  "end": 304.17,
+  "text": "to predict the next work."
+ },
+ {
+  "start": 304.17,
+  "end": 306.77,
+  "text": "neural network"
+ },
+ {
+  "start": 306.9,
+  "end": 310.0,
+  "text": "step."
+ },
+ {
+  "start": 310.5,
+  "end": 314.53,
+  "text": "till the end of sentence token"
+ },
+ {
+  "start": 314.53,
+  "end": 317.17,
+  "text": "is generated by the decoder."
+ },
+ {
+  "start": 317.17,
+  "end": 320.67,
+  "text": "an attention mechanism to improve"
+ },
+ {
+  "start": 320.67,
+  "end": 324.47,
+  "text": "decoder architecture."
+ },
+ {
+  "start": 325.23,
+  "end": 328.3,
+  "text": "Thank you so much for listening."
+ }
+]

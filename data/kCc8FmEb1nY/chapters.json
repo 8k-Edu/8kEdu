@@ -1,0 +1,152 @@
+[
+ {
+  "start": 0,
+  "end": 472,
+  "title": "intro: ChatGPT, Transformers, nanoGPT, Shakespeare"
+ },
+ {
+  "start": 472,
+  "end": 568,
+  "title": "reading and exploring the data"
+ },
+ {
+  "start": 568,
+  "end": 867,
+  "title": "tokenization, train/val split"
+ },
+ {
+  "start": 867,
+  "end": 1331,
+  "title": "data loader: batches of chunks of data"
+ },
+ {
+  "start": 1331,
+  "end": 2093,
+  "title": "simplest baseline: bigram language model, loss, generation"
+ },
+ {
+  "start": 2093,
+  "end": 2280,
+  "title": "training the bigram model"
+ },
+ {
+  "start": 2280,
+  "end": 2533,
+  "title": "port our code to a script"
+ },
+ {
+  "start": 2533,
+  "end": 2831,
+  "title": "version 1: averaging past context with for loops, the weakest form of aggregation"
+ },
+ {
+  "start": 2831,
+  "end": 3114,
+  "title": "the trick in self-attention: matrix multiply as weighted aggregation"
+ },
+ {
+  "start": 3114,
+  "end": 3282,
+  "title": "version 2: using matrix multiply"
+ },
+ {
+  "start": 3282,
+  "end": 3506,
+  "title": "version 3: adding softmax"
+ },
+ {
+  "start": 3506,
+  "end": 3618,
+  "title": "minor code cleanup"
+ },
+ {
+  "start": 3618,
+  "end": 3720,
+  "title": "positional encoding"
+ },
+ {
+  "start": 3720,
+  "end": 4298,
+  "title": "THE CRUX OF THE VIDEO: version 4: self-attention"
+ },
+ {
+  "start": 4298,
+  "end": 4366,
+  "title": "note 1: attention as communication"
+ },
+ {
+  "start": 4366,
+  "end": 4420,
+  "title": "note 2: attention has no notion of space, operates over sets"
+ },
+ {
+  "start": 4420,
+  "end": 4454,
+  "title": "note 3: there is no communication across batch dimension"
+ },
+ {
+  "start": 4454,
+  "end": 4539,
+  "title": "note 4: encoder blocks vs. decoder blocks"
+ },
+ {
+  "start": 4539,
+  "end": 4616,
+  "title": "note 5: attention vs. self-attention vs. cross-attention"
+ },
+ {
+  "start": 4616,
+  "end": 4751,
+  "title": "note 6: \"scaled\" self-attention. why divide by sqrt(head_size)"
+ },
+ {
+  "start": 4751,
+  "end": 4919,
+  "title": "inserting a single self-attention block to our network"
+ },
+ {
+  "start": 4919,
+  "end": 5065,
+  "title": "multi-headed self-attention"
+ },
+ {
+  "start": 5065,
+  "end": 5208,
+  "title": "feedforward layers of transformer block"
+ },
+ {
+  "start": 5208,
+  "end": 5571,
+  "title": "residual connections"
+ },
+ {
+  "start": 5571,
+  "end": 5869,
+  "title": "layernorm (and its relationship to our previous batchnorm)"
+ },
+ {
+  "start": 5869,
+  "end": 6159,
+  "title": "scaling up the model! creating a few variables. adding dropout"
+ },
+ {
+  "start": 6159,
+  "end": 6382,
+  "title": "encoder vs. decoder vs. both (?) Transformers"
+ },
+ {
+  "start": 6382,
+  "end": 6533,
+  "title": "super quick walkthrough of nanoGPT, batched multi-headed self-attention"
+ },
+ {
+  "start": 6533,
+  "end": 6872,
+  "title": "back to ChatGPT, GPT-3, pretraining vs. finetuning, RLHF"
+ },
+ {
+  "start": 6872,
+  "end": 6980,
+  "title": "conclusions"
+ }
+]

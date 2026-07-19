@@ -1,0 +1,52 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "French omelette preparation",
+  "explanation": "The chef demonstrates how to prepare a French omelette by cracking eggs into a bowl, establishing the core manipulable concept of egg quantity for the recipe",
+  "params": {
+   "expr": "3 * x",
+   "sliders": [
+    {
+     "name": "servings",
+     "min": 1,
+     "max": 10,
+     "value": 1
+    },
+    {
+     "name": "eggs_per_serving",
+     "min": 0.5,
+     "max": 5,
+     "value": 3
+    }
+   ]
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Egg cooking temperature and timing",
+  "explanation": "The video demonstrates how to control egg texture by manipulating cooking time and temperature, which can be modeled as a function of heat and duration with visual feedback on doneness",
+  "params": {
+   "expr": "f(time, temp) = [set on edges, set in middle, caramelized brown]",
+   "sliders": [
+    {
+     "name": "time",
+     "min": 0,
+     "max": 10,
+     "value": 3
+    },
+    {
+     "name": "temp",
+     "min": 50,
+     "max": 150,
+     "value": 85
+    }
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ }
+]

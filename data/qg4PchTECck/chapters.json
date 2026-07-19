@@ -1,0 +1,22 @@
+[
+ {
+  "start": 0,
+  "end": 18,
+  "title": "Intro"
+ },
+ {
+  "start": 18,
+  "end": 70,
+  "title": "Problem Formulation"
+ },
+ {
+  "start": 70,
+  "end": 132,
+  "title": "Gradient Descent"
+ },
+ {
+  "start": 132,
+  "end": 186,
+  "title": "Flavors of Gradient Descent"
+ }
+]

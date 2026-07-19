@@ -1,0 +1,437 @@
+[
+ {
+  "start": 0.32,
+  "end": 2.19,
+  "text": "Gradient descent is the process by which"
+ },
+ {
+  "start": 2.2,
+  "end": 3.79,
+  "text": "machines learn how to generate new"
+ },
+ {
+  "start": 3.8,
+  "end": 5.11,
+  "text": "faces,"
+ },
+ {
+  "start": 5.12,
+  "end": 6.99,
+  "text": "play hide and seek, and even beat the"
+ },
+ {
+  "start": 7.0,
+  "end": 9.55,
+  "text": "best humans at games like Dota."
+ },
+ {
+  "start": 9.56,
+  "end": 12.31,
+  "text": "But, what exactly is gradient descent?"
+ },
+ {
+  "start": 12.32,
+  "end": 13.95,
+  "text": "To answer that question, let's say"
+ },
+ {
+  "start": 13.96,
+  "end": 16.15,
+  "text": "you're trying to train your computer to"
+ },
+ {
+  "start": 16.16,
+  "end": 18.63,
+  "text": "listen to an audio file and recognize"
+ },
+ {
+  "start": 18.64,
+  "end": 20.91,
+  "text": "three spoken commands based on a labeled"
+ },
+ {
+  "start": 20.92,
+  "end": 23.35,
+  "text": "data set. The first step is to formulate"
+ },
+ {
+  "start": 23.36,
+  "end": 25.15,
+  "text": "this machine learning task as a"
+ },
+ {
+  "start": 25.16,
+  "end": 28.07,
+  "text": "mathematical optimization problem."
+ },
+ {
+  "start": 28.08,
+  "end": 30.15,
+  "text": "For example, you can work with a neural"
+ },
+ {
+  "start": 30.16,
+  "end": 32.23,
+  "text": "network whose weights are unknown"
+ },
+ {
+  "start": 32.24,
+  "end": 34.03,
+  "text": "variables,"
+ },
+ {
+  "start": 34.04,
+  "end": 36.51,
+  "text": "whose input is an audio data, and whose"
+ },
+ {
+  "start": 36.52,
+  "end": 38.91,
+  "text": "output is a vector of size three, where"
+ },
+ {
+  "start": 38.92,
+  "end": 40.91,
+  "text": "each entry represents how much the"
+ },
+ {
+  "start": 40.92,
+  "end": 42.31,
+  "text": "neural network thinks the audio"
+ },
+ {
+  "start": 42.32,
+  "end": 45.03,
+  "text": "corresponds to each command. Then, for"
+ },
+ {
+  "start": 45.04,
+  "end": 46.83,
+  "text": "each example in the data set, you"
+ },
+ {
+  "start": 46.84,
+  "end": 49.43,
+  "text": "compare the output of the neural network"
+ },
+ {
+  "start": 49.44,
+  "end": 51.23,
+  "text": "to the ideal output,"
+ },
+ {
+  "start": 51.24,
+  "end": 53.07,
+  "text": "take the difference, the square, and"
+ },
+ {
+  "start": 53.08,
+  "end": 55.07,
+  "text": "then the sum, and you get the cost of a"
+ },
+ {
+  "start": 55.08,
+  "end": 57.19,
+  "text": "single training example. By taking the"
+ },
+ {
+  "start": 57.2,
+  "end": 59.55,
+  "text": "sum over all training examples, you get"
+ },
+ {
+  "start": 59.56,
+  "end": 61.59,
+  "text": "the overall cost function. And the"
+ },
+ {
+  "start": 61.6,
+  "end": 63.95,
+  "text": "problem now becomes, how do we find the"
+ },
+ {
+  "start": 63.96,
+  "end": 66.03,
+  "text": "right value of theta that makes this"
+ },
+ {
+  "start": 66.04,
+  "end": 69.39,
+  "text": "cost function as small as possible?"
+ },
+ {
+  "start": 69.4,
+  "end": 72.11,
+  "text": "And this is where the second step, or"
+ },
+ {
+  "start": 72.12,
+  "end": 73.95,
+  "text": "gradient descent, comes in. And you"
+ },
+ {
+  "start": 73.96,
+  "end": 76.07,
+  "text": "might ask, why do we need to invent an"
+ },
+ {
+  "start": 76.08,
+  "end": 78.23,
+  "text": "algorithm for this at all? Can't we just"
+ },
+ {
+  "start": 78.24,
+  "end": 79.95,
+  "text": "plot the function and point to the"
+ },
+ {
+  "start": 79.96,
+  "end": 83.15,
+  "text": "minimizer? Well, theta usually has many"
+ },
+ {
+  "start": 83.16,
+  "end": 85.15,
+  "text": "more entries than just two."
+ },
+ {
+  "start": 85.16,
+  "end": 86.71,
+  "text": "And in that setting, it's hard to see"
+ },
+ {
+  "start": 86.72,
+  "end": 88.47,
+  "text": "what the function looks like."
+ },
+ {
+  "start": 88.48,
+  "end": 90.67,
+  "text": "So, what can we do?"
+ },
+ {
+  "start": 90.68,
+  "end": 92.79,
+  "text": "The insight of gradient descent is that"
+ },
+ {
+  "start": 92.8,
+  "end": 94.59,
+  "text": "while we cannot get a look at the whole"
+ },
+ {
+  "start": 94.6,
+  "end": 96.99,
+  "text": "function all at once, we can easily"
+ },
+ {
+  "start": 97.0,
+  "end": 99.23,
+  "text": "evaluate the cost function at an"
+ },
+ {
+  "start": 99.24,
+  "end": 101.07,
+  "text": "arbitrary point."
+ },
+ {
+  "start": 101.08,
+  "end": 102.43,
+  "text": "And with a process called"
+ },
+ {
+  "start": 102.44,
+  "end": 104.87,
+  "text": "backpropagation, we can also evaluate"
+ },
+ {
+  "start": 104.88,
+  "end": 106.31,
+  "text": "the negative gradient of this cost"
+ },
+ {
+  "start": 106.32,
+  "end": 108.51,
+  "text": "function and take a small step in that"
+ },
+ {
+  "start": 108.52,
+  "end": 111.03,
+  "text": "direction. Gradient descent continues in"
+ },
+ {
+  "start": 111.04,
+  "end": 113.07,
+  "text": "an iterative fashion. It computes the"
+ },
+ {
+  "start": 113.08,
+  "end": 115.35,
+  "text": "negative gradient at the new point,"
+ },
+ {
+  "start": 115.36,
+  "end": 117.15,
+  "text": "takes a step in that direction, and so"
+ },
+ {
+  "start": 117.16,
+  "end": 118.43,
+  "text": "on and so forth."
+ },
+ {
+  "start": 118.44,
+  "end": 120.35,
+  "text": "The intuition behind every step is that"
+ },
+ {
+  "start": 120.36,
+  "end": 122.35,
+  "text": "the gradient of a function gives you the"
+ },
+ {
+  "start": 122.36,
+  "end": 124.15,
+  "text": "direction that increases that function"
+ },
+ {
+  "start": 124.16,
+  "end": 126.47,
+  "text": "the most. So, by taking a small step in"
+ },
+ {
+  "start": 126.48,
+  "end": 128.67,
+  "text": "the opposite direction, you can hope to"
+ },
+ {
+  "start": 128.68,
+  "end": 130.31,
+  "text": "make the function decrease at each"
+ },
+ {
+  "start": 130.32,
+  "end": 132.71,
+  "text": "iteration. Gradient descent, as I just"
+ },
+ {
+  "start": 132.72,
+  "end": 134.35,
+  "text": "presented it, is known as vanilla"
+ },
+ {
+  "start": 134.36,
+  "end": 136.19,
+  "text": "gradient descent because several"
+ },
+ {
+  "start": 136.2,
+  "end": 137.75,
+  "text": "variants have been developed throughout"
+ },
+ {
+  "start": 137.76,
+  "end": 139.91,
+  "text": "the years to improve it."
+ },
+ {
+  "start": 139.92,
+  "end": 141.99,
+  "text": "In stochastic gradient descent, instead"
+ },
+ {
+  "start": 142.0,
+  "end": 143.71,
+  "text": "of taking the sum over all training"
+ },
+ {
+  "start": 143.72,
+  "end": 145.55,
+  "text": "examples when taking the gradient of the"
+ },
+ {
+  "start": 145.56,
+  "end": 147.75,
+  "text": "cost function, which can be expensive"
+ },
+ {
+  "start": 147.76,
+  "end": 149.75,
+  "text": "when the number of examples is big, we"
+ },
+ {
+  "start": 149.76,
+  "end": 151.99,
+  "text": "can take a small random subset at each"
+ },
+ {
+  "start": 152.0,
+  "end": 153.67,
+  "text": "iteration."
+ },
+ {
+  "start": 153.68,
+  "end": 155.59,
+  "text": "Adaptive gradient descent picks a"
+ },
+ {
+  "start": 155.6,
+  "end": 157.79,
+  "text": "different step size for each component"
+ },
+ {
+  "start": 157.8,
+  "end": 159.03,
+  "text": "of data."
+ },
+ {
+  "start": 159.04,
+  "end": 160.59,
+  "text": "And this can be extremely useful when"
+ },
+ {
+  "start": 160.6,
+  "end": 163.23,
+  "text": "data is sparse, like text data and image"
+ },
+ {
+  "start": 163.24,
+  "end": 164.39,
+  "text": "data."
+ },
+ {
+  "start": 164.4,
+  "end": 166.27,
+  "text": "Momentum gradient descent keeps track of"
+ },
+ {
+  "start": 166.28,
+  "end": 168.59,
+  "text": "previously computed gradients to build"
+ },
+ {
+  "start": 168.6,
+  "end": 170.79,
+  "text": "up momentum and accelerate convergence"
+ },
+ {
+  "start": 170.8,
+  "end": 172.39,
+  "text": "to the minimizer. This was gradient"
+ },
+ {
+  "start": 172.4,
+  "end": 174.31,
+  "text": "descent in under 3 minutes. If you like"
+ },
+ {
+  "start": 174.32,
+  "end": 176.79,
+  "text": "the video, like and subscribe, and see"
+ },
+ {
+  "start": 176.8,
+  "end": 179.52,
+  "text": "you next time."
+ }
+]

@@ -1,0 +1,38 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Espresso Recipe Calculator",
+  "explanation": "A calculator to set dose, yield, and time parameters for brewing espresso with adjustable sliders and computation cells for recipe scaling and troubleshooting metrics",
+  "params": {
+   "cells": [
+    "dose = dose_slider * 20\nprint(f'Dose: {dose:.1f} g')",
+    "yield = dose * yield_slider\nprint(f'Yield: {yield:.1f} g')",
+    "time = time_slider\nprint(f'Time: {time} s')",
+    "print(f'Recommended dose range: 20-22 g (single/double), 22-26 g (triple)')"
+   ],
+   "sliders": [
+    {
+     "name": "dose_slider",
+     "min": 20,
+     "max": 26,
+     "value": 22
+    },
+    {
+     "name": "yield_slider",
+     "min": 1.5,
+     "max": 2.5,
+     "value": 2.0
+    },
+    {
+     "name": "time_slider",
+     "min": 15,
+     "max": 30,
+     "value": 19.5
+    }
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ }
+]

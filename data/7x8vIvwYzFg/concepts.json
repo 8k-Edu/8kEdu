@@ -1,0 +1,82 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Bond Yield Calculator",
+  "explanation": "Bond yields serve as a key economic barometer that can be modeled and explored interactively",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef calculate_yield(price, face_value, coupon_rate, years_to_maturity):\n    coupon_payment = face_value * coupon_rate\n    discount_rate = coupon_payment / price\n    yield_to_maturity = (coupon_payment / face_value) + (face_value - price) / (face_value * (1 + discount_rate) ** (1 / years_to_maturity))\n    return yield_to_maturity\n\ndef plot_yield_curve(price, face_value, coupon_rate, years):\n    yields = []\n    for t in range(1, years + 1):\n        yields.append(calculate_yield(price, face_value, coupon_rate, t))\n    plt.plot(range(1, years + 1), yields)\n    plt.xlabel('Years to Maturity')\n    plt.ylabel('Yield')\n    plt.title('Yield Curve')\n    plt.grid(True)\n    plt.show()\n\n# Default values from the video\nprice = 1000\nface_value = 1000\ncoupon_rate = 0.03\nyears = 10\n\n# Interactive sliders\nimport ipywidgets as widgets\nfrom IPython.display import display\n\nprice_slider = widgets.FloatSlider(value=price, min=500, max=2000, step=1, description='Price')\ncoupon_slider = widgets.FloatSlider(value=coupon_rate, min=0, max=0.1, step=0.001, description='Coupon Rate')\nyears_slider = widgets.IntSlider(value=years, min=1, max=30, description='Years')\n\ndisplay(price_slider, coupon_slider, years_slider)\n\n# Calculate and plot\ncalculate_yield(price_slider.value, face_value, coupon_slider.value, years_slider.value)\nplot_yield_curve(price_slider.value, face_value, coupon_slider.value, years_slider.value)\n"
+   ],
+   "sliders": [
+    {
+     "name": "price",
+     "min": 500,
+     "max": 2000,
+     "value": 1000
+    },
+    {
+     "name": "coupon_rate",
+     "min": 0,
+     "max": 0.1,
+     "value": 0.03
+    },
+    {
+     "name": "years",
+     "min": 1,
+     "max": 30,
+     "value": 10
+    }
+   ],
+   "features": [
+    "wrap",
+    "merge_center",
+    "bold"
+   ],
+   "highlight": {
+    "features": [
+     "bold"
+    ],
+    "cells": [
+     0,
+     0
+    ]
+   }
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Bond Calculator",
+  "explanation": "This interactive tool lets users adjust bond parameters like maturity, coupon rate, and principal to calculate annual payments and visualize cash flow over time, directly supporting the teacher's explanation of bond fundamentals and their financial impact",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Default bond parameters from the video\nmaturity_years = 10\ncoupon_rate = 0.04\nprincipal = 1000\n\n# Calculate annual payment\nannual_payment = principal * coupon_rate\n\n# Generate cash flow over time\nyears = np.arange(1, maturity_years + 1)\ncash_flow = [annual_payment] * maturity_years\n\n# Plot cash flow\ndef plot_cash_flow():\n    plt.figure(figsize=(10, 5))\n    plt.bar(years, cash_flow, color='skyblue')\n    plt.title('Annual Cash Flow from Bond')\n    plt.xlabel('Years')\n    plt.ylabel('Payment ($)')\n    plt.grid(axis='y', alpha=0.3)\n    plt.show()\n\nplot_cash_flow()\n\n# Print key values\nprint(f'Maturity: {maturity_years} years')\nprint(f'Coupon Rate: {coupon_rate*100}%')\nprint(f'Annual Payment: ${annual_payment}')\nprint(f'Total Return: ${annual_payment * maturity_years}')"
+   ],
+   "sliders": [
+    {
+     "name": "maturity_years",
+     "min": 1,
+     "max": 30,
+     "value": 10
+    },
+    {
+     "name": "coupon_rate",
+     "min": 0.01,
+     "max": 0.1,
+     "value": 0.04
+    },
+    {
+     "name": "principal",
+     "min": 100,
+     "max": 100000,
+     "value": 1000
+    }
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ }
+]
