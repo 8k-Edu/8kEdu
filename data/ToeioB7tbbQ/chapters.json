@@ -1,0 +1,32 @@
+[
+ {
+  "start": 0,
+  "end": 45,
+  "title": "Intro"
+ },
+ {
+  "start": 45,
+  "end": 160,
+  "title": "Proper Equipment"
+ },
+ {
+  "start": 160,
+  "end": 229,
+  "title": "Running Schedule"
+ },
+ {
+  "start": 229,
+  "end": 308,
+  "title": "Running Buddy"
+ },
+ {
+  "start": 308,
+  "end": 417,
+  "title": "Fueling Recovery"
+ },
+ {
+  "start": 417,
+  "end": 517,
+  "title": "Have Fun"
+ }
+]
