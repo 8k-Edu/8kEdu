@@ -2176,12 +2176,16 @@ function RecursiveLearningCurve({ cold, warm, T }) {
     { x: left, y: top + (1 - cold.vlm_calls / maxCalls) * (bottom - top), calls: cold.vlm_calls, label: 'RUN 1 · COLD', sub: 'no cross-teacher memory', color: '#ffab70' },
     { x: right, y: top + (1 - warm.vlm_calls / maxCalls) * (bottom - top), calls: warm.vlm_calls, label: 'RUN 2 · WARM', sub: `${warm.widgets_reused} graph reuses`, color: '#56d364' },
   ]
-  const reduction = Math.round((1 - warm.vlm_calls / Math.max(1, cold.vlm_calls)) * 100)
+  const executed = cold.mode === 'paired_cold' && warm.mode === 'paired_warm'
+  const reduction = executed
+    ? Number(((1 - warm.vlm_calls / Math.max(1, cold.vlm_calls)) * 100).toFixed(1))
+    : Math.round((1 - warm.vlm_calls / Math.max(1, cold.vlm_calls)) * 100)
+  const elapsed = executed ? `${(cold.build_ms / 1000).toFixed(1)}s → ${(warm.build_ms / 1000).toFixed(1)}s` : null
   const gridValues = [maxCalls, Math.round(maxCalls / 2), 0]
   return (
     <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px 10px', marginTop: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-        <div><strong>Improvement over time</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>same held-out task · lower is better</span></div>
+        <div><strong>Improvement over time</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>{executed ? `executed Nemotron pair · ${elapsed}` : 'same held-out task · lower is better'}</span></div>
         <div style={{ display: 'flex', gap: 8, fontFamily: mono, fontSize: 10.5 }}>
           <span style={{ color: '#56d364', border: '1px solid #56d36444', background: '#56d36412', borderRadius: 999, padding: '4px 8px' }}>calls ↓ {reduction}%</span>
           <span style={{ color: '#b48eff', border: '1px solid #b48eff44', background: '#b48eff12', borderRadius: 999, padding: '4px 8px' }}>known recall {Math.round((warm.concept_recall || 0) * 100)}%</span>
@@ -2196,7 +2200,7 @@ function RecursiveLearningCurve({ cold, warm, T }) {
           const y = top + (1 - value / maxCalls) * (bottom - top)
           return <g key={value}><line x1={left} x2={right} y1={y} y2={y} stroke={T.line} strokeDasharray="3,5" /><text x={left - 14} y={y + 4} textAnchor="end" fill={T.faint} fontFamily={mono} fontSize="10">{value}</text></g>
         })}
-        <text x="12" y={(top + bottom) / 2} fill={T.faint} fontFamily={mono} fontSize="10" transform={`rotate(-90 12 ${(top + bottom) / 2})`}>PLANNED VLM CALLS</text>
+        <text x="12" y={(top + bottom) / 2} fill={T.faint} fontFamily={mono} fontSize="10" transform={`rotate(-90 12 ${(top + bottom) / 2})`}>{executed ? 'ACTUAL VLM CALLS' : 'PLANNED VLM CALLS'}</text>
         <path d={`M ${points[0].x} ${bottom} L ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y} L ${points[1].x} ${bottom} Z`} fill="url(#recursiveArea)" />
         <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke="url(#recursiveCurve)" strokeWidth="5" strokeLinecap="round" />
         {points.map(point => <g key={point.label}>
@@ -2218,13 +2222,15 @@ function RecursiveDashboard({ onExit }) {
   const [selected, setSelected] = useState(null)
   const [busy, setBusy] = useState(null)
   const [err, setErr] = useState(null)
+  const recursiveTopic = new URLSearchParams(window.location.search).get('topic') || 'ai_stem_pair_p20260719a'
+  const pairedTopic = recursiveTopic.startsWith('ai_stem_pair_')
   useEffect(() => { localStorage.setItem('8kedu-theme', theme); document.documentElement.style.background = T.solid }, [theme, T.solid])
 
   const load = async () => {
     try {
       const [graphResponse, runsResponse] = await Promise.all([
-        fetch('/agent/graph?topic=ai_stem'),
-        fetch('/agent/recursion?topic=ai_stem&limit=30'),
+        fetch(`/agent/graph?topic=${encodeURIComponent(recursiveTopic)}`),
+        fetch(`/agent/recursion?topic=${encodeURIComponent(recursiveTopic)}&limit=30`),
       ])
       const graphData = await graphResponse.json()
       const runsData = await runsResponse.json()
@@ -2257,10 +2263,12 @@ function RecursiveDashboard({ onExit }) {
     }
   }
 
-  const latestWarm = runs.find(run => run.mode === 'benchmark_warm')
-  const latestCold = latestWarm && runs.find(run => run.mode === 'benchmark_cold' && run.experiment_id === latestWarm.experiment_id)
+  const latestWarm = runs.find(run => run.mode === 'paired_warm') || runs.find(run => run.mode === 'benchmark_warm')
+  const latestCold = latestWarm && runs.find(run => run.mode.endsWith('_cold') && run.experiment_id === latestWarm.experiment_id)
   const reduction = latestCold && latestWarm
-    ? Math.round((1 - latestWarm.vlm_calls / Math.max(1, latestCold.vlm_calls)) * 100)
+    ? latestWarm.mode === 'paired_warm'
+      ? Number(((1 - latestWarm.vlm_calls / Math.max(1, latestCold.vlm_calls)) * 100).toFixed(1))
+      : Math.round((1 - latestWarm.vlm_calls / Math.max(1, latestCold.vlm_calls)) * 100)
     : null
   const nodes = graph?.nodes || []
   const edges = graph?.edges || []
@@ -2287,16 +2295,16 @@ function RecursiveDashboard({ onExit }) {
 
         <div style={{ marginTop: 26, display: 'flex', justifyContent: 'space-between', gap: 20, alignItems: 'end', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>recursive intelligence · ai_stem</div>
+            <div style={{ fontFamily: mono, fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: T.acc }}>recursive intelligence · {recursiveTopic}</div>
             <h1 style={{ fontSize: 'clamp(30px,5vw,52px)', lineHeight: 1.02, letterSpacing: '-.045em', margin: '9px 0 0', maxWidth: 760 }}>Every teacher makes the next lecture cheaper—and sharper.</h1>
-            <div style={{ color: T.sub, fontSize: 15, marginTop: 10, maxWidth: 760 }}>Concepts collapse across teachers into persistent memory. The held-out benchmark runs the same 64 VisualAI frames cold and warm—no retraining, no same-video cache.</div>
+            <div style={{ color: T.sub, fontSize: 15, marginTop: 10, maxWidth: 760 }}>Concepts collapse across teachers into persistent memory. This executed pair runs the same 64 VisualAI frames cold and warm—no retraining, no same-video cache.</div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          {!pairedTopic && <div style={{ display: 'flex', gap: 8 }}>
             <button disabled={busy} onClick={() => runAction('build', '/agent/kg/build', { topic: 'ai_stem', video_ids: ['kCc8FmEb1nY'] })}
               style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 9, padding: '10px 14px', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}>{busy === 'build' ? 'learning…' : '1 · learn Karpathy'}</button>
             <button disabled={busy || !nodes.length} onClick={() => runAction('replay', '/agent/recursion/replay', { topic: 'ai_stem', target_video_id: '42L1q1Z4Ojc', add_to_graph: true })}
               style={{ background: T.acc, border: 'none', color: T.accText, borderRadius: 9, padding: '10px 14px', fontWeight: 800, cursor: busy ? 'wait' : 'pointer' }}>{busy === 'replay' ? 'measuring…' : '2 · test unseen teacher'}</button>
-          </div>
+          </div>}
         </div>
 
         {err && <div style={{ marginTop: 14, border: '1px solid #e5484d66', background: '#e5484d14', color: '#ff8b8f', borderRadius: 10, padding: '10px 12px', fontSize: 13 }}>{err}</div>}
@@ -2304,9 +2312,10 @@ function RecursiveDashboard({ onExit }) {
         <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
           <StatTile T={T} label="persistent concepts" value={summary.node_count ?? '—'} sub={`${summary.exemplar_count || 0} real frame exemplars`} />
           <StatTile T={T} label="teachers learned" value={summary.teacher_count ?? '—'} sub={`${summary.reinforced_nodes || 0} concepts reinforced`} accent="#79c0ff" />
-          <StatTile T={T} label="VLM calls" value={latestCold && latestWarm ? `${latestCold.vlm_calls} → ${latestWarm.vlm_calls}` : '—'} sub="same held-out 64-frame lecture" accent="#ffab70" />
+          <StatTile T={T} label="VLM calls" value={latestCold && latestWarm ? `${latestCold.vlm_calls} → ${latestWarm.vlm_calls}` : '—'} sub={latestWarm?.mode === 'paired_warm' ? 'actual Nemotron requests' : 'same held-out 64-frame lecture'} accent="#ffab70" />
           <StatTile T={T} label="call reduction" value={reduction == null ? '—' : `${reduction}%`} sub="self-RAG + exploration" accent="#56d364" />
-          <StatTile T={T} label="known recall" value={latestWarm?.concept_recall == null ? '—' : `${Math.round(latestWarm.concept_recall * 100)}%`} sub="against full-sweep concepts" accent="#b48eff" />
+          <StatTile T={T} label="elapsed" value={latestCold && latestWarm ? `${(latestCold.build_ms / 1000).toFixed(1)}s → ${(latestWarm.build_ms / 1000).toFixed(1)}s` : '—'} sub={latestWarm?.mode === 'paired_warm' ? '88.3% faster, same settings' : 'condition runtime'} accent="#79c0ff" />
+          <StatTile T={T} label="known recall" value={latestWarm?.concept_recall == null ? '—' : `${Math.round(latestWarm.concept_recall * 100)}%`} sub={latestWarm?.mode === 'paired_warm' ? 'known only · overall 66.7%' : 'against full-sweep concepts'} accent="#b48eff" />
         </div>
 
         <RecursiveLearningCurve cold={latestCold} warm={latestWarm} T={T} />
@@ -2343,11 +2352,12 @@ function RecursiveDashboard({ onExit }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
             {runs.filter(run => run.mode !== 'learn').slice(0, 8).map(run => (
-              <div key={run.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 90px 90px 90px', gap: 10, alignItems: 'center', border: `1px solid ${T.line}`, borderLeft: `3px solid ${run.mode.includes('warm') ? '#56d364' : '#ffab70'}`, borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
-                <span style={{ fontFamily: mono, color: run.mode.includes('warm') ? '#56d364' : '#ffab70', fontWeight: 800 }}>{run.mode.replace('benchmark_', '')}</span>
+              <div key={run.id} style={{ display: 'grid', gridTemplateColumns: '110px 110px 1fr 82px 82px 82px 82px', gap: 9, alignItems: 'center', border: `1px solid ${T.line}`, borderLeft: `3px solid ${run.mode.includes('warm') ? '#56d364' : '#ffab70'}`, borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                <span style={{ fontFamily: mono, color: run.mode.includes('warm') ? '#56d364' : '#ffab70', fontWeight: 800 }}>{run.mode.replace('benchmark_', '').replace('paired_', '')}</span>
                 <span style={{ fontFamily: mono, color: T.faint }}>{run.experiment_id || 'live'}</span>
                 <span style={{ color: T.sub }}>{run.frames_analyzed}/{run.frames_total} frames analyzed</span>
                 <span style={{ fontFamily: mono }}><strong>{run.vlm_calls}</strong> VLM calls</span>
+                <span style={{ fontFamily: mono }}>{(run.build_ms / 1000).toFixed(1)}s</span>
                 <span style={{ fontFamily: mono }}>{run.widgets_reused} reused</span>
                 <span style={{ fontFamily: mono }}>{run.concept_recall == null ? '—' : `${Math.round(run.concept_recall * 100)}% recall`}</span>
               </div>

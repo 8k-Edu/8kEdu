@@ -10,14 +10,14 @@
 
 **Format:** Loom, camera on, one continuous product walkthrough
 
-This is the record-ready script. Its metrics match experiment `e9d586862cb6`, persisted in Supabase and visible in `?view=graph`.
+This is the record-ready script. Its metrics match executed experiment `p20260719a`, persisted in Supabase and visible in `?view=graph`.
 
 ## Before recording
 
 1. Start the app with `./run.sh` and confirm the local Nemotron endpoint is available.
 2. Open the landing page, a Karpathy attention widget, `?view=graph`, and `?view=agent` in that order.
 3. Use the dark theme and a browser width near 1440 px so the graph and run table fit together.
-4. Confirm the graph shows 15 concepts, 59 exemplars, two teachers, and the 64 → 8 run delta.
+4. Confirm the graph shows 15 concepts, 60 exemplars, two teachers, and the 64 → 8 actual-call delta.
 5. Do not click **test unseen teacher**. VisualAI joined the graph after the held-out experiment was recorded.
 6. Keep the containment proof ready in a terminal. If it is slow, show the already-persisted status in the agent dashboard.
 7. Replace the repository URL on the final end card only if the public URL changes.
@@ -82,13 +82,13 @@ This is the record-ready script. Its metrics match experiment `e9d586862cb6`, pe
 
 > Now the controlled test. VisualAI was held out when this experiment ran. The target was the same 64-frame lecture in both conditions.
 
-> To keep the comparison reproducible, we replay real cached full-sweep outputs. The cold baseline analyzes all 64 frames, requiring 64 vision-model calls.
+> We created a fresh isolated topic and seeded it only with Karpathy. Cold executed all 64 frames through Nemotron: 64 actual calls in 553.1 seconds.
 
-> With memory learned only from Karpathy, the warm planner analyzes 15 frames. Seven known moments reuse validated graph exemplars, and eight remain exploration calls for possible novelty.
+> Warm used the same frames, model, prompt hash, image settings, token budget, temperature, and concurrency. Seven known moments reused graph exemplars, leaving eight actual calls. It finished in 64.7 seconds.
 
-> That saves 56 calls: an 87.5 percent reduction. Against the full sweep, known-concept recall is 100 percent and retrieval precision is 100 percent.
+> That is 87.5 percent fewer calls and 88.3 percent less elapsed time. Known-concept recall and retrieval precision are both 100 percent; overall cold-concept recall is 66.7 percent.
 
-> This is cross-teacher transfer, not a same-video cache hit. The persisted rows share one experiment ID so the comparison stays auditable.
+> VisualAI stayed out of memory until both conditions and quality metrics finished. The persisted rows share one experiment ID, so the comparison stays auditable.
 
 ## 2:37–3:06 — Show the recursive mechanism
 
@@ -140,16 +140,17 @@ This is the record-ready script. Its metrics match experiment `e9d586862cb6`, pe
 
 ## Claims visible in the recording
 
-- Controlled target: VisualAI, 64 frames, held out before experiment `e9d586862cb6`.
-- Cold baseline: 64 frames analyzed and 64 VLM calls.
-- Warm plan: 15 frames analyzed, seven graph reuses, and eight exploratory VLM calls.
-- Delta: 56 calls saved, 87.5% reduction, 100% known-concept recall, 100% retrieval precision.
-- Graph after admission: 15 concepts, 59 exemplars, two teachers, 11 reinforced concepts.
-- The comparison is a replay over cached real full-sweep outputs, not a fresh wall-clock benchmark.
+- Controlled target: VisualAI, 64 frames, held out before experiment `p20260719a`.
+- Cold: 64 actual calls, 553.1 seconds, zero errors.
+- Warm: 15 selected frames, seven graph reuses, eight actual calls, 64.7 seconds, zero errors.
+- Delta: 87.5% fewer calls, 88.3% less elapsed time, 100% known recall and retrieval precision.
+- Overall cold-concept recall: 66.7%.
+- Graph after admission: 15 concepts, 60 exemplars, two teachers, 11 reinforced concepts.
 
 ## Do not claim or show
 
-- Do not claim a measured cold-versus-warm wall-clock improvement.
+- Do not generalize the measured runtime beyond experiment `p20260719a` and its recorded settings.
+- Do not call known-concept recall overall recall; the two metrics are intentionally separate.
 - Do not say the warm path extracts new parameters; it currently reuses the best validated prior spec.
 - Do not call the held-out result a same-video cache hit.
 - Do not click **test unseen teacher** after VisualAI is already in the graph.

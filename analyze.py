@@ -16,6 +16,7 @@ Outputs: <data>/concepts.json
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import re
@@ -273,6 +274,7 @@ class MlxBackend:
         self.model, self.processor = load(MLX_MODEL)
         self.config = load_config(MLX_MODEL)
         self.model_name = MLX_MODEL
+        self.call_count = 0
 
     def ask(self, frame: Path, context: str, max_px: int | None = None, system: str | None = None) -> str:
         src = frame
@@ -291,6 +293,7 @@ class MlxBackend:
                 f'{system or SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
                 num_images=1,
             )
+            self.call_count += 1
             out = self._generate(
                 self.model, self.processor, prompt, image=[str(src)],
                 max_tokens=800, temperature=0.1, verbose=False,
@@ -308,6 +311,7 @@ class OpenAIBackend:
         from openai import OpenAI
         self.model = model
         self.model_name = model
+        self.call_count = 0
         # Bound every call and disable SDK retries. vllm-mlx keeps generating for a client
         # that has gone away, so an untimed client is how a slow request cascades into a
         # 100s+ pileup under load; a timeout closes the socket → the server cancels it.
@@ -337,6 +341,7 @@ class OpenAIBackend:
             None,
         ):
             try:
+                self.call_count += 1
                 resp = self.client.chat.completions.create(
                     model=self.model, messages=messages, temperature=0.1,
                     max_tokens=KEDU_MAX_TOKENS,  # thinking models spend reasoning tokens from this budget
@@ -427,6 +432,9 @@ def main() -> None:
                     help="persistent concept-graph topic, e.g. ai_stem")
     ap.add_argument("--recursive-mode", choices=["off", "cold", "warm"], default="off")
     ap.add_argument("--experiment-id", default="")
+    ap.add_argument("--run-kind", choices=["live", "paired"], default="live")
+    ap.add_argument("--defer-admission", action="store_true",
+                    help="do not add warm target specs to recursive memory")
     ap.add_argument("--exploration-rate", type=float, default=0.125)
     ap.add_argument("--max-px", type=int, default=0)
     args = ap.parse_args()
@@ -440,6 +448,7 @@ def main() -> None:
         frames = frames[: args.limit]
 
     genre = apply_genre(detect_genre(cues) if args.genre == "auto" else args.genre)
+    prompt_hash = hashlib.sha256(SYSTEM.encode()).hexdigest()[:12]
     print(f"genre lens: {genre}")
     backend = make_backend(args.backend)
 
@@ -514,7 +523,8 @@ def main() -> None:
 
     concepts = [r[3] for r in results if r and r[0] in ("reuse", "ok")]
     widgets_reused = sum(1 for r in results if r and r[0] == "reuse")
-    vlm_calls = sum(1 for r in results if r and r[0] in ("ok", "none", "error"))
+    frame_attempts = sum(1 for r in results if r and r[0] in ("ok", "none", "error"))
+    vlm_calls = int(getattr(backend, "call_count", frame_attempts))
     errors = sum(1 for r in results if r and r[0] == "error")
 
     merged = []
@@ -536,9 +546,14 @@ def main() -> None:
         elapsed_ms = round((time.perf_counter() - started) * 1000)
         recursive.log_processing_run(args.recursive_topic, {
             "experiment_id": args.experiment_id or f"live-{args.video}-{int(time.time())}",
-            "mode": f"live_{args.recursive_mode}",
+            "mode": f"{args.run_kind}_{args.recursive_mode}",
             "video_id": args.video,
-            "source_videos": [],
+            "source_videos": sorted({
+                exemplar.get("video_id")
+                for plan in plans if plan.get("node")
+                for exemplar in plan["node"].get("exemplars", [])
+                if exemplar.get("video_id")
+            }),
             "frames_total": len(frames),
             "frames_analyzed": len(plans),
             "vlm_calls": vlm_calls,
@@ -551,10 +566,25 @@ def main() -> None:
             "concept_recall": None,
             "retrieval_precision": None,
             "model": getattr(backend, "model_name", args.backend),
-            "prompt_version": "kg-v1",
-            "metadata": {"output": args.out_name, "exploration_rate": args.exploration_rate},
+            "prompt_version": prompt_hash,
+            "metadata": {
+                "measurement": "executed paired condition" if args.run_kind == "paired" else "executed live run",
+                "output": args.out_name,
+                "backend": args.backend,
+                "genre": genre,
+                "prompt_hash": prompt_hash,
+                "max_px": sweep_max_px,
+                "jpeg_quality": 85,
+                "max_tokens": KEDU_MAX_TOKENS,
+                "temperature": 0.1,
+                "exploration_rate": args.exploration_rate,
+                "concurrency": concurrency,
+                "frames_attempted": frame_attempts,
+                "elapsed_ms": elapsed_ms,
+                "admission_deferred": bool(args.defer_admission),
+            },
         })
-        if args.recursive_mode == "warm":
+        if args.recursive_mode == "warm" and not args.defer_admission:
             recursive.ingest_specs(args.recursive_topic, args.video, merged)
 
 

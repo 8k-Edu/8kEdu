@@ -25,9 +25,16 @@
 
 Each analyzed lecture adds concepts, prerequisites, widget patterns, and validated examples to shared memory. The next run retrieves that knowledge before deciding which frames still need vision-model analysis.
 
-The included controlled replay starts with a Karpathy lecture, then evaluates a held-out VisualAI lecture. It preserves 100% known-concept recall while reducing planned VLM calls from 64 to 8 through 7 graph reuses.
+The executed paired experiment seeds memory only with Karpathy, then processes the same 64 held-out VisualAI frames twice. Warm memory cuts actual Nemotron calls from 64 to 8 and elapsed time from 553.1 to 64.7 seconds.
 
 The dashboard at `?view=graph` shows the learning curve, concept graph, cold/warm traces, recall, and retrieval precision. See the [recursive experiment plan](docs/hackguide/RECURSIVE.md) for the protocol and evidence.
+
+Reproduce the isolated pair with:
+
+```bash
+KEDU_MAX_TOKENS=1024 KEDU_CONCURRENCY=4 uv run python -m agent.paired \
+  --backend vllm --max-px 512
+```
 
 ## Project summary
 
@@ -156,9 +163,9 @@ bash claw-agent/contained_agent_demo.sh
 
 ## Current scope and next
 
-The 64→8 recursive result is a reproducible replay over cached full-sweep output. It measures the warm planner's call budget and retrieval quality, not a paired wall-clock benchmark.
+Experiment `p20260719a` is a fresh executed pair: identical model, prompt hash, 64-frame target, image settings, token budget, temperature, and concurrency. Only Karpathy memory differs between conditions.
 
-Next, we plan to run fresh paired cold/warm inference, adapt retrieved specs to each teacher's exact visual parameters, connect mastery to curriculum sequencing, and expand multi-user identity.
+Known-concept recall and retrieval precision are both 100%; overall cold-concept recall is 66.7%. Next, we plan to adapt retrieved specs to each teacher's visuals, connect mastery to sequencing, and expand multi-user identity.
 
 ## Team
 

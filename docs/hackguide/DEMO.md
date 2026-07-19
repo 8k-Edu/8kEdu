@@ -18,11 +18,11 @@ Confirm the local Nemotron endpoint is up. Open `http://dev.localhost:5174/` and
 
 The graph must show:
 
-- 15 concepts and 59 real frame exemplars.
+- 15 concepts and 60 real frame exemplars.
 - Two teachers and 11 reinforced concepts.
 - Cold: 64/64 frames, 64 VLM calls.
 - Warm: 15/64 frames, seven reuses, eight VLM calls.
-- 87.5% reduction and 100% known-concept recall.
+- 87.5% fewer actual calls, 88.3% less elapsed time, and 100% known-concept recall.
 
 Do **not** click **test unseen teacher** while recording. VisualAI is already in the graph because the valid held-out experiment ran before admission.
 
@@ -42,9 +42,9 @@ Open the graph. Point to concepts, exemplars, teachers, and reinforced nodes. Ex
 
 ### 4. Recursive proof — 1:48–2:37
 
-Trace the over-time curve from run one to run two, then hold on the cold/warm rows. State that this is a reproducible replay over cached real full-sweep outputs, not a fresh wall-clock test.
+Trace the over-time curve from run one to run two, then hold on the cold/warm rows. State that this is an executed pair under experiment `p20260719a`, not a planned replay.
 
-Say the exact delta: **64 cold calls → eight warm exploration calls + seven graph reuses; 56 calls saved; 87.5% reduction; 100% recall and precision.**
+Say the exact delta: **64 calls and 553.1 s cold → eight calls and 64.7 s warm + seven graph reuses; 87.5% fewer calls; 88.3% less time; 100% known recall and precision.**
 
 ### 5. Mechanism — 2:37–3:06
 
@@ -60,7 +60,8 @@ Return to the cross-teacher exemplars. Close on active learning, reusable educat
 
 ## Truth guardrails
 
-- Do not claim measured cold/warm wall-clock time.
+- Attribute measured runtime only to experiment `p20260719a` and its recorded settings.
+- Do not call 100% known-concept recall “overall recall”; overall cold-concept recall is 66.7%.
 - Do not claim new-frame parameter adaptation; warm retrieval currently copies a validated prior spec.
 - Do not describe the recursive result as a same-video cache hit.
 - Do not claim Nemotron canonicalizes concepts; canonicalization is deterministic.

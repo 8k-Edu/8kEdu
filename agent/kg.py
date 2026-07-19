@@ -368,6 +368,41 @@ def _match_node(name: str, nodes: list[dict], threshold: float = 0.72) -> tuple[
     return (best_node, round(best_score, 3)) if best_score >= threshold else (None, round(best_score, 3))
 
 
+def paired_quality_metrics(cold_specs: list[dict], warm_specs: list[dict],
+                           seed_nodes: list[dict]) -> dict:
+    """Score executed warm output against the executed cold sweep.
+
+    Cold output is the paired ground truth. Known-concept recall covers concepts in that
+    output that were already present in seed-only memory; retrieval precision covers the
+    warm specs that actually came from graph reuse.
+    """
+    def names(specs: list[dict]) -> set[str]:
+        return {
+            canonicalize_concept(
+                spec.get("title", ""), spec.get("explanation", ""), spec.get("widget", ""),
+            )[0]
+            for spec in specs
+            if isinstance(spec, dict) and spec.get("widget") not in (None, "none")
+        }
+
+    cold_names = names(cold_specs)
+    warm_names = names(warm_specs)
+    known_names = {name for name in cold_names if _match_node(name, seed_nodes)[0]}
+    reused_names = names([
+        spec for spec in warm_specs
+        if isinstance(spec, dict) and spec.get("recursive_reuse")
+    ])
+    return {
+        "cold_concepts": len(cold_names),
+        "warm_concepts": len(warm_names),
+        "known_concepts": len(known_names),
+        "retrieved_concepts": len(reused_names),
+        "known_concept_recall": round(len(known_names & reused_names) / max(1, len(known_names)), 3),
+        "retrieval_precision": round(len(reused_names & cold_names) / max(1, len(reused_names)), 3),
+        "overall_concept_recall": round(len(cold_names & warm_names) / max(1, len(cold_names)), 3),
+    }
+
+
 def _context_match(context: str, nodes: list[dict]) -> tuple[dict | None, float]:
     context_tokens = _tokens(context)
     best_node = None
@@ -461,6 +496,89 @@ def log_processing_run(topic: str, payload: dict) -> int:
         run_id = _insert_run(cursor, payload)
         connection.commit()
         return run_id
+
+
+def paired_condition_run(topic: str, experiment_id: str, mode: str) -> dict:
+    ensure_schema()
+    with db.conn() as connection, connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+        cursor.execute(
+            "select * from topic_runs where topic=%s and experiment_id=%s and mode=%s "
+            "order by created_at desc,id desc limit 1",
+            (topic, experiment_id, f"paired_{mode}"),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise RuntimeError(f"missing persisted paired_{mode} run for {experiment_id}")
+        return dict(row)
+
+
+def finalize_paired_experiment(topic: str, experiment_id: str, metrics: dict) -> dict:
+    """Validate the pair and persist executed quality metrics before target admission."""
+    ensure_schema()
+    with db.conn() as connection, connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+        cursor.execute(
+            "select * from topic_runs where topic=%s and experiment_id=%s "
+            "and mode in ('paired_cold','paired_warm') order by mode for update",
+            (topic, experiment_id),
+        )
+        rows = {row["mode"]: dict(row) for row in cursor.fetchall()}
+        if set(rows) != {"paired_cold", "paired_warm"}:
+            raise RuntimeError(f"experiment {experiment_id} does not have exactly one completed pair")
+        cold, warm = rows["paired_cold"], rows["paired_warm"]
+        if cold["video_id"] != warm["video_id"] or cold["frames_total"] != warm["frames_total"]:
+            raise RuntimeError("paired conditions used different targets or frame sets")
+        if cold["model"] != warm["model"] or cold["prompt_version"] != warm["prompt_version"]:
+            raise RuntimeError("paired conditions used different model or prompt settings")
+
+        setting_keys = (
+            "backend", "genre", "prompt_hash", "max_px", "jpeg_quality",
+            "max_tokens", "temperature", "concurrency",
+        )
+        cold_metadata = dict(cold.get("metadata") or {})
+        warm_metadata = dict(warm.get("metadata") or {})
+        mismatches = [key for key in setting_keys if cold_metadata.get(key) != warm_metadata.get(key)]
+        if mismatches:
+            raise RuntimeError(f"paired settings differ: {', '.join(mismatches)}")
+
+        quality = {
+            **metrics,
+            "pair_complete": True,
+            "target_admitted": False,
+            "measurement": "executed paired Nemotron condition",
+        }
+        cursor.execute(
+            "update topic_runs set concept_recall=1, retrieval_precision=null, "
+            "metadata=metadata || %s::jsonb where id=%s",
+            (json.dumps(quality), cold["id"]),
+        )
+        cursor.execute(
+            "update topic_runs set concept_recall=%s, retrieval_precision=%s, "
+            "known_concepts=%s, metadata=metadata || %s::jsonb where id=%s",
+            (
+                metrics["known_concept_recall"], metrics["retrieval_precision"],
+                metrics["known_concepts"], json.dumps(quality), warm["id"],
+            ),
+        )
+        connection.commit()
+    return {
+        "cold": paired_condition_run(topic, experiment_id, "cold"),
+        "warm": paired_condition_run(topic, experiment_id, "warm"),
+    }
+
+
+def mark_paired_target_admitted(topic: str, experiment_id: str) -> None:
+    ensure_schema()
+    with db.conn() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            "update topic_runs set metadata=metadata || '{\"target_admitted\":true}'::jsonb "
+            "where topic=%s and experiment_id=%s and mode in ('paired_cold','paired_warm')",
+            (topic, experiment_id),
+        )
+        if cursor.rowcount != 2:
+            raise RuntimeError(f"could not mark complete pair {experiment_id} admitted")
+        connection.commit()
 
 
 def replay_benchmark(topic: str, target_video_id: str, add_to_graph: bool = True) -> dict:
