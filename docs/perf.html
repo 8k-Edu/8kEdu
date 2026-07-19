@@ -112,7 +112,7 @@
   .swatch{width:11px;height:11px;border-radius:3px;flex:none;}
   .swatch.ghost{background:transparent;border:1px dashed var(--line-2);}
 
-  .ships{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .ships{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;}
   .ship{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 17px;box-shadow:var(--shadow);}
   .ship .st{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;
     letter-spacing:.04em;text-transform:uppercase;}
@@ -128,8 +128,18 @@
   .note b{color:var(--ink);font-weight:600;}
   .note code{font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 5px;}
 
+  /* feature ledger — what we adopt from vllm-mlx vs. what we deliberately skip */
+  .ledger{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .dot.use{background:var(--accent);} .dot.skip{background:var(--faint);}
+  .ship li .why{color:var(--muted);}
+  .ship li code{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;}
+  .st .n{margin-left:auto;font-weight:400;color:var(--faint);letter-spacing:0;text-transform:none;}
+  /* throughput panel reads the opposite way — longer bar = faster (frames/s) */
+  .tput .row{grid-template-columns:112px 1fr 78px;}
+  .tput .stg{white-space:nowrap;}
+
   @media (max-width:720px){
-    .heroes{grid-template-columns:1fr;} .ships{grid-template-columns:1fr;}
+    .heroes{grid-template-columns:1fr;} .ledger{grid-template-columns:1fr;}
     .row{grid-template-columns:54px 1fr 60px;} .cap{padding-left:66px;}
   }
 </style>
@@ -192,6 +202,62 @@
           <li>Client + server <b>request timeouts</b> &amp; a <b>warmup ping</b></li>
           <li>Kills the disconnected-client pileup that spiked tail latency to <b>100&nbsp;s+</b> under load</li>
         </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>Which vLLM-mlx features we use — and which we skip</h2>
+      <div class="hint">vllm-mlx 0.4.0 · an MLX reimpl, not upstream vLLM</div>
+    </div>
+    <div class="ledger">
+      <div class="ship">
+        <div class="st"><span class="dot use"></span>Using<span class="n">6 features</span></div>
+        <ul>
+          <li><b>Continuous in-flight batching</b> <span class="why">— <code>--continuous-batching</code> runs many requests at once; the offline sweep fans across it for the throughput win below.</span></li>
+          <li><b>Structured outputs</b> <span class="why">— <code>response_format</code> json_schema; the 4B emits schema-valid concept JSON on the vision path, verified end-to-end.</span></li>
+          <li><b>OpenAI-compatible + base64 images</b> <span class="why">— drop-in beside LM&nbsp;Studio; one client path, no rewrite.</span></li>
+          <li><b>Request timeouts + warmup ping</b> <span class="why">— client <code>KEDU_TIMEOUT</code> (no retries) + server <code>--timeout</code>; kills the disconnected-client / cold-kernel pileup.</span></li>
+          <li><b>Frame downscale ≤768px + bounded <code>max_tokens</code></b> <span class="why">— fewer visual tokens per call → faster prefill, more sequences fit the batch.</span></li>
+          <li><b>Opt-in KV-cache quant · <code>--max-num-seqs</code></b> <span class="why">— headroom to fit more concurrent image sequences when memory allows.</span></li>
+        </ul>
+      </div>
+      <div class="ship">
+        <div class="st"><span class="dot skip"></span>Skipped<span class="n">why not</span></div>
+        <ul>
+          <li><b>PagedAttention</b> <span class="why">— not present in this MLX port (only an experimental block cache). Nothing to adopt.</span></li>
+          <li><b>Prefix cache for our prompt</b> <span class="why">— the prefix caches are text-only; an image skips them, so the fixed system prompt re-prefills regardless. We cut tokens instead.</span></li>
+          <li><b>Speculative decoding (MLLM draft)</b> <span class="why">— SimpleEngine-only, mutually exclusive with continuous batching. We keep batching.</span></li>
+          <li><b>Default SimpleEngine</b> <span class="why">— serializes and 503s the 2nd concurrent request — the opposite of what the sweep needs.</span></li>
+          <li><b>Hidden states / logprobs</b> <span class="why">— absent on the OpenAI endpoints; the pipeline doesn't need them.</span></li>
+          <li><b>Tool calling</b> <span class="why">— supported, but concept extraction is single-shot structured output; no tools.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>New: concurrent offline sweep — the curator's library build</h2>
+      <div class="hint">throughput · longer bar = faster · frames / second</div>
+    </div>
+    <div class="card tput">
+      <div class="metric">
+        <div class="mtop">
+          <div><div class="mname">16-frame sweep on vllm-mlx</div>
+            <div class="msub">cold · synthetic frames · KEDU_CONCURRENCY</div></div>
+          <span class="badge">1.7× faster</span>
+        </div>
+        <div class="rel"><div class="row"><span class="stg">sequential</span>
+          <div class="track"><div class="fill i0" style="--w:59.7%"></div></div><span class="val">0.40/s</span></div>
+          <div class="cap i0"><span class="why">one frame at a time — 40.4&nbsp;s total</span></div></div>
+        <div class="rel"><div class="row"><span class="stg">concurrent ×4</span>
+          <div class="track"><div class="fill i1" style="--w:86.6%"></div></div><span class="val">0.58/s</span></div>
+          <div class="cap i1"><span class="d">▲ 1.47×</span><span class="why">fanned across continuous batching — 27.4&nbsp;s</span></div></div>
+        <div class="rel"><div class="row"><span class="stg">concurrent ×8</span>
+          <div class="track"><div class="fill i2" style="--w:100%"></div></div><span class="val">0.67/s</span></div>
+          <div class="cap i2"><span class="d">▲ 1.70×</span><span class="why">23.8&nbsp;s · <b>0</b> dropped requests (503s)</span></div></div>
       </div>
     </div>
   </section>
