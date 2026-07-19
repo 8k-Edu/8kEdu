@@ -61,12 +61,15 @@ def least_filled_genre():
 
 
 def process_new(video_id, genre, title="", channel=""):
-    """Cold path: ingest keyframes + analyze with the genre lens → Supabase cache."""
+    """Cold path: ingest keyframes + analyze with the genre lens → Supabase cache.
+    host uses `uv run`; the OpenShell sandbox has no uv, so fall back to bare python3."""
+    import shutil
+    runner = ["uv", "run"] if shutil.which("uv") else ["python3"]
     vd = ROOT / "data" / video_id
     if not (vd / "frames.json").exists():
-        subprocess.run(["uv", "run", "ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
+        subprocess.run(runner + ["ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                        cwd=ROOT, timeout=900, check=True)
-    subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
+    subprocess.run(runner + ["analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
                     "--video", video_id, "--genre", genre, "--limit", "16",
                     "--recursive-topic", genre, "--recursive-mode", "warm", "--max-px", "512"],
                    cwd=ROOT, timeout=2400, check=True)

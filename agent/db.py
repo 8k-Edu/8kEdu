@@ -265,9 +265,25 @@ def set_video_genre(video_id, genre, title="", channel_name=""):
 
 
 def is_cached(video_id):
+    return concepts_count(video_id) > 0
+
+
+def concepts_count(video_id):
     with conn() as c, c.cursor() as cur:
         cur.execute("select count(*) from concepts where video_id=%s", (video_id,))
-        return cur.fetchone()[0] > 0
+        return cur.fetchone()[0]
+
+
+def upsert_concepts(video_id, concepts, model="nemotron-3-nano-omni", title=""):
+    """Replace a video's cached concepts. Shared by tools._upsert_from_disk (host + sandbox)."""
+    ensure_video(video_id, title)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("delete from concepts where video_id=%s", (video_id,))
+        for cc in concepts:
+            cur.execute("insert into concepts(video_id,t_s,widget,spec,model) values (%s,%s,%s,%s,%s)",
+                        (video_id, cc.get("time"), cc.get("widget"), json.dumps(cc), model))
+        c.commit()
+    return len(concepts)
 
 
 def video_genre(video_id):
@@ -501,3 +517,13 @@ def dashboard_state(user_id, limit=12):
             "usd_saved": round((cache_reuses * concepts_cached + infer_hits) * 0.002, 2),
         },
     }
+
+
+# --- sandbox DB path: raw Postgres can't cross the SNI egress proxy, so write via PostgREST ---
+if os.environ.get("KEDU_DB_REST") == "1":
+    from agent.db_rest import (  # noqa: F401,F811  override psycopg2 impls with REST
+        ensure_learner, set_goal, active_goal, ensure_video, set_video_genre,
+        concepts_count, is_cached, upsert_concepts, curriculum, add_to_curriculum,
+        next_unprocessed, mark_curriculum, add_channel, monitored_channels,
+        mark_channel_checked, log_run, library_stats,
+    )
