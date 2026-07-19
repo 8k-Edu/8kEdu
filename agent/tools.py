@@ -31,26 +31,14 @@ def find_video(query: str, n: int = 3):
 
 # ---------- PROCESS_VIDEO — turn a video into interactive widgets (cache-aware) ----------
 def _cache_count(video_id: str):
-    with db.conn() as c, c.cursor() as cur:
-        cur.execute("select count(*) from concepts where video_id=%s", (video_id,))
-        return cur.fetchone()[0]
+    return db.concepts_count(video_id)
 
 
 def _upsert_from_disk(video_id: str):
-    """Fill the Supabase global cache from a locally-processed video."""
-    vd = DATA / video_id
-    concepts = json.loads((vd / "concepts.json").read_text())
-    title = ""
-    with db.conn() as c, c.cursor() as cur:
-        cur.execute("insert into videos(video_id,title) values (%s,%s) on conflict (video_id) do nothing",
-                    (video_id, title))
-        cur.execute("delete from concepts where video_id=%s", (video_id,))
-        for cc in concepts:
-            cur.execute("insert into concepts(video_id,t_s,widget,spec,model) values (%s,%s,%s,%s,%s)",
-                        (video_id, cc.get("time"), cc.get("widget"), json.dumps(cc),
-                         "nemotron-3-nano-omni"))
-        c.commit()
-    return len(concepts)
+    """Fill the Supabase global cache from a locally-processed video.
+    Uses db.upsert_concepts so it works on host (psycopg2) and in-sandbox (PostgREST)."""
+    concepts = json.loads((DATA / video_id / "concepts.json").read_text())
+    return db.upsert_concepts(video_id, concepts)
 
 
 def process_video(video_id: str):
@@ -62,9 +50,12 @@ def process_video(video_id: str):
         n = _upsert_from_disk(video_id)
         return {"video_id": video_id, "source": "disk→cache", "concepts": n}
     # cold: run the engine (ingest + analyze). Slow; used for genuinely new videos.
-    subprocess.run(["uv", "run", "ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
+    # host uses `uv run`; the sandbox has no uv, so fall back to bare python3 there.
+    import shutil
+    runner = ["uv", "run"] if shutil.which("uv") else ["python3"]
+    subprocess.run(runner + ["ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                    cwd=ROOT, timeout=600, check=True)
-    subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
+    subprocess.run(runner + ["analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
                     "--video", video_id],
                    cwd=ROOT, timeout=1800, check=True)
     n = _upsert_from_disk(video_id)
