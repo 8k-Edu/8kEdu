@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import time
+from collections import OrderedDict
 from pathlib import Path
 
 import uvicorn
@@ -57,16 +58,35 @@ def _prompt_hash(video: str, frame: str, context: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+_lru: "OrderedDict[str, dict]" = OrderedDict()
+_LRU_MAX = 256
+
+
 def _cache_get(h: str):
+    hit = _lru.get(h)
+    if hit is not None:
+        _lru.move_to_end(h)
+        return hit
     if not _db:
         return None
     try:
-        return _db.cache_get(h)
+        result = _db.cache_get(h)
     except Exception:
         return None
+    if result is not None:
+        _lru_put(h, result)
+    return result
+
+
+def _lru_put(h: str, result: dict):
+    _lru[h] = result
+    _lru.move_to_end(h)
+    while len(_lru) > _LRU_MAX:
+        _lru.popitem(last=False)
 
 
 def _cache_put(h: str, video: str, result: dict):
+    _lru_put(h, result)
     if not _db:
         return
     try:
