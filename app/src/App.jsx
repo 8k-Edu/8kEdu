@@ -536,6 +536,25 @@ function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refresh
   )
 }
 
+// A malformed VLM spec must never blank the whole app — catch render crashes and
+// show a card the learner can act on (refine box below still works to regenerate).
+class WidgetBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null } }
+  static getDerivedStateFromError(err) { return { err } }
+  componentDidUpdate(prev) { if (prev.resetKey !== this.props.resetKey && this.state.err) this.setState({ err: null }) }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ border: '1px solid #d29922aa', background: '#1c1710', borderRadius: 10, padding: '14px 16px', fontSize: 13, color: '#d29922' }}>
+          ⚠ this widget's spec didn't render ({String(this.state.err?.message || this.state.err).slice(0, 90)}) —
+          use the refine box below to regenerate it, or pick another moment.
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 // Chat box under a widget: type an instruction → regenerate the widget honoring it.
 function RefineBox({ onRefine, busy }) {
   const [v, setV] = useState('')
@@ -918,7 +937,11 @@ function Lecture({ videoId, role }) {
                   padding: '8px 14px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
                 }}>share remix</button>
               </div>
-              {Widget ? <Widget key={`${active.time}-${active.widget}`} params={active.params ?? {}} onState={onState} /> : null}
+              {Widget ? (
+                <WidgetBoundary resetKey={`${active.time}-${active.widget}-${active.title}`}>
+                  <Widget key={`${active.time}-${active.widget}`} params={active.params ?? {}} onState={onState} />
+                </WidgetBoundary>
+              ) : null}
               {Widget ? <RefineBox onRefine={refineWidget} busy={busy} /> : null}
               <div style={{ fontSize: 11, color: '#8b949e' }}>
                 {followVideo
