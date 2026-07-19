@@ -1,6 +1,6 @@
 import unittest
 
-from agent.kg import _match_node, canonicalize_concept, concept_quality
+from agent.kg import _match_node, canonicalize_concept, concept_quality, observations_from_specs
 
 
 class CanonicalizationTests(unittest.TestCase):
@@ -33,6 +33,20 @@ class MatchingTests(unittest.TestCase):
     def test_unrelated_concept_is_not_forced_into_graph(self):
         node, _score = _match_node("mortgage-payment", [{"name": "self-attention"}])
         self.assertIsNone(node)
+
+
+class SourceMetadataTests(unittest.TestCase):
+    def test_cached_ai_video_keeps_real_teacher_identity(self):
+        observations = observations_from_specs("4Bdc55j80l8", "ai_stem", [{
+            "time": 120,
+            "title": "Attention Mechanism in RNNs",
+            "explanation": "Attention focuses on relevant words.",
+            "widget": "attention",
+            "params": {"q": [[1, 0]], "k": [[1, 0]]},
+        }])
+
+        self.assertEqual(observations[0]["channel"], "The AI Hacker")
+        self.assertEqual(observations[0]["video_title"], "Illustrated Guide to Transformers Neural Network")
 
 
 if __name__ == "__main__":

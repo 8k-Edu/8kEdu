@@ -2277,6 +2277,18 @@ function RecursiveDashboard({ onExit }) {
   const teacherLeads = [...new Map(exemplars.map(exemplar => [exemplar.channel || 'Unknown teacher', exemplar])).values()]
   const teacherLeadIds = new Set(teacherLeads.map(exemplar => exemplar.id))
   const featuredExemplars = [...teacherLeads, ...exemplars.filter(exemplar => !teacherLeadIds.has(exemplar.id))]
+  const sourceMap = new Map()
+  nodes.forEach(node => (node.exemplars || []).forEach(exemplar => {
+    const current = sourceMap.get(exemplar.video_id) || {
+      video_id: exemplar.video_id,
+      title: exemplar.video_title || exemplar.video_id,
+      channel: exemplar.channel || 'Unknown teacher',
+      moments: 0,
+    }
+    current.moments += 1
+    sourceMap.set(exemplar.video_id, current)
+  }))
+  const sourceVideos = [...sourceMap.values()].sort((a, b) => b.moments - a.moments)
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
@@ -2311,6 +2323,7 @@ function RecursiveDashboard({ onExit }) {
 
         <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
           <StatTile T={T} label="persistent concepts" value={summary.node_count ?? '—'} sub={`${summary.exemplar_count || 0} real frame exemplars`} />
+          <StatTile T={T} label="source videos" value={summary.video_count ?? sourceVideos.length ?? '—'} sub="grounded lecture sources" accent="#f0c36c" />
           <StatTile T={T} label="teachers learned" value={summary.teacher_count ?? '—'} sub={`${summary.reinforced_nodes || 0} concepts reinforced`} accent="#79c0ff" />
           <StatTile T={T} label="VLM calls" value={latestCold && latestWarm ? `${latestCold.vlm_calls} → ${latestWarm.vlm_calls}` : '—'} sub={latestWarm?.mode === 'paired_warm' ? 'actual Nemotron requests' : 'same held-out 64-frame lecture'} accent="#ffab70" />
           <StatTile T={T} label="call reduction" value={reduction == null ? '—' : `${reduction}%`} sub="self-RAG + exploration" accent="#56d364" />
@@ -2319,6 +2332,17 @@ function RecursiveDashboard({ onExit }) {
         </div>
 
         <RecursiveLearningCurve cold={latestCold} warm={latestWarm} T={T} />
+
+        {!!sourceVideos.length && <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px', marginTop: 16 }}>
+          <div><strong>Source library</strong><span style={{ color: T.faint, fontSize: 12, marginLeft: 8 }}>{sourceVideos.length} real lectures · added after the paired measurement</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 8, marginTop: 12 }}>
+            {sourceVideos.map(source => <a key={source.video_id} href={`?v=${source.video_id}`}
+              style={{ textDecoration: 'none', color: T.text, border: `1px solid ${T.line}`, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8', borderRadius: 10, padding: '9px 10px', minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 }}><strong>{source.channel}</strong><span style={{ color: T.acc, fontFamily: mono, whiteSpace: 'nowrap' }}>{source.moments} {source.moments === 1 ? 'moment' : 'moments'}</span></div>
+              <div style={{ color: T.faint, fontSize: 11.5, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{source.title}</div>
+            </a>)}
+          </div>
+        </div>}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(280px,.85fr)', gap: 16, marginTop: 18 }}>
           <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: '14px 16px 8px', overflow: 'hidden' }}>

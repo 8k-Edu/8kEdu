@@ -27,7 +27,7 @@ Each analyzed lecture adds concepts, prerequisites, widget patterns, and validat
 
 The executed paired experiment seeds memory only with Karpathy, then processes the same 64 held-out VisualAI frames twice. Warm memory cuts actual Nemotron calls from 64 to 8 and elapsed time from 553.1 to 64.7 seconds.
 
-The dashboard at `?view=graph` shows the learning curve, concept graph, cold/warm traces, recall, and retrieval precision. See the [recursive experiment plan](docs/hackguide/RECURSIVE.md) for the protocol and evidence.
+The dashboard at `?view=graph` shows the learning curve, 6-video source library, 69-concept graph, cold/warm traces, recall, and retrieval precision. See the [recursive experiment plan](docs/hackguide/RECURSIVE.md) for the protocol and evidence.
 
 Reproduce the isolated pair with:
 

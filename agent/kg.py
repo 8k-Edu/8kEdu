@@ -35,6 +35,22 @@ DEMO_VIDEO_META = {
         "title": "Multi-Head Attention Explained Visually",
         "channel": "VisualAI",
     },
+    "l8pRSuU81PU": {
+        "title": "Let's reproduce GPT-2 (124M)",
+        "channel": "Andrej Karpathy",
+    },
+    "4Bdc55j80l8": {
+        "title": "Illustrated Guide to Transformers Neural Network",
+        "channel": "The AI Hacker",
+    },
+    "qg4PchTECck": {
+        "title": "Gradient Descent in 3 minutes",
+        "channel": "Visually Explained",
+    },
+    "jmmW0F0biz0": {
+        "title": "Neural Networks Explained in 5 minutes",
+        "channel": "IBM Technology",
+    },
 }
 
 CONCEPT_ALIASES = (
@@ -329,12 +345,14 @@ def graph_snapshot(topic: str) -> dict:
     for link in links:
         by_node.setdefault(int(link["kg_concept_id"]), []).append(link)
     teachers = set()
+    videos = set()
     for node in nodes:
         node_links = by_node.get(int(node["id"]), [])
         node["exemplars"] = node_links
         node["widgets"] = sorted({link["widget"] for link in node_links if link.get("widget")})
         node["teachers"] = sorted({link["channel"] for link in node_links if link.get("channel")})
         teachers.update(node["teachers"])
+        videos.update(link["video_id"] for link in node_links if link.get("video_id"))
     reinforced = sum(1 for node in nodes if node["exemplar_count"] > 1)
     return {
         "topic": topic,
@@ -346,6 +364,7 @@ def graph_snapshot(topic: str) -> dict:
             "exemplar_count": len(links),
             "reinforced_nodes": reinforced,
             "teacher_count": len(teachers),
+            "video_count": len(videos),
         },
     }
 

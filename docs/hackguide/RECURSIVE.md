@@ -9,14 +9,14 @@
 
 | Evidence | Current result |
 |---|---|
-| Persistent graph | 15 concepts · 60 real frame exemplars · 2 teachers · 11 reinforced concepts |
+| Persistent graph | 69 concepts · 145 real frame exemplars · 6 videos · 5 teachers |
 | Controlled target | VisualAI lecture · 64 frames · held out before experiment `p20260719a` |
 | Cold baseline | 64 frames · 64 actual Nemotron calls · 553.1 s |
 | Warm condition | 15 selected frames · 7 graph reuses · 8 actual Nemotron calls · 64.7 s |
 | Delta | 87.5% fewer calls · 88.3% less time · 100% known recall · 100% retrieval precision |
 | Viewer | `?view=graph`, backed by persisted Supabase graph and run rows |
 
-Both conditions executed with the same model, prompt hash, target frames, 512 px image cap, JPEG settings, 1024-token budget, temperature, and concurrency. VisualAI was admitted only after both rows and quality metrics were persisted.
+Both conditions executed with the same model, prompt hash, target frames, 512 px image cap, JPEG settings, 1024-token budget, temperature, and concurrency. VisualAI was admitted only after both rows and quality metrics were persisted. Four more analyzed lectures were added afterward, leaving the paired rows unchanged.
 
 ---
 
@@ -121,7 +121,7 @@ When processing a **new** video under topic T:
 
 ## 6. The demo  (`?view=graph`)
 
-- **Graph — persistent memory, live.** Nodes are sized by `exemplar_count`; edges distinguish related and prerequisite links. Click Self-attention to show Karpathy and VisualAI exemplars together.
+- **Graph — persistent memory, live.** The source library shows six real lectures from five named teachers. Nodes are sized by `exemplar_count`; choose any concept from the dropdown or click a node.
 - **Delta — persisted cold/warm rows.** The cards show 64→8 actual calls, 553.1→64.7 seconds, and 100% known-concept recall. Both rows share experiment `p20260719a`.
 - **Isolation.** The topic `ai_stem_pair_p20260719a` began empty, was seeded only with Karpathy, and admitted VisualAI only after both conditions completed.
 
