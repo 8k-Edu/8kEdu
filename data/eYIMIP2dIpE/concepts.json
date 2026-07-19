@@ -1,0 +1,112 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Basic Risotto Ingredient Calculator",
+  "explanation": "Adjust ingredient amounts for any number of servings to ensure proper proportions and cooking time.",
+  "params": {
+   "cells": [
+    "import matplotlib.pyplot as plt\n\n# Slider inputs (global variables)\nshallot_amt = shallot_count\n garlic_amt = garlic_cloves\n stock_ml = stock_cups * 240\n\nprint(f\"Shallots: {shallot_amt}\")\nprint(f\"Garlic cloves: {garlic_amt}\")\nprint(f\"Stock (ml): {stock_ml}\")\n\nplt.bar(['Stock'], [stock_ml])\nplt.title('Chicken Stock Amount')\nplt.ylabel('Milliliters')\nplt.show()"
+   ],
+   "sliders": {
+    "shallot_count": 1.5,
+    "garlic_cloves": 3.0,
+    "stock_cups": 4.5
+   }
+  },
+  "time": 50,
+  "frame": "f_000050.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Risotto Recipe Scaler",
+  "explanation": "Scaling the ingredient amounts lets viewers adapt the risotto recipe to any desired number of servings.",
+  "params": {
+   "expr": "rice_cups = 1.5 * (servings / 4); wine_cups = 0.5 * (servings / 4); stock_per_addition = 0.5 / 4; total_stock_cups = (servings - 1) * stock_per_addition",
+   "sliders": [
+    "servings"
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Risotto ingredient scaling",
+  "explanation": "Adjusting the quantities of rice, wine, saffron, and stock lets you prepare the correct portion size while preserving flavor and timing.",
+  "params": {
+   "sliders": [
+    {
+     "name": "servings",
+     "type": "int",
+     "min": 1,
+     "max": 10,
+     "default": 4
+    },
+    {
+     "name": "wine_cups",
+     "type": "float",
+     "min": 0.1,
+     "max": 2.0,
+     "default": 0.5
+    },
+    {
+     "name": "saffron_pinsches",
+     "type": "int",
+     "min": 0,
+     "max": 5,
+     "default": 1
+    },
+    {
+     "name": "stock_ladle_cups",
+     "type": "float",
+     "min": 0.1,
+     "max": 1.0,
+     "default": 0.5
+    },
+    {
+     "name": "stock_additions",
+     "type": "int",
+     "min": 1,
+     "max": 10,
+     "default": 4
+    }
+   ],
+   "cells": [
+    "import math\n\n# Compute ingredient amounts\nrice_cups = servings * 0.25   # 1/4 cup per serving\nwine_cups = wine_cups          # from slider\nsaffron_pinsches = saffron_pinsches\nstock_per_ladle = stock_ladle_cups\ntotal_stock_cups = stock_additions * stock_per_ladle\n\n# Total cooking time (minutes)\ntoast_minutes = 0.5   # 30 seconds = 0.5 min\ncook_minutes = servings * 5  # approx 5 min per serving\ntotal_time_minutes = toast_minutes + cook_minutes\n\nprint(f\"Rice: {rice_cups:.2f} cups\")\nprint(f\"White wine: {wine_cups:.2f} cups\")\nprint(f\"Saffron: {saffron_pinsches} pinch(es)\")\nprint(f\"Stock per ladle: {stock_per_ladle:.2f} cup(s), total stock: {total_stock_cups:.2f} cups\")\nprint(f\"Total time (min): {total_time_minutes:.1f}\")"
+   ]
+  },
+  "time": 130,
+  "frame": "f_000130.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Risotto Recipe Scaler",
+  "explanation": "Adjusting ingredient quantities lets you scale the risotto recipe to any number of servings.",
+  "params": {
+   "expr": "total_rice = rice_per_serving * servings; total_stock = stock_per_serving * servings",
+   "sliders": [
+    {
+     "name": "servings",
+     "type": "float",
+     "default": 4
+    },
+    {
+     "name": "rice_per_serving",
+     "type": "float",
+     "default": 0.5
+    },
+    {
+     "name": "stock_per_serving",
+     "type": "float",
+     "default": 1
+    }
+   ]
+  },
+  "time": 140,
+  "frame": "f_000140.jpg"
+ }
+]

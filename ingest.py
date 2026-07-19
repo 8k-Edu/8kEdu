@@ -7,8 +7,12 @@ Outputs: <out>/video.mp4, <out>/transcript.json, <out>/frames/f_<sec>.jpg
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
+
+# host uses `uv run yt-dlp`; the sandbox has yt-dlp on PATH but no uv
+YTDLP = ["uv", "run", "yt-dlp"] if shutil.which("uv") else ["yt-dlp"]
 from pathlib import Path
 
 MAX_FRAMES = 120
@@ -24,16 +28,15 @@ def download(url: str, out: Path) -> Path:
     """Video is required (merge to mkv — always works); subs are best-effort."""
     existing = sorted(out.glob("video.mp4")) + sorted(out.glob("video.mkv")) + sorted(out.glob("video.webm"))
     if not existing:
-        run([
-            "uv", "run", "yt-dlp",
+        run(YTDLP + [
             "-f", "bv*[height<=480]+ba/b[height<=480]/b",
             "--merge-output-format", "mkv",
             "-o", str(out / "video.%(ext)s"),
             url,
         ])
         # subs: separate, non-fatal — many videos have none
-        run([
-            "uv", "run", "yt-dlp", "--skip-download",
+        run(YTDLP + [
+            "--skip-download",
             "--write-auto-subs", "--write-subs", "--sub-langs", "en.*",
             "-o", str(out / "video.%(ext)s"), url,
         ], check=False)
