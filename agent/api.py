@@ -65,6 +65,13 @@ def tick():
 _containment_cache = {"data": None}
 
 
+@app.get("/pub/config")
+def pub_config():
+    """Public Supabase config for the browser client (anon key is public by design)."""
+    return {"url": os.environ.get("SUPABASE_URL", ""),
+            "anon_key": os.environ.get("SUPABASE_PUBLISHABLE_KEY", "")}
+
+
 @app.get("/agent/library")
 def library():
     """Cached videos grouped by genre — the live gallery, grown by the curator."""
