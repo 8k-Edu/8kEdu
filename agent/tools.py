@@ -62,7 +62,7 @@ def process_video(video_id: str):
     subprocess.run(runner + ["ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                    cwd=ROOT, timeout=600, check=True)
     subprocess.run(runner + ["analyze.py", "--backend", os.environ.get("KEDU_BACKEND", "lmstudio"),
-                    "--video", video_id],
+                    f"--video={video_id}"],  # = form: YouTube IDs can start with '-'
                    cwd=ROOT, timeout=1800, check=True)
     n = _upsert_from_disk(video_id)
     return {"video_id": video_id, "source": "engine", "concepts": n}
