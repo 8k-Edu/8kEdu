@@ -208,6 +208,23 @@ def valid(spec: dict | None) -> bool:
 
 # ---------- backends ----------
 
+def _jpeg_bytes(frame: Path, max_px: int | None) -> bytes:
+    """JPEG bytes for the frame, downscaled so the long edge is <= max_px. A 1280x720
+    frame carries ~6x the visual tokens of a 512-wide one, and the VLM call scales with
+    that — see the perf baseline. max_px=None returns the original bytes untouched."""
+    if not max_px:
+        return frame.read_bytes()
+    from PIL import Image
+    import io
+    img = Image.open(frame)
+    if max(img.size) <= max_px:
+        return frame.read_bytes()
+    img.thumbnail((max_px, max_px))
+    buf = io.BytesIO()
+    img.convert("RGB").save(buf, format="JPEG", quality=85)
+    return buf.getvalue()
+
+
 class MlxBackend:
     def __init__(self):
         from mlx_vlm import load, generate  # lazy: heavy import
@@ -219,17 +236,31 @@ class MlxBackend:
         self.config = load_config(MLX_MODEL)
         self.model_name = MLX_MODEL
 
-    def ask(self, frame: Path, context: str) -> str:
-        prompt = self._apply(
-            self.processor, self.config,
-            f'{SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
-            num_images=1,
-        )
-        out = self._generate(
-            self.model, self.processor, prompt, image=[str(frame)],
-            max_tokens=800, temperature=0.1, verbose=False,
-        )
-        return out.text if hasattr(out, "text") else str(out)
+    def ask(self, frame: Path, context: str, max_px: int | None = None) -> str:
+        src = frame
+        tmp = None
+        if max_px:
+            import tempfile
+            data = _jpeg_bytes(frame, max_px)
+            if len(data) != frame.stat().st_size:
+                fd, name = tempfile.mkstemp(suffix=".jpg")
+                Path(name).write_bytes(data)
+                os.close(fd)
+                src = tmp = Path(name)
+        try:
+            prompt = self._apply(
+                self.processor, self.config,
+                f'{SYSTEM}\n\nTeacher is saying: "{context}"\n\nEmit the concept spec JSON.',
+                num_images=1,
+            )
+            out = self._generate(
+                self.model, self.processor, prompt, image=[str(src)],
+                max_tokens=800, temperature=0.1, verbose=False,
+            )
+            return out.text if hasattr(out, "text") else str(out)
+        finally:
+            if tmp:
+                tmp.unlink(missing_ok=True)
 
 
 class OpenAIBackend:
@@ -241,8 +272,8 @@ class OpenAIBackend:
         self.model_name = model
         self.client = OpenAI(base_url=base_url, api_key=api_key)
 
-    def ask(self, frame: Path, context: str) -> str:
-        img = base64.standard_b64encode(frame.read_bytes()).decode()
+    def ask(self, frame: Path, context: str, max_px: int | None = None) -> str:
+        img = base64.standard_b64encode(_jpeg_bytes(frame, max_px)).decode()
         messages = [
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": [
