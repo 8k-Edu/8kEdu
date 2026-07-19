@@ -67,7 +67,8 @@ def process_new(video_id, genre, title="", channel=""):
         subprocess.run(["uv", "run", "ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                        cwd=ROOT, timeout=900, check=True)
     subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("TACTILE_BACKEND", "lmstudio"),
-                    "--video", video_id, "--genre", genre, "--limit", "16"],
+                    "--video", video_id, "--genre", genre, "--limit", "16",
+                    "--recursive-topic", genre, "--recursive-mode", "warm", "--max-px", "512"],
                    cwd=ROOT, timeout=2400, check=True)
     n = tools._upsert_from_disk(video_id)
     db.set_video_genre(video_id, genre, title, channel)
