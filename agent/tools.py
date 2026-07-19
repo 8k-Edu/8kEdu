@@ -4,6 +4,7 @@ Network + exec here are what OpenShell contains.
 """
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 import urllib.request
@@ -12,12 +13,17 @@ from agent import db
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
+# host uses `uv run yt-dlp`; the OpenShell sandbox has yt-dlp on PATH but no uv
+YTDLP = ["uv", "run", "yt-dlp"] if shutil.which("uv") else ["yt-dlp"]
+if os.environ.get("KEDU_SANDBOX") == "1":
+    YTDLP = YTDLP + ["--no-check-certificates"]  # proxy MITM; egress allowlist is the boundary
+
 
 # ---------- FIND_VIDEO — discover a lecture for a concept ----------
 def find_video(query: str, n: int = 3):
     """YouTube search via yt-dlp (fast, reliable for the live loop)."""
     out = subprocess.run(
-        ["uv", "run", "yt-dlp", f"ytsearch{n}:{query}", "--flat-playlist",
+        YTDLP + [f"ytsearch{n}:{query}", "--flat-playlist",
          "--print", "%(id)s\t%(title)s\t%(channel)s"],
         cwd=ROOT, capture_output=True, text=True, timeout=90)
     vids = []
@@ -92,7 +98,7 @@ def _monitor_apify(channel_url: str, max_items: int):
 def _monitor_ytdlp(channel_url: str, max_items: int):
     """yt-dlp fallback — fast, no token; keeps the live loop resilient."""
     out = subprocess.run(
-        ["uv", "run", "yt-dlp", channel_url, "--flat-playlist", f"--playlist-end={max_items}",
+        YTDLP + [channel_url, "--flat-playlist", f"--playlist-end={max_items}",
          "--print", "%(id)s\t%(title)s"],
         cwd=ROOT, capture_output=True, text=True, timeout=90)
     vids = []
