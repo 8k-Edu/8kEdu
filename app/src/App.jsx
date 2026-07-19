@@ -1487,13 +1487,14 @@ function Landing({ onOpen }) {
         <Logo size={30} wordColor={T.text} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <a href="?view=learn" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>learn</a>
-        <a href="?view=community" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>community</a>
-        <a href="?view=graph" style={{ textDecoration: 'none', color: T.acc, background: T.acc + '12', border: `1px solid ${T.acc}66`, borderRadius: 999, padding: '7px 13px', fontSize: 13, fontWeight: 700 }}>recursive ↗</a>
+        <a href="?view=graph" title="Recursive Intelligence proof" aria-label="Open the Recursive Intelligence graph"
+          style={{ textDecoration: 'none', color: T.acc, background: T.acc + '12', border: `1px solid ${T.acc}66`, borderRadius: 999, padding: '7px 13px', fontSize: 13, fontWeight: 750 }}>recursive graph</a>
         <a href="?view=agent"
           style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: T.panel, border: `1px solid ${T.acc}55`, color: T.text, borderRadius: 999, padding: '7px 13px', fontSize: 13, cursor: 'pointer' }}>
           <span className="edu-pulse" style={{ width: 8, height: 8, borderRadius: 4, background: T.acc, display: 'inline-block' }} />
           agent live
         </a>
+        <a href="?view=community" style={{ textDecoration: 'none', color: T.text, background: T.panel, border: `1px solid ${T.line}`, borderRadius: 999, padding: '7px 13px', fontSize: 13 }}>community</a>
         <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="toggle theme"
           style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>
           {theme === 'dark' ? '☀ light' : '☾ dark'}
