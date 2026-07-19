@@ -26,12 +26,27 @@ network_policies:
         rules:
           - allow: { method: GET, path: "/**" }
           - allow: { method: HEAD, path: "/**" }
+      - host: "*.youtube.com"          # www/m/consent + the innertube API subdomains yt-dlp hits
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
       - host: i.ytimg.com
         port: 443
         protocol: rest
         enforcement: enforce
         rules:
           - allow: { method: GET, path: "/**" }
+      - host: "*.googlevideo.com"      # the media CDN — rotating rr*---sn-* subdomains
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
       - host: www.googleapis.com
         port: 443
         protocol: rest
