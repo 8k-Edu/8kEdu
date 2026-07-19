@@ -11,9 +11,30 @@ tamper-evident OCSF audit log.
 ## Files
 | File | What |
 |---|---|
-| [`policies/8kedu.yaml`](policies/8kedu.yaml) | Egress policy preset — YouTube, Apify, Supabase, local inference. Nothing else. |
+| [`policies/8kedu.yaml`](policies/8kedu.yaml) | Egress policy preset — YouTube, Apify, Supabase, local inference (+ the OpenShell gateway IP). Nothing else. |
 | [`agent_egress_probe.py`](agent_egress_probe.py) | The agent's own urllib egress pattern + a rogue exfil. Run inside the sandbox. |
 | [`contain_demo.sh`](contain_demo.sh) | One-command demo: allowed sinks succeed, exfil blocked + logged. |
+| [`contained_agent_demo.sh`](contained_agent_demo.sh) | **Option D** — 8kEdu's `analyze` step runs *inside* the sandbox: Nemotron reasoning → real widget, exfil blocked. |
+
+## The agent runs contained (option D)
+
+Beyond proving the policy blocks exfil, **8kEdu's actual reasoning runs inside `scoutclaw`**:
+
+1. **Provisioned within the policy** — `yt-dlp`, `ffmpeg` (static), `openai`, `pillow` installed via the
+   policy-allowed **pypi** channel into `/sandbox/.local` (no arbitrary-host downloads).
+2. **`analyze.py` runs inside the sandbox** — reaches only the allowlisted Nemotron endpoint
+   (`host.openshell.internal:1234`), reasons over lecture frames, and produces a real widget spec
+   (proven: *"Scrambled Egg Cooking Time Calculator"*). Results flow back to the host to persist in Supabase.
+3. **Exfil stays blocked while it works** — a POST of the widgets it just made → denied + OCSF-logged.
+4. **Durable** — snapshotted as `8kedu-contained` (survives restart).
+
+**Key fix that unblocked this:** `host.openshell.internal` resolves to `0.250.250.254` inside the sandbox —
+outside the standard private ranges, so the SSRF guard 403'd the model until `0.250.250.0/24` was added to
+the policy's `allowed_ips`.
+
+**Honest limitation:** the *video download* (yt-dlp) stays host-side — YouTube's media is served from
+rotating `*.googlevideo.com` subdomains that per-host egress can't practically allowlist. The contained
+piece is the reasoning (the part that handles untrusted content and could leak).
 
 Persistence (Supabase two-tier schema — global cache + per-user state) is applied to the
 live DB and accessed via [`agent/db.py`](../agent/db.py).
