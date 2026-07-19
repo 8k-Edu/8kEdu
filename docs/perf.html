@@ -154,8 +154,9 @@
   <div class="eyebrow">performance progression</div>
   <h1>Time to first widget, release over release.</h1>
   <p class="lede">The mint hot path went from <b>over the 5-second budget</b> to <b>well under 1.5 s</b> — and each
-    drop is tagged with the change that caused it. More vLLM tuning is in flight, so the <b>next</b> slot is left
-    open on purpose.</p>
+    drop is tagged with the change that caused it. The latest release (PR&nbsp;#6) swaps the whole model server to
+    <b>vllm-metal</b> — upstream vLLM with real <b>PagedAttention</b>; that latency isn't re-benchmarked here
+    (the host was memory-bound — see method), so the charts run through PR&nbsp;#5 and the migration is logged below.</p>
 
   <div class="heroes" id="heroes"></div>
 
@@ -203,35 +204,44 @@
           <li>Kills the disconnected-client pileup that spiked tail latency to <b>100&nbsp;s+</b> under load</li>
         </ul>
       </div>
+      <div class="ship">
+        <div class="st"><span class="dot" style="background:#8067dc"></span>PR&nbsp;#6 · vLLM&nbsp;Metal</div>
+        <ul>
+          <li><b>Native <a href="https://github.com/vllm-project/vllm-metal" style="color:inherit">vllm-metal</a></b> — upstream vLLM 0.25.1 + a Metal backend, replacing the third-party vllm-mlx port</li>
+          <li><b>PagedAttention</b> (default paged-varlen Metal kernel) + <b>prefix caching</b> + real continuous batching — the features the MLX port couldn't offer</li>
+          <li>Brain moved to <b>DeepSeek-R1-Distill-Qwen-7B</b> on the same server (Nemotron's MoE isn't supported); vision keeps the same <b>Qwen3-VL-4B</b></li>
+          <li><b>Client unchanged</b> — same OpenAI path; only the server + <code>serve-vllm-metal.sh</code> are new</li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <section>
     <div class="head">
-      <h2>Which vLLM-mlx features we use — and which we skip</h2>
-      <div class="hint">vllm-mlx 0.4.0 · an MLX reimpl, not upstream vLLM</div>
+      <h2>Which vLLM features we use on vllm-metal — and which we skip</h2>
+      <div class="hint">vllm-metal 0.3.0 · upstream vLLM 0.25.1 + Metal plugin</div>
     </div>
     <div class="ledger">
       <div class="ship">
-        <div class="st"><span class="dot use"></span>Using<span class="n">6 features</span></div>
+        <div class="st"><span class="dot use"></span>Using<span class="n">now on Metal</span></div>
         <ul>
-          <li><b>Continuous in-flight batching</b> <span class="why">— <code>--continuous-batching</code> runs many requests at once; the offline sweep fans across it for the throughput win below.</span></li>
-          <li><b>Structured outputs</b> <span class="why">— <code>response_format</code> json_schema; the 4B emits schema-valid concept JSON on the vision path, verified end-to-end.</span></li>
-          <li><b>OpenAI-compatible + base64 images</b> <span class="why">— drop-in beside LM&nbsp;Studio; one client path, no rewrite.</span></li>
-          <li><b>Request timeouts + warmup ping</b> <span class="why">— client <code>KEDU_TIMEOUT</code> (no retries) + server <code>--timeout</code>; kills the disconnected-client / cold-kernel pileup.</span></li>
-          <li><b>Frame downscale ≤768px + bounded <code>max_tokens</code></b> <span class="why">— fewer visual tokens per call → faster prefill, more sequences fit the batch.</span></li>
-          <li><b>Opt-in KV-cache quant · <code>--max-num-seqs</code></b> <span class="why">— headroom to fit more concurrent image sequences when memory allows.</span></li>
+          <li><b>PagedAttention</b> <span class="why">— the <b>default</b> paged-varlen Metal kernel (server log: <i>"Native paged-attention Metal kernels loaded"</i>). The MLX port never had this — here it <i>is</i> the attention backend, not an add-on. This is the migration's headline.</span></li>
+          <li><b>Prefix caching</b> <span class="why">— <code>--enable-prefix-caching</code>, default-on for the paged KV cache; the fixed genre system-prompt prefix is reused across calls instead of re-prefilled.</span></li>
+          <li><b>Continuous batching + chunked prefill</b> <span class="why">— upstream vLLM's real scheduler (<code>--max-num-seqs</code>), not an MLX reimpl; chunked prefill rides the unified varlen kernel.</span></li>
+          <li><b>Structured outputs</b> <span class="why">— <code>response_format</code> json_schema; verified schema-valid concept JSON on the Qwen3-VL vision path, on Metal.</span></li>
+          <li><b>OpenAI-compatible + base64 images</b> <span class="why">— the client is <b>unchanged</b> from the LM&nbsp;Studio / vllm-mlx path; only the server swapped.</span></li>
+          <li><b>Request timeouts + warmup ping</b> <span class="why">— client <code>KEDU_TIMEOUT</code> + a warmup that absorbs the cold Metal kernel compile.</span></li>
         </ul>
       </div>
       <div class="ship">
-        <div class="st"><span class="dot skip"></span>Skipped<span class="n">why not</span></div>
+        <div class="st"><span class="dot skip"></span>Skipped<span class="n">available, not on</span></div>
         <ul>
-          <li><b>PagedAttention</b> <span class="why">— not present in this MLX port (only an experimental block cache). Nothing to adopt.</span></li>
-          <li><b>Prefix cache for our prompt</b> <span class="why">— the prefix caches are text-only; an image skips them, so the fixed system prompt re-prefills regardless. We cut tokens instead.</span></li>
-          <li><b>Speculative decoding (MLLM draft)</b> <span class="why">— SimpleEngine-only, mutually exclusive with continuous batching. We keep batching.</span></li>
-          <li><b>Default SimpleEngine</b> <span class="why">— serializes and 503s the 2nd concurrent request — the opposite of what the sweep needs.</span></li>
-          <li><b>Hidden states / logprobs</b> <span class="why">— absent on the OpenAI endpoints; the pipeline doesn't need them.</span></li>
-          <li><b>Tool calling</b> <span class="why">— supported, but concept extraction is single-shot structured output; no tools.</span></li>
+          <li><b>Speculative decoding</b> <span class="why">— now <i>available</i> on vllm-metal (mtp / draft / ngram), unlike the MLX port — but it's greedy-only and the vision path samples at temp&nbsp;0.1. Left off.</span></li>
+          <li><b>TurboQuant KV compression</b> <span class="why">— supported via <code>--additional-config</code> (needs paged attention, which we now have); experimental, so off until A/B'd.</span></li>
+          <li><b><code>--kv-cache-dtype fp8</code></b> <span class="why">— CUDA/ROCm-only; rejected on Metal at config time. TurboQuant is the Metal route if we want KV compression.</span></li>
+          <li><b>Tensor parallelism (TP&gt;1)</b> <span class="why">— only TP=1 is validated on Metal (single device); a 4B/7B doesn't need it.</span></li>
+          <li><b>Hidden states / logprobs</b> <span class="why">— the pipeline doesn't need them.</span></li>
+          <li><b>Tool calling</b> <span class="why">— concept extraction is single-shot structured output; no tools.</span></li>
         </ul>
       </div>
     </div>
@@ -239,14 +249,14 @@
 
   <section>
     <div class="head">
-      <h2>New: concurrent offline sweep — the curator's library build</h2>
-      <div class="hint">throughput · longer bar = faster · frames / second</div>
+      <h2>Concurrent offline sweep — PagedAttention batching scales further</h2>
+      <div class="hint">throughput · longer bar = faster · read the <b>ratio</b> (absolute fps is host-dependent)</div>
     </div>
     <div class="card tput">
       <div class="metric">
         <div class="mtop">
-          <div><div class="mname">16-frame sweep on vllm-mlx</div>
-            <div class="msub">cold · synthetic frames · KEDU_CONCURRENCY</div></div>
+          <div><div class="mname">Sweep on vllm-mlx <span style="font-weight:400;color:var(--faint)">· PR&nbsp;#5, the MLX port</span></div>
+            <div class="msub">cold · synthetic frames · clean host</div></div>
           <span class="badge">1.7× faster</span>
         </div>
         <div class="rel"><div class="row"><span class="stg">sequential</span>
@@ -259,15 +269,54 @@
           <div class="track"><div class="fill i2" style="--w:100%"></div></div><span class="val">0.67/s</span></div>
           <div class="cap i2"><span class="d">▲ 1.70×</span><span class="why">23.8&nbsp;s · <b>0</b> dropped requests (503s)</span></div></div>
       </div>
+      <div class="metric">
+        <div class="mtop">
+          <div><div class="mname">Sweep on vllm-metal <span style="font-weight:400;color:#8067dc">· PR&nbsp;#6, PagedAttention</span></div>
+            <div class="msub">cold · real keyframes · memory-bound host — the <b>ratio</b> is the like-for-like result</div></div>
+          <span class="badge">2.7× faster</span>
+        </div>
+        <div class="rel"><div class="row"><span class="stg">sequential</span>
+          <div class="track"><div class="fill i0" style="--w:36.2%"></div></div><span class="val">0.17/s</span></div>
+          <div class="cap i0"><span class="why">one frame at a time — 69.5&nbsp;s total</span></div></div>
+        <div class="rel"><div class="row"><span class="stg">concurrent ×4</span>
+          <div class="track"><div class="fill i1" style="--w:85.1%"></div></div><span class="val">0.40/s</span></div>
+          <div class="cap i1"><span class="d">▲ 2.33×</span><span class="why">fanned across the paged KV cache — 29.9&nbsp;s</span></div></div>
+        <div class="rel"><div class="row"><span class="stg">concurrent ×8</span>
+          <div class="track"><div class="fill i2" style="--w:100%"></div></div><span class="val">0.47/s</span></div>
+          <div class="cap i2"><span class="d">▲ 2.70×</span><span class="why">25.7&nbsp;s · <b>0</b> dropped (503s) · scales past the MLX port's 1.70×</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>What PagedAttention actually buys — A/B on the same host</h2>
+      <div class="hint"><code>VLLM_METAL_USE_PAGED_ATTENTION</code> off vs on · vllm-metal 0.3.0</div>
+    </div>
+    <div class="card">
+      <div class="metric">
+        <div class="mtop"><div><div class="mname">KV-cache concurrency capacity</div>
+          <div class="msub">max concurrent 8k-token sequences the KV cache admits (vLLM engine log)</div></div>
+          <span class="badge">9.8× the headroom</span></div>
+        <div class="rel"><div class="row"><span class="stg">paged off</span>
+          <div class="track"><div class="fill i0" style="--w:10.2%"></div></div><span class="val">1.00×</span></div>
+          <div class="cap i0"><span class="why">no paging → one sequence at a time; the vision workload also <b>crashes</b> the engine (<code>device_allocator</code> assert) — unusable, not just slow</span></div></div>
+        <div class="rel"><div class="row"><span class="stg">paged on</span>
+          <div class="track"><div class="fill i2" style="--w:100%"></div></div><span class="val">9.78×</span></div>
+          <div class="cap i2"><span class="d">▲ paged</span><span class="why">the default paged-varlen Metal kernel — this is what makes the ×8 batching sweep above possible (2.70×, 0 drops)</span></div></div>
+      </div>
     </div>
   </section>
 
   <div class="note">
     <b>Method.</b> PR&nbsp;#4 deltas are its measured before/after on the Excel lecture (<code>qwen3-vl-4b</code>).
     PR&nbsp;#5 figures are a same-method benchmark on video <code>5IgOP7Lpk5g</code> — identical model, direct-to-server,
-    warmed, sequential — giving <b>~1.33&nbsp;s</b> (vLLM) vs <b>~1.40&nbsp;s</b> (LM&nbsp;Studio). Warm-hit and region wins come
-    from PR&nbsp;#4 caching; PR&nbsp;#5 changes the model server, not the cache, so it holds them.
-    <b>Adding the next release:</b> append one entry to a metric's <code>stages[]</code> in this file and shift the ghost — the bars, deltas and factors recompute.
+    warmed, sequential — giving <b>~1.33&nbsp;s</b> (vLLM) vs <b>~1.40&nbsp;s</b> (LM&nbsp;Studio) on a clean host. Warm-hit and
+    region wins are cache-driven and server-independent, so PR&nbsp;#5/#6 hold them.
+    <b>PR&nbsp;#6 (vllm-metal)</b> is an architectural migration — PagedAttention + prefix caching + real batching, each
+    validated end-to-end — but its single-request latency is <b>not re-benchmarked here</b>: the measuring host was
+    memory-bound (heavy swap), which confounds absolute numbers, and PagedAttention's win is a <i>throughput</i> effect
+    under concurrency, not single-request cold-miss (prefill+decode-bound). A clean-host re-benchmark is the open follow-up.
   </div>
 </div>
 
@@ -293,7 +342,7 @@
         {rel:"baseline", v:5700, disp:"5.7 s",  driver:"full-res frame · fresh DB conn per call"},
         {rel:"PR #4",    v:1900, disp:"1.9 s",  driver:"frame downscale ≤768px + persistent cache conn"},
         {rel:"PR #5",    v:1330, disp:"1.33 s", driver:"vLLM (vllm-mlx) backend"},
-      ], next:"more vLLM tuning — concurrency, kv-cache quant" },
+      ], next:"PR #6 → vllm-metal (PagedAttention) shipped; clean-host re-benchmark + throughput sweep pending" },
     { name:"Warm cache hit", sub:"identical ask, served from cache",
       stages:[
         {rel:"baseline", v:560, disp:"560 ms", driver:"no in-process cache"},

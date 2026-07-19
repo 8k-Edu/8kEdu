@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kedu
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8090
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kedu
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 167.86.98.204   # host nginx (dev.perspectivity.co block) listens here on :8090 for /8kedu
+    ports:
+      - name: http
+        port: 8090
+        protocol: TCP

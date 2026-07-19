@@ -23,7 +23,8 @@ const banner = () => ({
   },
 })
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/8kedu/' : '/', // prod: served under dev.perspectivity.co/8kedu
   plugins: [react(), banner()],
   publicDir: '../data', // serves concepts.json + frames/ straight from the pipeline
   server: {
@@ -37,4 +38,4 @@ export default defineConfig({
       '/pub': 'http://127.0.0.1:8787',             // community remix feed (agent/api.py)
     },
   },
-})
+}))

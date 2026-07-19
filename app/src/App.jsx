@@ -6,6 +6,9 @@ import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
 import { restore, signInGuest, signOut } from './supa.js'
 
+// API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
+const P = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 const TYPE_ICON = {
   matrix_mul: '✕', attention: '◧', softmax: '▮', function_plot: '∿', composite: '⧉', notebook: '🐍',
 }
@@ -490,7 +493,7 @@ function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refresh
   const saveKey = async (value) => {
     setSaving(true)
     try {
-      const response = await fetch('/api/openrouter-key', {
+      const response = await fetch(P + '/api/openrouter-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${identity.token}` },
         body: JSON.stringify({ key: value }),
@@ -599,7 +602,7 @@ function Lecture({ videoId, role }) {
   }), [identity?.token])
   const refreshBilling = useCallback(() => {
     if (!identity?.token) { setBilling(null); return }
-    fetch('/api/billing', { headers: { Authorization: `Bearer ${identity.token}` } }).then(r => r.json()).then(setBilling).catch(() => setBilling(null))
+    fetch(P + '/api/billing', { headers: { Authorization: `Bearer ${identity.token}` } }).then(r => r.json()).then(setBilling).catch(() => setBilling(null))
   }, [identity?.token])
   useEffect(() => { restore().then(setIdentity) }, [])
   useEffect(() => { refreshBilling() }, [refreshBilling])
@@ -619,7 +622,7 @@ function Lecture({ videoId, role }) {
   }
 
   useEffect(() => {
-    fetch('/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
+    fetch(P + '/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
   }, [])
 
   useEffect(() => {
@@ -632,13 +635,13 @@ function Lecture({ videoId, role }) {
         processVideo()
       }
     }
-    fetch(`/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
+    fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
       setConcepts(cs)
       if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
       else autoProcess()
     }).catch(() => { setConcepts([]); autoProcess() })
-    fetch(`/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
-    fetch(`/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
+    fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
+    fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
   }, [videoId])
 
   const pinnedUntil = useRef(0)
@@ -662,7 +665,7 @@ function Lecture({ videoId, role }) {
       const iframe = document.querySelector('#player-box iframe')
       iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: '' }), '*')
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
-      const r = await fetch('/api/region', {
+      const r = await fetch(P + '/api/region', {
         method: 'POST',
         headers: requestHeaders,
         body: JSON.stringify({ text: around, time, ...rect, video: videoId, cloud }),
@@ -691,7 +694,7 @@ function Lecture({ videoId, role }) {
     setBusy(true)
     try {
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
-      const r = await fetch('/api/widget', {
+      const r = await fetch(P + '/api/widget', {
         method: 'POST',
         headers: requestHeaders,
         body: JSON.stringify({ text: around || question, time, ask: question, video: videoId, cloud }),
@@ -718,7 +721,7 @@ function Lecture({ videoId, role }) {
   const createWidget = async (intent) => {
     setBusy(true)
     try {
-      const r = await fetch('/api/widget', {
+      const r = await fetch(P + '/api/widget', {
         method: 'POST',
         headers: requestHeaders,
         body: JSON.stringify({ text: ask.text, time: ask.time, ask: intent, video: videoId, cloud }),
@@ -745,7 +748,7 @@ function Lecture({ videoId, role }) {
     try {
       const around = cues.filter(c => Math.abs(c.start - (cur.time ?? time)) < 35).map(c => c.text).join(' ')
       const ask = `The current widget is a "${cur.widget}" titled "${cur.title}". Regenerate it, applying this change: ${instruction}`
-      const r = await fetch('/api/widget', {
+      const r = await fetch(P + '/api/widget', {
         method: 'POST', headers: requestHeaders,
         body: JSON.stringify({ text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud }),
       })
@@ -770,19 +773,19 @@ function Lecture({ videoId, role }) {
   const processVideo = async () => {
     setProc({ state: 'running', step: 'starting' })
     try {
-      await fetch('/api/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video: videoId }) })
+      await fetch(P + '/api/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video: videoId }) })
     } catch { setProc({ state: 'error', error: 'ingest endpoint offline — run serve.py' }); return }
     const poll = setInterval(async () => {
       try {
-        const s = await fetch(`/api/ingest/status?video=${videoId}`).then(r => r.json())
+        const s = await fetch(P + `/api/ingest/status?video=${videoId}`).then(r => r.json())
         setProc(s)
         if (s.state === 'done') {
           clearInterval(poll)
-          const cs = await fetch(`/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
+          const cs = await fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
           setConcepts(cs)
           if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
-          fetch(`/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
-          fetch(`/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
+          fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
+          fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
         } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
       } catch { /* keep polling */ }
     }, 2500)
@@ -1169,7 +1172,7 @@ const DashboardCard = () => (
     <Badge>dashboard</Badge>
     <div style={{ display: 'flex', gap: 7, padding: '28px 10px 0' }}>
       <div style={{ flex: 1.25 }}>
-        <img src="/kCc8FmEb1nY/frames/f_003780.jpg" alt="" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 6, border: '1px solid #22292f' }} />
+        <img src={`${P}/kCc8FmEb1nY/frames/f_003780.jpg`} alt="" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 6, border: '1px solid #22292f' }} />
         <div style={{ position: 'relative', height: 10, background: '#141a21', borderRadius: 5, marginTop: 6 }}>
           {[12, 25, 38, 55, 63, 78, 90].map((p, i) => (
             <span key={p} style={{ position: 'absolute', left: `${p}%`, top: 2, width: 3, height: 6, borderRadius: 2, background: ['#b48eff', '#ffab70', '#79c0ff', '#56d364', '#79c0ff', '#ff9bce', '#e3b341'][i] }} />
@@ -1673,7 +1676,7 @@ function Landing({ onOpen }) {
   }, [theme, T.solid])
   const [live, setLive] = useState(null)
   useEffect(() => {
-    fetch('/agent/library').then(r => r.json()).then(d => { if (d.ok) setLive(d.videos) }).catch(() => {})
+    fetch(P + '/agent/library').then(r => r.json()).then(d => { if (d.ok) setLive(d.videos) }).catch(() => {})
   }, [])
   const gallery = useMemo(() => mergeGallery(live), [live])
   const go = () => {
@@ -1830,14 +1833,14 @@ function CommunityView({ onExit, onOpen }) {
   const logout = async () => { await signOut(); setMe(null) }
   const load = async (s) => {
     try {
-      const r = await fetch(`/pub/feed?sort=${s ?? sort}`); const d = await r.json()
+      const r = await fetch(P + `/pub/feed?sort=${s ?? sort}`); const d = await r.json()
       if (d.ok) { setItems(d.items); setErr(null) } else setErr(d.error)
     } catch (e) { setErr('agent api offline — start agent/api.py') }
   }
   useEffect(() => { load() }, [sort])
   const setVotes = (id, n) => setItems(x => x.map(a => a.id === id ? { ...a, votes: n } : a))
   const upvoteVia = async (id, voter) => {
-    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: voter?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
+    const r = await fetch(P + '/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: voter?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
     const d = await r.json(); if (d.ok) setVotes(id, d.votes)
   }
   const upvote = async (id) => {
@@ -1858,7 +1861,7 @@ function CommunityView({ onExit, onOpen }) {
     try { await upvoteVia(id, voter) } catch (e) {}
   }
   const remix = async (id) => {
-    try { await fetch('/pub/fork', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id }) }); load() } catch (e) {}
+    try { await fetch(P + '/pub/fork', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id }) }); load() } catch (e) {}
   }
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
@@ -1957,7 +1960,7 @@ function LearnView({ onExit, onOpen }) {
     if (!s) { setErr('type a subject'); return }
     setSubject(s); setBusy(true); setErr(null)
     try {
-      const r = await fetch('/agent/learn/propose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: s, kind }) })
+      const r = await fetch(P + '/agent/learn/propose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: s, kind }) })
       const d = await r.json()
       if (!d.ok) { setErr(d.error || 'propose failed'); setBusy(false); return }
       setProposal(d); setStage('paths')
@@ -1967,7 +1970,7 @@ function LearnView({ onExit, onOpen }) {
   const choose = async (path_id) => {
     setBusy(true)
     try {
-      const r = await fetch('/agent/learn/choose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal_id: proposal.goal_id, path_id, titles: proposal.titles }) })
+      const r = await fetch(P + '/agent/learn/choose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal_id: proposal.goal_id, path_id, titles: proposal.titles }) })
       const d = await r.json()
       if (!d.ok) { setErr(d.error || 'choose failed'); setBusy(false); return }
       setCourse(d); setStage('course')
@@ -2139,19 +2142,19 @@ function AgentDashboard({ onExit }) {
 
   const load = async () => {
     try {
-      const r = await fetch('/agent/state'); const d = await r.json()
+      const r = await fetch(P + '/agent/state'); const d = await r.json()
       if (d.ok) { setState(d); setErr(null) } else setErr(d.error || 'agent api down')
     } catch (e) { setErr('agent api offline — start agent/api.py') }
   }
   useEffect(() => {
-    load(); fetch('/agent/containment').then(r => r.json()).then(setContain).catch(() => {})
+    load(); fetch(P + '/agent/containment').then(r => r.json()).then(setContain).catch(() => {})
     const id = setInterval(load, 2500)
     return () => clearInterval(id)
   }, [])
 
   const wake = async () => {
     setTicking(true)
-    try { await fetch('/agent/tick', { method: 'POST' }); await load() }
+    try { await fetch(P + '/agent/tick', { method: 'POST' }); await load() }
     catch (e) { setErr('tick failed') } finally { setTicking(false) }
   }
 
@@ -2460,8 +2463,8 @@ function RecursiveDashboard({ onExit }) {
   const load = async () => {
     try {
       const [graphResponse, runsResponse] = await Promise.all([
-        fetch(`/agent/graph?topic=${encodeURIComponent(recursiveTopic)}`),
-        fetch(`/agent/recursion?topic=${encodeURIComponent(recursiveTopic)}&limit=30`),
+        fetch(P + `/agent/graph?topic=${encodeURIComponent(recursiveTopic)}`),
+        fetch(P + `/agent/recursion?topic=${encodeURIComponent(recursiveTopic)}&limit=30`),
       ])
       const graphData = await graphResponse.json()
       const runsData = await runsResponse.json()
@@ -2680,7 +2683,7 @@ function PerfDashboard({ onExit }) {
 
   const load = async () => {
     try {
-      const r = await fetch(`/agent/perf?scope=${scope}&limit=50`)
+      const r = await fetch(P + `/agent/perf?scope=${scope}&limit=50`)
       const d = await r.json()
       if (d.ok) { setData(d); setErr(null) } else setErr(d.error || 'unknown error')
     } catch (e) { setErr('agent api offline — start agent/api.py') }
