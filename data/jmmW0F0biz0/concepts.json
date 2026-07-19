@@ -1,0 +1,66 @@
+[
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Linear Regression Model",
+  "explanation": "It shows how adjustable weights map inputs to outputs, enabling prediction of future events.",
+  "params": {
+   "expr": "y = w * x + b",
+   "sliders": [
+    "w",
+    "x",
+    "b"
+   ]
+  },
+  "time": 30,
+  "frame": "f_000030.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "matrix_mul",
+  "title": "Linear weighted sum for binary decisions",
+  "explanation": "The teacher demonstrates that multiplying an input vector of yes/no decisions by a weight vector produces the raw prediction, which is then compared to a threshold.",
+  "params": {
+   "a": [
+    [
+     1,
+     0,
+     1
+    ]
+   ],
+   "b": [
+    [
+     5
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Weighted sum with threshold in linear model",
+  "explanation": "Adjusting input values and weights lets students see how the linear combination produces the predicted output.",
+  "params": {
+   "expr": "yhat = w1*x1 + w2*x2 + w3*x3 - 3",
+   "sliders": [
+    "x1",
+    "x2",
+    "x3",
+    "w1",
+    "w2",
+    "w3",
+    "threshold"
+   ]
+  },
+  "time": 140,
+  "frame": "f_000140.jpg"
+ }
+]
