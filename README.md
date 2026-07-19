@@ -123,6 +123,8 @@ uv run python scripts/patch-vllm-nemotron-audio.py
 
 > **Note — audio-tower patch.** mlx-community's 4-bit conversion stores the Omni audio (`sound_encoder`) conv weights in MLX layout, but `mlx_vlm`'s loader assumes PyTorch layout and re-transposes them, crashing at load (`Expected shape (256, 3, 3, 1) but received (256, 3, 1, 3)`). 8kEdu uses only the vision + text towers; `scripts/patch-vllm-nemotron-audio.py` makes that transpose a no-op so the model loads. It is idempotent — re-run it after `uv tool upgrade vllm-mlx`. LM Studio (`--backend lmstudio`, `:1234`) remains a drop-in fallback that serves the same model via GGUF.
 
+> **Alternative — native vllm-metal.** `scripts/serve-vllm-metal.sh` serves on [vllm-project/vllm-metal](https://github.com/vllm-project/vllm-metal) — upstream vLLM with a Metal backend and real **PagedAttention**. It doesn't support Nemotron-Omni's MoE, so it runs Qwen3-VL-4B (vision, `:8000`) + DeepSeek-R1-Distill-Qwen-7B (brain, `:8001`); set `VLLM_MODEL=qwen3-vl-4b`, `NEMOTRON_MODEL=deepseek-r1-distill-qwen-7b`, `NEMOTRON_BASE_URL=…:8001`. See [`docs/perf.html`](docs/perf.html) for what PagedAttention buys (concurrency 1.0×→9.8×, ×8 batching sweep).
+
 ## Configuration
 
 Copy `.env.example` to `.env`. The main settings are:
