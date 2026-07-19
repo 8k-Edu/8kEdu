@@ -11,6 +11,7 @@
 | **Team** | Team 8kEdu |
 | **Track** | Recursive Intelligence |
 | **Loom video** | https://www.loom.com/share/cc3035fd7be945d3a884611ac7e5abff |
+| **Live app** | https://dev.perspectivity.co/8kedu/ |
 | **Repository** | https://github.com/8k-Edu/8kEdu |
 | **App** | `/` lesson · `?view=graph` recursive memory · `?view=agent` agent activity |
 
