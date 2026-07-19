@@ -605,10 +605,18 @@ function Lecture({ videoId, role }) {
   useEffect(() => {
     const remix = specFromHash()
     if (remix) { setSelected(remix); setFollowVideo(false) }
+    const autoProcess = () => {
+      // set by the landing "drop a video" box — start the agent without another click
+      if (sessionStorage.getItem('8kedu-auto-process') === videoId) {
+        sessionStorage.removeItem('8kedu-auto-process')
+        processVideo()
+      }
+    }
     fetch(`/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
       setConcepts(cs)
       if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
-    }).catch(() => setConcepts([]))
+      else autoProcess()
+    }).catch(() => { setConcepts([]); autoProcess() })
     fetch(`/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
     fetch(`/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
   }, [videoId])
@@ -1655,6 +1663,8 @@ function Landing({ onOpen }) {
   const go = () => {
     const id = parseVideoId(url.trim())
     if (!id) { setErr('paste a YouTube link (or 11-char video id)'); return }
+    // dropped a fresh video → the lecture auto-starts the agent on it (one-action demo)
+    sessionStorage.setItem('8kedu-auto-process', id)
     onOpen(id)
   }
   const rise = { hide: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } } }
