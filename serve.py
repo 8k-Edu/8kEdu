@@ -58,6 +58,12 @@ def _prompt_hash(video: str, frame: str, context: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def _region_hash(video: str, frame: str, x: float, y: float, w: float, h: float) -> str:
+    box = f"{x:.2f},{y:.2f},{w:.2f},{h:.2f}"  # what's in the box drives the result, not the words
+    key = f"{PROMPT_VERSION}|region|{info.get('model','?')}|{video}|{frame}|{box}"
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
 _lru: "OrderedDict[str, dict]" = OrderedDict()
 _LRU_MAX = 256
 
@@ -196,6 +202,22 @@ def make_region_widget(req: RegionAsk):
 
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
+    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "region", "model": info.get("model")}
+
+    t0 = time.perf_counter()
+    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h)
+    cached = _cache_get(h)
+    ev["t_cache_lookup_ms"] = _ms(t0)
+    if cached is not None:
+        cached["cached"] = True
+        ev.update(cache_hit=True, spec_valid=("widget" in cached),
+                  widget_kind=cached.get("widget", "answer"),
+                  t_backend_ask_ms=0, t_parse_validate_ms=0, t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return cached
+    ev["cache_hit"] = False
+
     src = DATA / req.video / "frames" / fr["file"]
     img = Image.open(src)
     W, H = img.size
@@ -212,10 +234,6 @@ def make_region_widget(req: RegionAsk):
     crops.mkdir(exist_ok=True)
     path = crops / f"c_{int(req.time)}_{int(req.x * 100)}_{int(req.y * 100)}.jpg"
     crop.convert("RGB").save(path, quality=88)
-
-    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
-          "frame_file": fr["file"], "kind": "region", "model": info.get("model"),
-          "cache_hit": False, "t_cache_lookup_ms": 0}
 
     context = (
         f'Teacher is saying: "{req.text[:1000]}"\n\n'
@@ -242,9 +260,11 @@ def make_region_widget(req: RegionAsk):
     if not is_valid:
         answer = (spec or {}).get("explanation") or ""
         if answer:
+            out = {"answer": answer, "time": req.time}
+            _cache_put(h, req.video, out)
             ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
             _fire_event(ev)
-            return {"answer": answer, "time": req.time}
+            return out
         ev.update(spec_valid=False, widget_kind="none",
                   error="couldn't read that region", t_total_ms=_ms(t_start))
         _fire_event(ev)
@@ -252,6 +272,7 @@ def make_region_widget(req: RegionAsk):
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
+    _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
     return spec
