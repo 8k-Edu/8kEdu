@@ -1,6 +1,8 @@
 """Supabase (Postgres) access — the agent's persistent memory + shared cache."""
 import json
 import os
+import queue as _queue
+import threading as _threading
 from pathlib import Path
 import psycopg2
 import psycopg2.extras
@@ -100,25 +102,158 @@ def mark_curriculum(cid, state):
 
 
 # ---------- inference_cache — frame-level moat: identical asks across users never recompute ----------
+# The live ask path calls these per request, so they reuse one connection instead of paying
+# a ~600ms pooler handshake each time (see the perf baseline). Guarded by a lock because
+# uvicorn runs sync endpoints across a threadpool, and a psycopg2 connection isn't
+# shareable across concurrent cursors.
+_cache_conn = None
+_cache_conn_lock = _threading.Lock()
+
+
+def _cache_connection():
+    global _cache_conn
+    if _cache_conn is None or _cache_conn.closed:
+        load_env()
+        _cache_conn = psycopg2.connect(os.environ["SUPABASE_DB_URL"], connect_timeout=20)
+    return _cache_conn
+
+
+def _drop_cache_connection():
+    global _cache_conn
+    try:
+        if _cache_conn:
+            _cache_conn.close()
+    except Exception:
+        pass
+    _cache_conn = None
+
+
 def cache_get(prompt_hash):
     """Hit → return the stored result and bump the hits counter. Miss → None."""
-    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("select result from inference_cache where prompt_hash=%s", (prompt_hash,))
-        row = _one(cur)
-        if not row:
-            return None
-        cur.execute("update inference_cache set hits = hits + 1 where prompt_hash=%s", (prompt_hash,))
-        c.commit()
-        return row["result"]
+    with _cache_conn_lock:
+        for _attempt in (1, 2):
+            try:
+                c = _cache_connection()
+                with c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("select result from inference_cache where prompt_hash=%s", (prompt_hash,))
+                    row = cur.fetchone()
+                    if not row:
+                        c.commit()
+                        return None
+                    cur.execute("update inference_cache set hits = hits + 1 where prompt_hash=%s",
+                                (prompt_hash,))
+                c.commit()
+                return row["result"]
+            except Exception:
+                _drop_cache_connection()
+        return None
 
 
 def cache_put(prompt_hash, video_id, model, result):
-    with conn() as c, c.cursor() as cur:
-        cur.execute(
-            "insert into inference_cache(cache_key,video_id,model,prompt_hash,result,hits) "
-            "values (%s,%s,%s,%s,%s,0) on conflict (cache_key) do nothing",
-            (prompt_hash, video_id, model, prompt_hash, json.dumps(result)))
-        c.commit()
+    with _cache_conn_lock:
+        for _attempt in (1, 2):
+            try:
+                c = _cache_connection()
+                with c.cursor() as cur:
+                    cur.execute(
+                        "insert into inference_cache(cache_key,video_id,model,prompt_hash,result,hits) "
+                        "values (%s,%s,%s,%s,%s,0) on conflict (cache_key) do nothing",
+                        (prompt_hash, video_id, model, prompt_hash, json.dumps(result)))
+                c.commit()
+                return
+            except Exception:
+                _drop_cache_connection()
+
+
+# ---------- widget_events — per-request observability for the /api/* hot path ----------
+_WIDGET_EVENT_KEYS = (
+    "handle", "video_id", "t_s", "frame_file", "kind",
+    "t_cache_lookup_ms", "t_backend_ask_ms", "t_parse_validate_ms", "t_total_ms",
+    "cache_hit", "model", "spec_valid", "widget_kind", "error",
+)
+
+
+def log_widget_event(payload: dict) -> None:
+    """Synchronous single-row insert for tests / one-off callers.
+    The hot path uses enqueue_widget_event instead."""
+    cols = ",".join(_WIDGET_EVENT_KEYS)
+    placeholders = ",".join(["%s"] * len(_WIDGET_EVENT_KEYS))
+    values = [payload.get(k) for k in _WIDGET_EVENT_KEYS]
+    try:
+        with conn() as c, c.cursor() as cur:
+            cur.execute(f"insert into widget_events({cols}) values ({placeholders})", values)
+            c.commit()
+    except Exception:
+        pass  # observability must never break the request
+
+
+# One writer thread + one reused connection drains the queue, so the hot path pays only a
+# put_nowait instead of a connection handshake per event. See enqueue_widget_event.
+_event_q: "_queue.Queue | None" = None
+_writer_started = False
+_writer_lock = _threading.Lock()
+_EVENT_Q_MAX = 1000
+_EVENT_BATCH_MAX = 20
+
+
+def _widget_event_writer() -> None:
+    cols = ",".join(_WIDGET_EVENT_KEYS)
+    placeholders = ",".join(["%s"] * len(_WIDGET_EVENT_KEYS))
+    sql = f"insert into widget_events({cols}) values ({placeholders})"
+    c = None
+    while True:
+        batch = [_event_q.get()]
+        try:
+            while len(batch) < _EVENT_BATCH_MAX:
+                batch.append(_event_q.get_nowait())
+        except _queue.Empty:
+            pass
+        rows = [[e.get(k) for k in _WIDGET_EVENT_KEYS] for e in batch]
+        for _attempt in (1, 2):  # retry once: the pooler may have dropped an idle connection
+            try:
+                if c is None or c.closed:
+                    c = psycopg2.connect(os.environ["SUPABASE_DB_URL"], connect_timeout=20)
+                with c.cursor() as cur:
+                    cur.executemany(sql, rows)
+                c.commit()
+                break
+            except Exception:
+                try:
+                    if c:
+                        c.close()
+                except Exception:
+                    pass
+                c = None
+
+
+def enqueue_widget_event(payload: dict) -> None:
+    """Non-blocking hand-off to the writer thread. Drops the event if the queue is full —
+    telemetry must never block or OOM the request path."""
+    global _event_q, _writer_started
+    if not _writer_started:
+        with _writer_lock:
+            if not _writer_started:
+                load_env()
+                _event_q = _queue.Queue(maxsize=_EVENT_Q_MAX)
+                _threading.Thread(target=_widget_event_writer, daemon=True,
+                                  name="widget-event-writer").start()
+                _writer_started = True
+    try:
+        _event_q.put_nowait(payload)
+    except _queue.Full:
+        pass
+
+
+def recent_widget_events(handle: str | None = None, limit: int = 50) -> list[dict]:
+    """Most recent widget_events, optionally scoped to a handle."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        if handle:
+            cur.execute(
+                "select * from widget_events where handle=%s order by created_at desc limit %s",
+                (handle, limit))
+        else:
+            cur.execute("select * from widget_events order by created_at desc limit %s", (limit,))
+        return [dict(r) for r in cur.fetchall()]
 
 
 # ---------- curator: grow the shared library per genre ----------
