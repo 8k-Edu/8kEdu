@@ -1,0 +1,1137 @@
+[
+ {
+  "start": 0.16,
+  "end": 1.35,
+  "text": "What if I told you the biggest"
+ },
+ {
+  "start": 1.36,
+  "end": 3.03,
+  "text": "breakthrough in AI came from solving a"
+ },
+ {
+  "start": 3.04,
+  "end": 4.47,
+  "text": "children's game? Think about the"
+ },
+ {
+  "start": 4.48,
+  "end": 6.79,
+  "text": "telephone game. RNN's process sequences"
+ },
+ {
+  "start": 6.8,
+  "end": 8.95,
+  "text": "exactly like that. Each step only sees"
+ },
+ {
+  "start": 8.96,
+  "end": 10.71,
+  "text": "the message from the step before. And"
+ },
+ {
+  "start": 10.72,
+  "end": 12.23,
+  "text": "just like telephone, the message"
+ },
+ {
+  "start": 12.24,
+  "end": 15.27,
+  "text": "degrades fast. By step 50, the original"
+ },
+ {
+  "start": 15.28,
+  "end": 17.27,
+  "text": "meaning is almost completely gone. But"
+ },
+ {
+  "start": 17.28,
+  "end": 18.79,
+  "text": "what if we could let every word see"
+ },
+ {
+  "start": 18.8,
+  "end": 21.11,
+  "text": "every other word directly? In 2017,"
+ },
+ {
+  "start": 21.12,
+  "end": 23.27,
+  "text": "researchers ask a radical question. What"
+ },
+ {
+  "start": 23.28,
+  "end": 25.27,
+  "text": "if every word could talk to every other"
+ },
+ {
+  "start": 25.28,
+  "end": 28.23,
+  "text": "word directly? No more telephone game."
+ },
+ {
+  "start": 28.24,
+  "end": 30.07,
+  "text": "No more information bottlenecks. Instead"
+ },
+ {
+  "start": 30.08,
+  "end": 31.91,
+  "text": "of sequential processing, imagine a"
+ },
+ {
+  "start": 31.92,
+  "end": 33.75,
+  "text": "conference call where everyone can hear"
+ },
+ {
+  "start": 33.76,
+  "end": 36.07,
+  "text": "everyone else. That's attention. Watch"
+ },
+ {
+  "start": 36.08,
+  "end": 39.35,
+  "text": "this transformation. A sequential chain"
+ },
+ {
+  "start": 39.36,
+  "end": 41.67,
+  "text": "explodes into a fully connected network."
+ },
+ {
+  "start": 41.68,
+  "end": 43.43,
+  "text": "Every single position can now attend to"
+ },
+ {
+  "start": 43.44,
+  "end": 45.35,
+  "text": "every other position in parallel. The"
+ },
+ {
+  "start": 45.36,
+  "end": 46.95,
+  "text": "first word can see the last word. The"
+ },
+ {
+  "start": 46.96,
+  "end": 48.55,
+  "text": "middle can reference the beginning. But"
+ },
+ {
+  "start": 48.56,
+  "end": 49.99,
+  "text": "here's where it gets brilliant. The"
+ },
+ {
+  "start": 50.0,
+  "end": 51.67,
+  "text": "model doesn't just see everything. It"
+ },
+ {
+  "start": 51.68,
+  "end": 53.35,
+  "text": "learns what to pay attention to. It's"
+ },
+ {
+  "start": 53.36,
+  "end": 55.35,
+  "text": "not random connections. It's learnable,"
+ },
+ {
+  "start": 55.36,
+  "end": 57.51,
+  "text": "intelligent information routing. Think"
+ },
+ {
+  "start": 57.52,
+  "end": 59.19,
+  "text": "about reading this sentence. The cat"
+ },
+ {
+  "start": 59.2,
+  "end": 61.19,
+  "text": "that chased the mouse sat on the mat."
+ },
+ {
+  "start": 61.2,
+  "end": 63.11,
+  "text": "When processing sat, the model needs to"
+ },
+ {
+  "start": 63.12,
+  "end": 65.43,
+  "text": "know that cat is the subject, not mouse."
+ },
+ {
+  "start": 65.44,
+  "end": 67.03,
+  "text": "Attention learns these relationships"
+ },
+ {
+  "start": 67.04,
+  "end": 69.03,
+  "text": "automatically. But how does this magic"
+ },
+ {
+  "start": 69.04,
+  "end": 70.79,
+  "text": "actually work under the hood? Let me"
+ },
+ {
+  "start": 70.8,
+  "end": 71.99,
+  "text": "show you the three components that make"
+ },
+ {
+  "start": 72.0,
+  "end": 74.95,
+  "text": "it all possible."
+ },
+ {
+  "start": 74.96,
+  "end": 76.79,
+  "text": "Every attention mechanism has three"
+ },
+ {
+  "start": 76.8,
+  "end": 79.43,
+  "text": "essential components: query, key, and"
+ },
+ {
+  "start": 79.44,
+  "end": 81.35,
+  "text": "value. Think of it like a library"
+ },
+ {
+  "start": 81.36,
+  "end": 83.19,
+  "text": "retrieval system. The query is your"
+ },
+ {
+  "start": 83.2,
+  "end": 85.43,
+  "text": "question. What am I looking for? The key"
+ },
+ {
+  "start": 85.44,
+  "end": 87.35,
+  "text": "is what each book offers. This is what I"
+ },
+ {
+  "start": 87.36,
+  "end": 89.35,
+  "text": "contain. The value is the actual"
+ },
+ {
+  "start": 89.36,
+  "end": 91.19,
+  "text": "content. Here's what I can contribute."
+ },
+ {
+  "start": 91.2,
+  "end": 93.51,
+  "text": "Now watch how these work together. Every"
+ },
+ {
+  "start": 93.52,
+  "end": 94.71,
+  "text": "position in your sequence gets"
+ },
+ {
+  "start": 94.72,
+  "end": 96.95,
+  "text": "transformed three times. The same input"
+ },
+ {
+  "start": 96.96,
+  "end": 98.55,
+  "text": "becomes three different representations"
+ },
+ {
+  "start": 98.56,
+  "end": 101.11,
+  "text": "through learned weight matrices. Q="
+ },
+ {
+  "start": 101.12,
+  "end": 105.59,
+  "text": "input* W Q. That's your query matrix. K="
+ },
+ {
+  "start": 105.6,
+  "end": 111.67,
+  "text": "input* W K, your key matrix. V= W_V,"
+ },
+ {
+  "start": 111.68,
+  "end": 113.59,
+  "text": "your value matrix. But here's the"
+ },
+ {
+  "start": 113.6,
+  "end": 115.67,
+  "text": "critical insight. Queries and keys work"
+ },
+ {
+  "start": 115.68,
+  "end": 118.15,
+  "text": "together to determine who talks to whom."
+ },
+ {
+  "start": 118.16,
+  "end": 119.99,
+  "text": "When a query and a key are similar, they"
+ },
+ {
+  "start": 120.0,
+  "end": 121.67,
+  "text": "have high compatibility. That"
+ },
+ {
+  "start": 121.68,
+  "end": 123.19,
+  "text": "compatibility score determines the"
+ },
+ {
+  "start": 123.2,
+  "end": 125.35,
+  "text": "attention weight. High weight means pay"
+ },
+ {
+  "start": 125.36,
+  "end": 127.43,
+  "text": "a lot of attention here. Low weight"
+ },
+ {
+  "start": 127.44,
+  "end": 130.07,
+  "text": "mostly ignore this. Then values"
+ },
+ {
+  "start": 130.08,
+  "end": 131.75,
+  "text": "determine what information actually"
+ },
+ {
+  "start": 131.76,
+  "end": 133.67,
+  "text": "flows. Let's see this in action with a"
+ },
+ {
+  "start": 133.68,
+  "end": 135.91,
+  "text": "real sentence. The cat sat on the mat."
+ },
+ {
+  "start": 135.92,
+  "end": 137.67,
+  "text": "When processing the word sat, it creates"
+ },
+ {
+  "start": 137.68,
+  "end": 140.31,
+  "text": "a query. I need my subject. The word cat"
+ },
+ {
+  "start": 140.32,
+  "end": 142.47,
+  "text": "has a key that says I'm a subject noun."
+ },
+ {
+  "start": 142.48,
+  "end": 145.11,
+  "text": "their compatibility high. So Sat pays"
+ },
+ {
+  "start": 145.12,
+  "end": 147.67,
+  "text": "strong attention to cat. Meanwhile, Matt"
+ },
+ {
+  "start": 147.68,
+  "end": 149.83,
+  "text": "has a key saying, \"I'm a location noun."
+ },
+ {
+  "start": 149.84,
+  "end": 151.51,
+  "text": "The compatibility with SAT looking for a"
+ },
+ {
+  "start": 151.52,
+  "end": 153.75,
+  "text": "subject much lower.\" This is learned"
+ },
+ {
+  "start": 153.76,
+  "end": 155.59,
+  "text": "matchmaking for information. The model"
+ },
+ {
+  "start": 155.6,
+  "end": 157.35,
+  "text": "learns what patterns to look for, what"
+ },
+ {
+  "start": 157.36,
+  "end": 159.35,
+  "text": "connections matter, and it does this for"
+ },
+ {
+  "start": 159.36,
+  "end": 161.35,
+  "text": "every single word with every other word"
+ },
+ {
+  "start": 161.36,
+  "end": 163.67,
+  "text": "all at once. Now, let me show you the"
+ },
+ {
+  "start": 163.68,
+  "end": 165.11,
+  "text": "elegant mathematics that makes this"
+ },
+ {
+  "start": 165.12,
+  "end": 166.71,
+  "text": "possible. The beauty of attention is"
+ },
+ {
+  "start": 166.72,
+  "end": 168.15,
+  "text": "that it's just four mathematical"
+ },
+ {
+  "start": 168.16,
+  "end": 169.99,
+  "text": "operations. Let me walk you through each"
+ },
+ {
+  "start": 170.0,
+  "end": 172.23,
+  "text": "step with real numbers. Step one,"
+ },
+ {
+  "start": 172.24,
+  "end": 174.23,
+  "text": "compute compatibility scores. We take"
+ },
+ {
+  "start": 174.24,
+  "end": 175.83,
+  "text": "our query matrix and multiply it with"
+ },
+ {
+  "start": 175.84,
+  "end": 178.63,
+  "text": "the transpose of our key matrix. Q * K"
+ },
+ {
+  "start": 178.64,
+  "end": 180.63,
+  "text": "transpose. This gives us a score for"
+ },
+ {
+  "start": 180.64,
+  "end": 182.79,
+  "text": "every pair of positions. Watch. A"
+ },
+ {
+  "start": 182.8,
+  "end": 184.63,
+  "text": "four-word sentence creates a 4x4"
+ },
+ {
+  "start": 184.64,
+  "end": 186.71,
+  "text": "attention matrix. Each cell shows how"
+ },
+ {
+  "start": 186.72,
+  "end": 189.11,
+  "text": "much word I wants to attend to word J."
+ },
+ {
+  "start": 189.12,
+  "end": 192.07,
+  "text": "But wait, step two is crucial. Scaling."
+ },
+ {
+  "start": 192.08,
+  "end": 193.43,
+  "text": "We divide these scores by the square"
+ },
+ {
+  "start": 193.44,
+  "end": 196.07,
+  "text": "root of the dimension size. Why? Without"
+ },
+ {
+  "start": 196.08,
+  "end": 197.75,
+  "text": "scaling, the values explode during"
+ },
+ {
+  "start": 197.76,
+  "end": 199.99,
+  "text": "training. Large values push softmax into"
+ },
+ {
+  "start": 200.0,
+  "end": 201.59,
+  "text": "saturation regions where gradients"
+ },
+ {
+  "start": 201.6,
+  "end": 203.51,
+  "text": "vanish. The scaling keeps our gradients"
+ },
+ {
+  "start": 203.52,
+  "end": 206.15,
+  "text": "healthy and training stable. Step three,"
+ },
+ {
+  "start": 206.16,
+  "end": 208.15,
+  "text": "apply softmax to create a probability"
+ },
+ {
+  "start": 208.16,
+  "end": 210.15,
+  "text": "distribution. This transforms our raw"
+ },
+ {
+  "start": 210.16,
+  "end": 212.63,
+  "text": "scores into weights that sum to one. Now"
+ },
+ {
+  "start": 212.64,
+  "end": 214.07,
+  "text": "each position has a probability"
+ },
+ {
+  "start": 214.08,
+  "end": 215.91,
+  "text": "distribution over what to attend to."
+ },
+ {
+  "start": 215.92,
+  "end": 217.91,
+  "text": "High scores become high probabilities."
+ },
+ {
+  "start": 217.92,
+  "end": 220.55,
+  "text": "Low scores nearly zero attention."
+ },
+ {
+  "start": 220.56,
+  "end": 222.79,
+  "text": "Finally, step four, use these weights to"
+ },
+ {
+  "start": 222.8,
+  "end": 224.71,
+  "text": "aggregate the values. We multiply our"
+ },
+ {
+  "start": 224.72,
+  "end": 226.23,
+  "text": "attention weights with the value matrix"
+ },
+ {
+  "start": 226.24,
+  "end": 227.67,
+  "text": "and sum. Here's what makes this"
+ },
+ {
+  "start": 227.68,
+  "end": 229.91,
+  "text": "mechanism so elegant. First, it's"
+ },
+ {
+  "start": 229.92,
+  "end": 231.43,
+  "text": "completely differentiable. Every"
+ },
+ {
+  "start": 231.44,
+  "end": 233.27,
+  "text": "operation has smooth gradients. The"
+ },
+ {
+  "start": 233.28,
+  "end": 234.71,
+  "text": "model can learn through standard back"
+ },
+ {
+  "start": 234.72,
+  "end": 236.47,
+  "text": "propagation. Second, it's"
+ },
+ {
+  "start": 236.48,
+  "end": 238.47,
+  "text": "parallelizable. Unlike RNN's that"
+ },
+ {
+  "start": 238.48,
+  "end": 240.55,
+  "text": "process sequentially, attention computes"
+ },
+ {
+  "start": 240.56,
+  "end": 242.79,
+  "text": "all positions simultaneously. That's a"
+ },
+ {
+  "start": 242.8,
+  "end": 244.63,
+  "text": "massive speed up. Third, the"
+ },
+ {
+  "start": 244.64,
+  "end": 246.95,
+  "text": "computational complexity. Yes, it's O of"
+ },
+ {
+  "start": 246.96,
+  "end": 249.03,
+  "text": "N^ squ. Every position attends to every"
+ },
+ {
+  "start": 249.04,
+  "end": 251.03,
+  "text": "other position. But here's the key. It's"
+ },
+ {
+  "start": 251.04,
+  "end": 253.03,
+  "text": "quadratic in sequence length, not time"
+ },
+ {
+  "start": 253.04,
+  "end": 255.51,
+  "text": "steps. RNN's they're linear in sequence"
+ },
+ {
+  "start": 255.52,
+  "end": 257.59,
+  "text": "length but can't parallelize. For modern"
+ },
+ {
+  "start": 257.6,
+  "end": 259.11,
+  "text": "hardware optimized for parallel"
+ },
+ {
+  "start": 259.12,
+  "end": 261.67,
+  "text": "computation, attention wins. Let me show"
+ },
+ {
+  "start": 261.68,
+  "end": 262.95,
+  "text": "you something fascinating with our"
+ },
+ {
+  "start": 262.96,
+  "end": 264.79,
+  "text": "attention patterns. Watch what happens"
+ },
+ {
+  "start": 264.8,
+  "end": 266.63,
+  "text": "when we adjust the scaling factor."
+ },
+ {
+  "start": 266.64,
+  "end": 268.47,
+  "text": "Without scaling, the attention becomes"
+ },
+ {
+  "start": 268.48,
+  "end": 270.95,
+  "text": "extremely peaked, almost one hot. With"
+ },
+ {
+  "start": 270.96,
+  "end": 272.95,
+  "text": "proper scaling, we get smooth, learnable"
+ },
+ {
+  "start": 272.96,
+  "end": 275.03,
+  "text": "attention distributions. This simple"
+ },
+ {
+  "start": 275.04,
+  "end": 277.59,
+  "text": "formula revolutionized AI. But one"
+ },
+ {
+  "start": 277.6,
+  "end": 279.27,
+  "text": "perspective isn't enough. Let me show"
+ },
+ {
+  "start": 279.28,
+  "end": 281.11,
+  "text": "you why we use multiple attention heads."
+ },
+ {
+  "start": 281.12,
+  "end": 282.87,
+  "text": "Here's a question. Why limit ourselves"
+ },
+ {
+  "start": 282.88,
+  "end": 284.71,
+  "text": "to one attention pattern? Different"
+ },
+ {
+  "start": 284.72,
+  "end": 286.31,
+  "text": "relationships require different types of"
+ },
+ {
+  "start": 286.32,
+  "end": 287.99,
+  "text": "attention. That's where multi-head"
+ },
+ {
+  "start": 288.0,
+  "end": 289.83,
+  "text": "attention comes in. Instead of one set"
+ },
+ {
+  "start": 289.84,
+  "end": 293.19,
+  "text": "of QKV matrices, we create eight or 16."
+ },
+ {
+  "start": 293.2,
+  "end": 294.79,
+  "text": "Each head learns to look for different"
+ },
+ {
+  "start": 294.8,
+  "end": 296.95,
+  "text": "patterns. Watch this visualization of"
+ },
+ {
+  "start": 296.96,
+  "end": 299.27,
+  "text": "BERT's actual attention heads. Head one"
+ },
+ {
+  "start": 299.28,
+  "end": 301.59,
+  "text": "specializes in syntactic dependencies,"
+ },
+ {
+  "start": 301.6,
+  "end": 303.91,
+  "text": "connecting subjects to their verbs. Head"
+ },
+ {
+  "start": 303.92,
+  "end": 305.99,
+  "text": "two learns semantic similarity, grouping"
+ },
+ {
+  "start": 306.0,
+  "end": 308.15,
+  "text": "related concepts together. Head three"
+ },
+ {
+  "start": 308.16,
+  "end": 309.83,
+  "text": "focuses on positional patterns,"
+ },
+ {
+  "start": 309.84,
+  "end": 312.15,
+  "text": "attending to nearby words. Head four"
+ },
+ {
+  "start": 312.16,
+  "end": 313.83,
+  "text": "might specialize in co-reference,"
+ },
+ {
+  "start": 313.84,
+  "end": 316.15,
+  "text": "linking pronouns to their anticedants."
+ },
+ {
+  "start": 316.16,
+  "end": 317.91,
+  "text": "This specialization emerges naturally"
+ },
+ {
+  "start": 317.92,
+  "end": 320.31,
+  "text": "during training. No one programs it. The"
+ },
+ {
+  "start": 320.32,
+  "end": 322.07,
+  "text": "model discovers what patterns are useful"
+ },
+ {
+  "start": 322.08,
+  "end": 324.15,
+  "text": "for the task. Here's the computational"
+ },
+ {
+  "start": 324.16,
+  "end": 326.87,
+  "text": "trick. All heads process in parallel. We"
+ },
+ {
+  "start": 326.88,
+  "end": 328.39,
+  "text": "split our embedding dimension across"
+ },
+ {
+  "start": 328.4,
+  "end": 330.79,
+  "text": "heads, not duplicated. With dimension"
+ },
+ {
+  "start": 330.8,
+  "end": 334.07,
+  "text": "512 and 8 heads, each head works with 64"
+ },
+ {
+  "start": 334.08,
+  "end": 336.15,
+  "text": "dimensions. After all heads compute"
+ },
+ {
+  "start": 336.16,
+  "end": 337.83,
+  "text": "their attention, we concatenate the"
+ },
+ {
+  "start": 337.84,
+  "end": 339.75,
+  "text": "results. Then one final linear"
+ },
+ {
+  "start": 339.76,
+  "end": 341.67,
+  "text": "transformation mixes information across"
+ },
+ {
+  "start": 341.68,
+  "end": 343.75,
+  "text": "heads. Think of it as an ensemble of"
+ },
+ {
+  "start": 343.76,
+  "end": 345.11,
+  "text": "experts, each with a different"
+ },
+ {
+  "start": 345.12,
+  "end": 347.11,
+  "text": "specialty. Together, they capture the"
+ },
+ {
+  "start": 347.12,
+  "end": 348.47,
+  "text": "full complexity of language"
+ },
+ {
+  "start": 348.48,
+  "end": 350.47,
+  "text": "relationships. But there's one critical"
+ },
+ {
+  "start": 350.48,
+  "end": 351.67,
+  "text": "piece missing from our attention"
+ },
+ {
+  "start": 351.68,
+  "end": 353.75,
+  "text": "mechanism. Without it, attention has a"
+ },
+ {
+  "start": 353.76,
+  "end": 356.07,
+  "text": "fatal flaw. It has no idea about word"
+ },
+ {
+  "start": 356.08,
+  "end": 359.03,
+  "text": "order."
+ },
+ {
+  "start": 359.04,
+  "end": 360.95,
+  "text": "Here's something surprising. Attention"
+ },
+ {
+  "start": 360.96,
+  "end": 362.87,
+  "text": "is completely position blind. The"
+ },
+ {
+  "start": 362.88,
+  "end": 365.19,
+  "text": "sentence the cat sat on the mat produces"
+ },
+ {
+  "start": 365.2,
+  "end": 367.59,
+  "text": "the exact same attention as Matt the"
+ },
+ {
+  "start": 367.6,
+  "end": 370.39,
+  "text": "onsat cat the completely scrambled same"
+ },
+ {
+  "start": 370.4,
+  "end": 372.39,
+  "text": "result. Attention treats input like a"
+ },
+ {
+  "start": 372.4,
+  "end": 374.47,
+  "text": "bag of words not a sequence. The"
+ },
+ {
+  "start": 374.48,
+  "end": 376.55,
+  "text": "solution we inject position information"
+ },
+ {
+  "start": 376.56,
+  "end": 378.39,
+  "text": "directly into the embeddings. Every"
+ },
+ {
+  "start": 378.4,
+  "end": 380.15,
+  "text": "position gets a unique signature a"
+ },
+ {
+  "start": 380.16,
+  "end": 381.99,
+  "text": "positional encoding. The original"
+ },
+ {
+  "start": 382.0,
+  "end": 384.23,
+  "text": "transformer uses syosoidal patterns s"
+ },
+ {
+  "start": 384.24,
+  "end": 386.31,
+  "text": "and cosine waves. Different frequencies"
+ },
+ {
+  "start": 386.32,
+  "end": 388.15,
+  "text": "for different dimensions create unique"
+ },
+ {
+  "start": 388.16,
+  "end": 390.71,
+  "text": "position fingerprints. The beauty, these"
+ },
+ {
+  "start": 390.72,
+  "end": 392.71,
+  "text": "patterns extrapolate to sequences longer"
+ },
+ {
+  "start": 392.72,
+  "end": 394.87,
+  "text": "than training. Modern models often learn"
+ },
+ {
+  "start": 394.88,
+  "end": 396.63,
+  "text": "position embeddings instead. More"
+ },
+ {
+  "start": 396.64,
+  "end": 398.71,
+  "text": "flexible, but limited to positions seen"
+ },
+ {
+  "start": 398.72,
+  "end": 400.39,
+  "text": "during training. With positions"
+ },
+ {
+  "start": 400.4,
+  "end": 402.55,
+  "text": "restored, attention knows both what and"
+ },
+ {
+  "start": 402.56,
+  "end": 404.23,
+  "text": "where. Now you understand the engine"
+ },
+ {
+  "start": 404.24,
+  "end": 405.99,
+  "text": "powering modern AI. Let's see how this"
+ },
+ {
+  "start": 406.0,
+  "end": 408.15,
+  "text": "mechanism conquered the AI landscape."
+ },
+ {
+  "start": 408.16,
+  "end": 410.79,
+  "text": "2017, the transformer paper introduces"
+ },
+ {
+  "start": 410.8,
+  "end": 412.47,
+  "text": "attention is all you need. Machine"
+ },
+ {
+  "start": 412.48,
+  "end": 414.31,
+  "text": "translation quality jumps overnight."
+ },
+ {
+  "start": 414.32,
+  "end": 417.27,
+  "text": "Google translate is transformed. 2018,"
+ },
+ {
+  "start": 417.28,
+  "end": 419.35,
+  "text": "BERT arrives. Birectional attention"
+ },
+ {
+  "start": 419.36,
+  "end": 420.63,
+  "text": "understands context from both"
+ },
+ {
+  "start": 420.64,
+  "end": 423.99,
+  "text": "directions. 2020 GPT3 shows that scale"
+ },
+ {
+  "start": 424.0,
+  "end": 425.43,
+  "text": "plus attention equals emergent"
+ },
+ {
+  "start": 425.44,
+  "end": 428.63,
+  "text": "abilities. 175 billion parameters all"
+ },
+ {
+  "start": 428.64,
+  "end": 430.55,
+  "text": "connected through attention mechanisms."
+ },
+ {
+  "start": 430.56,
+  "end": 433.43,
+  "text": "2022 chat GPT brings attention based"
+ },
+ {
+  "start": 433.44,
+  "end": 435.43,
+  "text": "models to hundreds of millions. But it's"
+ },
+ {
+  "start": 435.44,
+  "end": 437.43,
+  "text": "not just language. Vision transformers"
+ },
+ {
+  "start": 437.44,
+  "end": 439.67,
+  "text": "process images with attention. Doll E"
+ },
+ {
+  "start": 439.68,
+  "end": 441.83,
+  "text": "generates images. Alphafold predicts"
+ },
+ {
+  "start": 441.84,
+  "end": 443.83,
+  "text": "protein structures. The same attention"
+ },
+ {
+  "start": 443.84,
+  "end": 446.23,
+  "text": "mechanism, infinite applications. Let's"
+ },
+ {
+  "start": 446.24,
+  "end": 448.39,
+  "text": "recap this revolutionary mechanism. We"
+ },
+ {
+  "start": 448.4,
+  "end": 450.15,
+  "text": "went from telephone game to conference"
+ },
+ {
+  "start": 450.16,
+  "end": 453.03,
+  "text": "call. Query, key, value. The trinity"
+ },
+ {
+  "start": 453.04,
+  "end": 455.11,
+  "text": "that routes information intelligently."
+ },
+ {
+  "start": 455.12,
+  "end": 456.39,
+  "text": "Multiple heads for multiple"
+ },
+ {
+  "start": 456.4,
+  "end": 458.47,
+  "text": "perspectives. Simple matrix math"
+ },
+ {
+  "start": 458.48,
+  "end": 460.55,
+  "text": "creating intelligent behavior. This is"
+ },
+ {
+  "start": 460.56,
+  "end": 463.19,
+  "text": "the foundation of GPT, BERT, and every"
+ },
+ {
+  "start": 463.2,
+  "end": 465.43,
+  "text": "modern language model. You now"
+ },
+ {
+  "start": 465.44,
+  "end": 467.27,
+  "text": "understand the key to modern AI. One"
+ },
+ {
+  "start": 467.28,
+  "end": 471.48,
+  "text": "mechanism, infinite possibilities."
+ }
+]

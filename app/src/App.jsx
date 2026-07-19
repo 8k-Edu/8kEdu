@@ -479,25 +479,31 @@ function AskBox({ ask, onClose, onCreate, busy }) {
 
 const CC_INPUT = { background: '#0d1117', border: '1px solid #30363d', borderRadius: 6, color: '#e6edf3', padding: '6px 8px', fontSize: 12.5, outline: 'none', width: '100%', boxSizing: 'border-box' }
 
-// Local (free) vs cloud (OpenRouter, credit-metered) model choice + credits + BYOK key.
-function CloudControl({ handle, setHandle, cloud, setCloud, billing, refreshBilling }) {
+function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refreshBilling }) {
   const [open, setOpen] = useState(false)
   const [key, setKey] = useState('')
   const [saving, setSaving] = useState(false)
+  const [keyError, setKeyError] = useState('')
   const credits = billing?.credits
   const broke = cloud && !billing?.has_own_key && typeof credits === 'number' && credits <= 0
   const saveKey = async (value) => {
     setSaving(true)
     try {
-      await fetch('/api/openrouter-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handle, key: value }) })
-      setKey(''); refreshBilling()
+      const response = await fetch('/api/openrouter-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${identity.token}` },
+        body: JSON.stringify({ key: value }),
+      })
+      const result = await response.json()
+      if (!result.ok) { setKeyError(result.error || 'could not use that key'); return }
+      setKeyError(''); setKey(''); refreshBilling()
     } finally { setSaving(false) }
   }
   return (
     <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       <span style={{ display: 'inline-flex', border: '1px solid #30363d', borderRadius: 999, overflow: 'hidden', fontSize: 11.5 }}>
         <button onClick={() => setCloud(false)} style={{ background: cloud ? 'transparent' : '#238636', color: cloud ? '#8b949e' : '#fff', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>🖥 local</button>
-        <button onClick={() => { setCloud(true); refreshBilling() }} style={{ background: cloud ? '#1f6feb' : 'transparent', color: cloud ? '#fff' : '#8b949e', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>☁ cloud</button>
+        <button onClick={enableCloud} style={{ background: cloud ? '#1f6feb' : 'transparent', color: cloud ? '#fff' : '#8b949e', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>☁ cloud</button>
       </span>
       {cloud && (
         <button onClick={() => setOpen(o => !o)} title="credits & OpenRouter key"
@@ -507,19 +513,19 @@ function CloudControl({ handle, setHandle, cloud, setCloud, billing, refreshBill
       )}
       {open && cloud && (
         <div style={{ position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22', border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a' }}>
-          <div style={{ fontSize: 11.5, color: '#8b949e' }}>Account (email or “guest”)</div>
-          <input value={handle} onChange={e => setHandle(e.target.value.trim())} placeholder="you@email.com" style={CC_INPUT} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#8b949e' }}><span>Account</span><span style={{ fontFamily: mono }}>{identity?.handle || 'signing in…'}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8b949e' }}>
             <span>Credits</span><b style={{ color: broke ? '#f85149' : '#56d364' }}>{credits ?? '…'}</b>
           </div>
           <div style={{ height: 1, background: '#30363d', margin: '2px 0' }} />
           <div style={{ fontSize: 11.5, color: '#8b949e' }}>Your OpenRouter key {billing?.has_own_key ? '· set (unmetered)' : '· optional → unmetered'}</div>
           <input value={key} onChange={e => setKey(e.target.value)} type="password" placeholder="sk-or-v1-…" style={CC_INPUT} />
+          {keyError && <div style={{ fontSize: 11, color: '#f85149' }}>{keyError}</div>}
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => saveKey(key)} disabled={saving || !key} style={{ flex: 1, background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: '6px', fontSize: 12, cursor: key ? 'pointer' : 'default', opacity: key ? 1 : .5 }}>{saving ? 'saving…' : 'save key'}</button>
             {billing?.has_own_key && <button onClick={() => saveKey('')} style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>clear</button>}
           </div>
-          <div style={{ fontSize: 10.5, color: '#6e7681', lineHeight: 1.45 }}>Cloud runs on OpenRouter — 1 credit per generation. Bring your own key for unmetered use. Local is always free.</div>
+          <div style={{ fontSize: 10.5, color: '#6e7681', lineHeight: 1.45 }}>Cloud runs on OpenRouter — 1 credit per generation. Bring your own key for unmetered use; it stays only in this server session and is never saved. Local is always free.</div>
         </div>
       )}
     </span>
@@ -547,17 +553,31 @@ function Lecture({ videoId, role }) {
   // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
   const [analyzed, setAnalyzed] = useState(INGESTED.includes(videoId))
-  const [handle, setHandle] = useState(() => localStorage.getItem('8kedu-handle') || 'guest')
+  const [identity, setIdentity] = useState(null)
   const [cloud, setCloud] = useState(false)
   const [billing, setBilling] = useState(null)
+  const requestHeaders = useMemo(() => ({
+    'Content-Type': 'application/json',
+    ...(identity?.token ? { Authorization: `Bearer ${identity.token}` } : {}),
+  }), [identity?.token])
   const refreshBilling = useCallback(() => {
-    fetch(`/api/billing?handle=${encodeURIComponent(handle)}`).then(r => r.json()).then(setBilling).catch(() => setBilling(null))
-  }, [handle])
-  useEffect(() => { localStorage.setItem('8kedu-handle', handle); refreshBilling() }, [handle, refreshBilling])
-  // shared: reflect a cloud response's credit balance; surface an out-of-credits stop
+    if (!identity?.token) { setBilling(null); return }
+    fetch('/api/billing', { headers: { Authorization: `Bearer ${identity.token}` } }).then(r => r.json()).then(setBilling).catch(() => setBilling(null))
+  }, [identity?.token])
+  useEffect(() => { restore().then(setIdentity) }, [])
+  useEffect(() => { refreshBilling() }, [refreshBilling])
+  const enableCloud = async () => {
+    const nextIdentity = identity?.token ? identity : await signInGuest()
+    if (!nextIdentity?.token) {
+      setToast('cloud credits need Supabase guest sign-in; local inference is still available')
+      return
+    }
+    setIdentity(nextIdentity)
+    setCloud(true)
+  }
   const applyBilling = (spec) => {
     if (spec && spec.credits !== undefined) setBilling(b => ({ ...(b || {}), credits: spec.credits }))
-    if (spec && spec.need_credits) { setToast('out of credits — add your OpenRouter key or switch to local'); return true }
+    if (spec && spec.need_credits) { setToast(spec.error || 'out of credits — add your OpenRouter key or switch to local'); return true }
     return false
   }
 
@@ -599,10 +619,11 @@ function Lecture({ videoId, role }) {
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
       const r = await fetch('/api/region', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: around, time, ...rect, video: videoId }),
+        headers: requestHeaders,
+        body: JSON.stringify({ text: around, time, ...rect, video: videoId, cloud }),
       })
       const spec = await r.json()
+      if (applyBilling(spec)) return
       if (spec.error) { setToast(`couldn't read that region: ${spec.error}`); return }
       if (spec.answer) {
         setSelected({ widget: 'answer', title: 'about that region', explanation: spec.answer, time: spec.time, user_made: true })
@@ -627,8 +648,8 @@ function Lecture({ videoId, role }) {
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
       const r = await fetch('/api/widget', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: around || question, time, ask: question, video: videoId, handle, cloud }),
+        headers: requestHeaders,
+        body: JSON.stringify({ text: around || question, time, ask: question, video: videoId, cloud }),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
@@ -654,8 +675,8 @@ function Lecture({ videoId, role }) {
     try {
       const r = await fetch('/api/widget', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: ask.text, time: ask.time, ask: intent, video: videoId, handle, cloud }),
+        headers: requestHeaders,
+        body: JSON.stringify({ text: ask.text, time: ask.time, ask: intent, video: videoId, cloud }),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
@@ -685,7 +706,7 @@ function Lecture({ videoId, role }) {
         </a>
         <span style={{ color: '#8b949e', fontSize: 14 }}>YouTube video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <CloudControl handle={handle} setHandle={setHandle} cloud={cloud} setCloud={setCloud} billing={billing} refreshBilling={refreshBilling} />
+          <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} />
           {roleCfg && (
             <span style={{ fontSize: 11.5, color: '#d2a8ff', border: '1px solid #8957e555', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
               {roleCfg.icon} {roleCfg.label}
@@ -1685,7 +1706,7 @@ function CommunityView({ onExit, onOpen }) {
   const [sort, setSort] = useState('hot')
   const [items, setItems] = useState([])
   const [err, setErr] = useState(null)
-  const [me, setMe] = useState(null)        // {uid, handle, mode:'cloud'|'local', client} or null
+  const [me, setMe] = useState(null)
   const [authBusy, setAuthBusy] = useState(false)
   useEffect(() => { restore().then(setMe) }, [])
   const login = async () => { setAuthBusy(true); try { setMe(await signInGuest()) } finally { setAuthBusy(false) } }
@@ -1698,23 +1719,26 @@ function CommunityView({ onExit, onOpen }) {
   }
   useEffect(() => { load() }, [sort])
   const setVotes = (id, n) => setItems(x => x.map(a => a.id === id ? { ...a, votes: n } : a))
-  const upvoteVia = async (id) => {
-    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: me?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
+  const upvoteVia = async (id, voter) => {
+    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: voter?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
     const d = await r.json(); if (d.ok) setVotes(id, d.votes)
   }
   const upvote = async (id) => {
-    if (!me) return login()   // must have an identity to vote
-    // Cloud identity → RLS insert (one vote per artifact+voter); local guest → open endpoint.
-    if (me.client && me.mode === 'cloud') {
+    let voter = me
+    if (!voter) {
+      setAuthBusy(true)
+      try { voter = await signInGuest(); setMe(voter) } finally { setAuthBusy(false) }
+    }
+    if (voter.client && voter.mode === 'cloud') {
       try {
-        const { error } = await me.client.from('votes').insert({ artifact_id: id, voter: me.uid })
-        if (error && error.code !== '23505') return upvoteVia(id)   // 23505 = already voted → no-op
-        const { count } = await me.client.from('votes').select('*', { count: 'exact', head: true }).eq('artifact_id', id)
+        const { error } = await voter.client.from('votes').insert({ artifact_id: id, voter: voter.uid })
+        if (error && error.code !== '23505') return upvoteVia(id, voter)
+        const { count } = await voter.client.from('votes').select('*', { count: 'exact', head: true }).eq('artifact_id', id)
         if (typeof count === 'number') setVotes(id, count)
         return
-      } catch (e) { return upvoteVia(id) }
+      } catch (e) { return upvoteVia(id, voter) }
     }
-    try { await upvoteVia(id) } catch (e) {}
+    try { await upvoteVia(id, voter) } catch (e) {}
   }
   const remix = async (id) => {
     try { await fetch('/pub/fork', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id }) }); load() } catch (e) {}
@@ -2448,7 +2472,7 @@ function RecursiveDashboard({ onExit }) {
               ))}
             </select>
             <h2 style={{ margin: '8px 0 4px', fontSize: 25, letterSpacing: '-.025em' }}>{selected?.label || 'No concept selected'}</h2>
-            {selected && <div style={{ color: T.sub, fontSize: 13 }}>{selected.exemplar_count} exemplars · {(selected.teachers || []).length} teachers · {(selected.widgets || []).join(' + ')}</div>}
+            {selected && <div style={{ color: T.sub, fontSize: 13 }}>{selected.exemplar_count} exemplars · {new Set((selected.exemplars || []).map(exemplar => exemplar.video_id)).size} videos · {(selected.teachers || []).length} teachers · {(selected.widgets || []).join(' + ')}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
               {featuredExemplars.slice(0, 6).map(exemplar => (
                 <a key={exemplar.id} href={`?v=${exemplar.video_id}`} style={{ textDecoration: 'none', border: `1px solid ${T.line}`, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8', borderRadius: 10, padding: '9px 10px', color: T.text }}>

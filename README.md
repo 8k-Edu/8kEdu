@@ -27,13 +27,19 @@ Each analyzed lecture adds concepts, prerequisites, widget patterns, and validat
 
 The executed paired experiment seeds memory only with Karpathy, then processes the same 64 held-out VisualAI frames twice. Warm memory cuts actual Nemotron calls from 64 to 8 and elapsed time from 553.1 to 64.7 seconds.
 
-The dashboard at `?view=graph` shows the learning curve, 6-video source library, 69-concept graph, cold/warm traces, recall, and retrieval precision. See the [recursive experiment plan](docs/hackguide/RECURSIVE.md) for the protocol and evidence.
+The dashboard at `?view=graph` shows the learning curve, eight-video source library, 71-concept graph, cold/warm traces, recall, and retrieval precision. Self-attention now contains 23 grounded moments across four videos and teachers. See the [recursive experiment plan](docs/hackguide/RECURSIVE.md) for the protocol and evidence.
 
 Reproduce the isolated pair with:
 
 ```bash
 KEDU_MAX_TOKENS=1024 KEDU_CONCURRENCY=4 uv run python -m agent.paired \
   --backend vllm --max-px 512
+```
+
+Rebuild the post-experiment eight-video source library from the committed concept specs with:
+
+```bash
+uv run python scripts/expand_recursive_demo.py
 ```
 
 ## Project summary
@@ -98,7 +104,7 @@ uv run analyze.py --backend vllm --video <id>
 uv run serve.py --backend vllm
 ```
 
-Supported analysis backends include `mlx`, `lmstudio`, `vllm`, `openai`, and `gemini`. Cloud backends require `KEDU_ALLOW_CLOUD=1`; local inference is the default path.
+Supported analysis backends include `mlx`, `lmstudio`, `vllm`, `openai`, `gemini`, and `openrouter`. Local inference is the default. In the lesson header, authenticated guest users can switch to credit-metered OpenRouter or enter their own key; BYOK keys remain only in the running API process and are never persisted.
 
 ### Serving Nemotron on Apple Silicon (vLLM)
 

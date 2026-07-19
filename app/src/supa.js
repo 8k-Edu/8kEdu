@@ -32,7 +32,13 @@ async function client() {
   return _clientPromise
 }
 
-const cloud = (user, c) => ({ uid: user.id, handle: 'guest-' + user.id.slice(0, 4), mode: 'cloud', client: c })
+const cloud = (session, c) => ({
+  uid: session.user.id,
+  handle: 'guest-' + session.user.id.slice(0, 4),
+  mode: 'cloud',
+  client: c,
+  token: session.access_token,
+})
 
 function localGuest() {
   let id = localStorage.getItem(LS_GUEST)
@@ -48,7 +54,7 @@ export async function restore() {
   const c = await client()
   if (c) {
     const { data: { session } } = await c.auth.getSession()
-    if (session?.user) return cloud(session.user, c)
+    if (session?.user) return cloud(session, c)
   }
   const existing = localStorage.getItem(LS_GUEST)
   return existing ? { uid: existing, handle: existing, mode: 'local', client: null } : null
@@ -59,8 +65,8 @@ export async function signInGuest() {
   if (c) {
     const { error } = await c.auth.signInAnonymously()
     if (!error) {
-      const { data: { user } } = await c.auth.getUser()
-      if (user) return cloud(user, c)
+      const { data: { session } } = await c.auth.getSession()
+      if (session?.user) return cloud(session, c)
     }
   }
   return localGuest()

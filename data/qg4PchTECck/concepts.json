@@ -1,0 +1,35 @@
+[
+ {
+  "time": 40,
+  "frame": "f_000040.jpg",
+  "title": "Neural network optimization for audio command recognition",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Define neural network parameters (weights/biases) as theta\n# Input: audio features (vector), Output: 3-class probability vector\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\ndef forward_pass(audio_vector, theta):\n    # theta contains weights and biases for all layers\n    # Implement forward propagation here\n    pass\n\ndef compute_cost(y_true, y_pred, theta):\n    # y_true: ideal output vector (size 3)\n    # y_pred: network output vector (size 3)\n    # Cost = sum((y_pred[i] - y_true[i])**2 for i in range(3))\n    return np.sum((y_pred - y_true)**2)\n\n# Example usage with labeled data\n# theta = initialize_weights()  # weights as unknown variables\n# for each training example:\n#     y_pred = forward_pass(audio_example, theta)\n#     cost = compute_cost(ideal_output, y_pred, theta)\n#     # Backpropagation to update theta\n\n# Visualize cost function landscape with sliders for theta values\n# Slider names: learning_rate, initial_weight_1, initial_weight_2, initial_bias_1, initial_bias_2, initial_bias_3\n# Default values: learning_rate=0.01, initial_weight_1=0.05, initial_weight_2=0.80, initial_bias_1=0.11, initial_bias_2=0.5, initial_bias_3=0.2\n\n# Plot cost vs. parameter changes\nplt.figure(figsize=(10,6))\n# Create meshgrid for two parameters (e.g., initial_weight_1 and initial_weight_2)\n# Compute cost for different theta combinations\n# plt.contourf(...) to show optimization landscape\nplt.show()"
+   ],
+   "sliders": [
+    {"max": 0.1, "min": 0.001, "name": "learning_rate", "value": 0.01},
+    {"max": 1.0, "min": 0.0, "name": "initial_weight_1", "value": 0.05},
+    {"max": 1.0, "min": 0.0, "name": "initial_weight_2", "value": 0.8},
+    {"max": 1.0, "min": 0.0, "name": "initial_bias_1", "value": 0.11},
+    {"max": 1.0, "min": 0.0, "name": "initial_bias_2", "value": 0.5},
+    {"max": 1.0, "min": 0.0, "name": "initial_bias_3", "value": 0.2}
+   ]
+  },
+  "widget": "notebook",
+  "explanation": "This frame shows how to formulate audio command recognition as a neural network optimization problem using a cost function over training examples, requiring a notebook to implement the math and visualize results with sliders for parameters like learning rate and weight initialization values shown in the diagram (0.05, 0.80, 0.11).",
+  "has_concept": true
+ },
+ {
+  "time": 120,
+  "frame": "f_000120.jpg",
+  "title": "Gradient descent visualization",
+  "params": {
+   "expr": "f(theta) = 3.40",
+   "sliders": ["theta0", "theta1", "eta"]
+  },
+  "widget": "function_plot",
+  "explanation": "Illustrates how gradient descent iteratively minimizes a cost function by moving opposite to the gradient direction",
+  "has_concept": true
+ }
+]

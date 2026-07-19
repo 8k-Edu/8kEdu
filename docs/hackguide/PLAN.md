@@ -82,11 +82,11 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] proven live: bootstrap → 0 added (baseline), then 2 new uploads detected → curriculum 1→3
 
 **P3.5 — Recursive Intelligence** ✅ done — the primary-track proof
-- [x] persistent cross-teacher graph: 15 concepts, 59 real exemplars, two teachers, 11 reinforced nodes
+- [x] persistent cross-teacher graph: 71 concepts, 163 real exemplars, eight videos, seven teachers
 - [x] controlled held-out replay: 64 cold calls → eight warm exploration calls + seven graph reuses
 - [x] quality guardrails: 100% known-concept recall and 100% retrieval precision
 - [x] `?view=graph`: live graph, cross-teacher exemplars, persisted cold/warm rows, demo controls
-- [x] truth-labeled as cached full-sweep replay, not a fresh wall-clock benchmark
+- [x] executed paired conditions persisted under one experiment ID with actual wall-clock timings
 
 **P4 — submit (Sun AM)**
 - [x] Harden the loop — heuristic fallback + per-action/-channel error isolation + failed runs logged; never crashes

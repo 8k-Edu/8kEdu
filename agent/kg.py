@@ -51,6 +51,14 @@ DEMO_VIDEO_META = {
         "title": "Neural Networks Explained in 5 minutes",
         "channel": "IBM Technology",
     },
+    "LudWfvu3ong": {
+        "title": "What is Attention Mechanisms in Transformers? (Explained Visually)",
+        "channel": "GoodLearningMachines",
+    },
+    "csWluHwfsB8": {
+        "title": "Transformer Explainer — Learn About Transformer With Visualization",
+        "channel": "Krish Naik",
+    },
 }
 
 CONCEPT_ALIASES = (

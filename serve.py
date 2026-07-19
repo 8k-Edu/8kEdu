@@ -9,12 +9,14 @@ import argparse
 import hashlib
 import json
 import os
+import threading
 import time
 from collections import OrderedDict
 from pathlib import Path
+from urllib.request import Request, urlopen
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -30,6 +32,10 @@ WIDGET_MAX_PX = int(os.environ.get("KEDU_MAX_PX", "768"))
 _frames_cache: dict[str, list] = {}
 backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
+_byok_keys: dict[str, str] = {}
+_byok_lock = threading.Lock()
+_auth_cache: dict[str, str] = {}
+_auth_lock = threading.Lock()
 
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
@@ -41,6 +47,33 @@ except Exception:
 
 def _handle() -> str:
     return os.environ.get("AGENT_HANDLE", "demo")
+
+
+def _authenticated_handle(authorization: str | None) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise CloudUnavailable("cloud requires guest sign-in")
+    token = authorization.removeprefix("Bearer ").strip()
+    with _auth_lock:
+        cached = _auth_cache.get(token)
+    if cached:
+        return cached
+    base_url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+    publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "")
+    if not base_url or not publishable_key:
+        raise CloudUnavailable("cloud identity is not configured")
+    request = Request(
+        f"{base_url}/auth/v1/user",
+        headers={"apikey": publishable_key, "Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            user_id = json.loads(response.read())["id"]
+    except Exception as error:
+        raise CloudUnavailable("guest session expired — sign in again") from error
+    handle = f"auth-{user_id}"
+    with _auth_lock:
+        _auth_cache[token] = handle
+    return handle
 
 
 def _fire_event(payload: dict) -> None:
@@ -63,10 +96,10 @@ def _prompt_hash(video: str, frame: str, context: str, genre: str | None = None,
 
 
 def _region_hash(video: str, frame: str, x: float, y: float, w: float, h: float,
-                 genre: str | None = None) -> str:
+                 genre: str | None = None, model: str | None = None) -> str:
     box = f"{x:.2f},{y:.2f},{w:.2f},{h:.2f}"  # what's in the box drives the result, not the words
     g = f"|g={genre}" if genre and genre != "general" else ""
-    key = f"{PROMPT_VERSION}|region|{info.get('model','?')}|{video}|{frame}|{box}{g}"
+    key = f"{PROMPT_VERSION}|region|{model or info.get('model','?')}|{video}|{frame}|{box}{g}"
     return hashlib.sha256(key.encode()).hexdigest()
 
 
@@ -142,9 +175,7 @@ class Ask(BaseModel):
     time: float
     ask: str = ""
     video: str = DEFAULT_VIDEO
-    handle: str = ""        # learner identity (for credits); falls back to AGENT_HANDLE
-    cloud: bool = False     # use a cloud model (OpenRouter) instead of the free local one
-    model: str = ""         # optional cloud model override (else OPENROUTER_MODEL)
+    cloud: bool = False
 
 
 def frames_for(video: str) -> list[dict]:
@@ -180,17 +211,15 @@ class CloudUnavailable(Exception):
         self.reason = reason
 
 
-def _cloud_ctx(handle: str, model: str):
+def _cloud_ctx(handle: str):
     """Resolve a cloud (OpenRouter) backend for this learner.
     Returns (backend, metered, model_name). BYOK key → unmetered; else platform key + credits.
     Raises CloudUnavailable when the learner can't pay (no key, no credits, billing offline)."""
     if not _db:
         raise CloudUnavailable("billing offline")
-    mdl = model or os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
-    try:
-        key = _db.own_key(handle)
-    except Exception:
-        key = None
+    mdl = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+    with _byok_lock:
+        key = _byok_keys.get(handle)
     if key:
         return openrouter_backend(key, mdl), False, mdl
     platform = os.environ.get("OPENROUTER_API_KEY")
@@ -212,7 +241,7 @@ def _with_billing(obj: dict, cloud: bool, model: str, credits_left):
 
 
 @app.post("/api/widget")
-def make_widget(req: Ask):
+def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     context = (
@@ -222,13 +251,14 @@ def make_widget(req: Ask):
         + "\nHonor the student's request if it maps to an available widget type."
         + "\nEmit the concept spec JSON."
     )
-    handle = req.handle or _handle()
+    handle = _handle()
     use, metered, model_name = backend, False, info.get("model")
     if req.cloud:
         try:
-            use, metered, model_name = _cloud_ctx(handle, req.model)
+            handle = _authenticated_handle(authorization)
+            use, metered, model_name = _cloud_ctx(handle)
         except CloudUnavailable as e:
-            bill = _db.user_billing(handle) if _db else {"credits": 0, "has_own_key": False}
+            bill = _db.user_billing(handle) if (_db and handle != _handle()) else {"credits": 0, "has_own_key": False}
             return {"error": e.reason, "need_credits": True, "cloud": True, **bill}
 
     ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
@@ -247,22 +277,28 @@ def make_widget(req: Ask):
                   t_backend_ask_ms=0, t_parse_validate_ms=0,
                   t_total_ms=_ms(t_start))
         _fire_event(ev)
-        # cache hit = no cloud call = no charge; still surface the learner's balance
         bal = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
         return _with_billing({**cached, "cached": True}, req.cloud, model_name, bal)
+
+    credits_left = None
+    if req.cloud and metered and _db:
+        credits_left = _db.spend_credit(handle, model_name, 1)
+        if credits_left is None:
+            return {"error": "out of credits — add your own OpenRouter key or use the local model",
+                    "need_credits": True, "cloud": True, **_db.user_billing(handle)}
 
     t0 = time.perf_counter()
     try:
         raw = use.ask(DATA / req.video / "frames" / fr["file"], context,
                       max_px=WIDGET_MAX_PX, system=compose_system(genre))
     except Exception as e:
+        if req.cloud and metered and _db and credits_left is not None:
+            _db.refund_credit(handle, model_name, 1)
         ev.update(cache_hit=False, spec_valid=False, error=str(e)[:200],
                   t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
         _fire_event(ev)
         raise
     ev["t_backend_ask_ms"] = _ms(t0)
-    # a real cloud call happened → debit one credit (BYOK is unmetered)
-    credits_left = _db.spend_credit(handle, model_name, 1) if (req.cloud and metered and _db) else None
 
     t0 = time.perf_counter()
     spec = extract_json(raw)
@@ -302,32 +338,41 @@ class RegionAsk(BaseModel):
     h: float
     ask: str = ""
     video: str = DEFAULT_VIDEO
+    cloud: bool = False
 
 
 @app.post("/api/region")
-def make_region_widget(req: RegionAsk):
+def make_region_widget(req: RegionAsk, authorization: str | None = Header(default=None)):
     """Click-the-whiteboard: crop what the student pointed at, make THAT alive."""
     from PIL import Image
 
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
-    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
-          "frame_file": fr["file"], "kind": "region", "model": info.get("model")}
+    handle = _handle()
+    use, metered, model_name = backend, False, info.get("model")
+    if req.cloud:
+        try:
+            handle = _authenticated_handle(authorization)
+            use, metered, model_name = _cloud_ctx(handle)
+        except CloudUnavailable as e:
+            return {"error": e.reason, "need_credits": True, "cloud": True}
+    ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "region", "model": model_name}
 
     genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
-    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h, genre)
+    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h, genre, model_name)
     cands = [h] if genre == "general" else [
-        h, _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h)]
+        h, _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h, None, model_name)]
     cached = _cache_get_first(cands)
     ev["t_cache_lookup_ms"] = _ms(t0)
     if cached is not None:
-        cached["cached"] = True
         ev.update(cache_hit=True, spec_valid=("widget" in cached),
                   widget_kind=cached.get("widget", "answer"),
                   t_backend_ask_ms=0, t_parse_validate_ms=0, t_total_ms=_ms(t_start))
         _fire_event(ev)
-        return cached
+        balance = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
+        return _with_billing({**cached, "cached": True}, req.cloud, model_name, balance)
     ev["cache_hit"] = False
 
     src = DATA / req.video / "frames" / fr["file"]
@@ -354,10 +399,18 @@ def make_region_widget(req: RegionAsk):
         + (f' They added: "{req.ask[:200]}"' if req.ask else "")
         + "\nEmit the concept spec JSON for what is in this region."
     )
+    credits_left = None
+    if req.cloud and metered and _db:
+        credits_left = _db.spend_credit(handle, model_name, 1)
+        if credits_left is None:
+            return {"error": "out of credits — add your own OpenRouter key or use the local model",
+                    "need_credits": True, "cloud": True, **_db.user_billing(handle)}
     t0 = time.perf_counter()
     try:
-        raw = backend.ask(path, context, system=compose_system(genre))
+        raw = use.ask(path, context, system=compose_system(genre))
     except Exception as e:
+        if req.cloud and metered and _db and credits_left is not None:
+            _db.refund_credit(handle, model_name, 1)
         ev.update(spec_valid=False, error=str(e)[:200],
                   t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
         _fire_event(ev)
@@ -376,7 +429,7 @@ def make_region_widget(req: RegionAsk):
             _cache_put(h, req.video, out)
             ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
             _fire_event(ev)
-            return out
+            return _with_billing(out, req.cloud, model_name, credits_left)
         ev.update(spec_valid=False, widget_kind="none",
                   error="couldn't read that region", t_total_ms=_ms(t_start))
         _fire_event(ev)
@@ -388,7 +441,7 @@ def make_region_widget(req: RegionAsk):
     _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
-    return spec
+    return _with_billing(spec, req.cloud, model_name, credits_left)
 
 
 @app.get("/api/info")
@@ -397,29 +450,48 @@ def get_info():
 
 
 class KeyReq(BaseModel):
-    handle: str = ""
     key: str = ""
 
 
 @app.get("/api/billing")
-def billing(handle: str = ""):
+def billing(authorization: str | None = Header(default=None)):
     """Credit balance + whether cloud is available for this learner."""
     if not _db:
         return {"credits": 0, "has_own_key": False, "cloud_available": False}
-    b = _db.user_billing(handle or _handle())
+    try:
+        h = _authenticated_handle(authorization)
+    except CloudUnavailable as error:
+        return {"credits": 0, "has_own_key": False, "cloud_available": False,
+                "authenticated": False, "error": error.reason}
+    b = _db.user_billing(h)
+    with _byok_lock:
+        b["has_own_key"] = bool(_byok_keys.get(h))
     b["cloud_available"] = b["has_own_key"] or bool(os.environ.get("OPENROUTER_API_KEY"))
+    b["authenticated"] = True
     b["model"] = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
     return b
 
 
 @app.post("/api/openrouter-key")
-def set_openrouter_key(req: KeyReq):
-    """Store/clear a learner's own OpenRouter key (BYOK → unmetered cloud). Key never leaves the server."""
+def set_openrouter_key(req: KeyReq, authorization: str | None = Header(default=None)):
+    """Hold/clear a BYOK key in process memory. It is never persisted or returned."""
     if not _db:
         return {"ok": False, "error": "billing offline"}
-    h = req.handle or _handle()
-    _db.set_openrouter_key(h, req.key.strip())
-    return {"ok": True, **_db.user_billing(h)}
+    try:
+        h = _authenticated_handle(authorization)
+    except CloudUnavailable as error:
+        return {"ok": False, "error": error.reason}
+    key = req.key.strip()
+    if key and not key.startswith("sk-or-"):
+        return {"ok": False, "error": "OpenRouter keys start with sk-or-"}
+    with _byok_lock:
+        if key:
+            _byok_keys[h] = key
+        else:
+            _byok_keys.pop(h, None)
+    result = _db.user_billing(h)
+    result["has_own_key"] = bool(key)
+    return {"ok": True, **result}
 
 
 def main() -> None:

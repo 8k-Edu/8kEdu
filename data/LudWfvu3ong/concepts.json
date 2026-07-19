@@ -1,0 +1,281 @@
+[
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Attention Mechanism Components",
+  "explanation": "The attention mechanism uses query, key, and value components to enable parallel information routing between sequence positions, allowing the model to learn which elements to focus on when processing context like sentence relationships in the example sentence about the cat, mouse, and mat",
+  "params": {
+   "q": [
+    [
+     0.1,
+     0.2,
+     0.3
+    ],
+    [
+     0.4,
+     0.5,
+     0.6
+    ],
+    [
+     0.7,
+     0.8,
+     0.9
+    ]
+   ],
+   "k": [
+    [
+     0.1,
+     0.2,
+     0.3
+    ],
+    [
+     0.4,
+     0.5,
+     0.6
+    ],
+    [
+     0.7,
+     0.8,
+     0.9
+    ]
+   ],
+   "sliders": [
+    {
+     "name": "query_dim",
+     "min": 1,
+     "max": 1000,
+     "value": 64
+    },
+    {
+     "name": "key_dim",
+     "min": 1,
+     "max": 1000,
+     "value": 64
+    },
+    {
+     "name": "value_dim",
+     "min": 1,
+     "max": 1000,
+     "value": 64
+    }
+   ]
+  },
+  "time": 70,
+  "frame": "f_000070.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Learned Matchmaking",
+  "explanation": "The attention mechanism computes compatibility scores between words by multiplying query and key matrices, enabling the model to determine which words to focus on for each other in a sentence like 'The cat sat on the mat'.",
+  "params": {
+   "q": [
+    [
+     0.15,
+     0.25,
+     0.1,
+     0.05,
+     0.05,
+     0.2,
+     0.25
+    ],
+    [
+     0.1,
+     0.35,
+     0.4,
+     0.05,
+     0.05,
+     0.05
+    ],
+    [
+     0.05,
+     0.1,
+     0.2,
+     0.15,
+     0.3,
+     0.2
+    ],
+    [
+     0.3,
+     0.15,
+     0.1,
+     0.1,
+     0.25,
+     0.2
+    ],
+    [
+     0.1,
+     0.2,
+     0.15,
+     0.35,
+     0.15,
+     0.15
+    ]
+   ],
+   "k": [
+    [
+     0.15,
+     0.25,
+     0.1,
+     0.05,
+     0.05,
+     0.2,
+     0.25
+    ],
+    [
+     0.1,
+     0.35,
+     0.4,
+     0.05,
+     0.05,
+     0.05
+    ],
+    [
+     0.05,
+     0.1,
+     0.2,
+     0.15,
+     0.3,
+     0.2
+    ],
+    [
+     0.3,
+     0.15,
+     0.1,
+     0.1,
+     0.25,
+     0.2
+    ],
+    [
+     0.1,
+     0.2,
+     0.15,
+     0.35,
+     0.15,
+     0.15
+    ]
+   ]
+  },
+  "time": 160,
+  "frame": "f_000160.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax Normalization",
+  "explanation": "Softmax converts raw scores into a probability distribution by exponentiating and normalizing values, ensuring gradients remain healthy during training through scaling by the square root of dimension size to prevent saturation and vanishing gradients, enabling differentiable and parallelizable attention mechanisms for sequence modeling",
+  "params": {
+   "logits": [
+    0.9,
+    -0.5,
+    1.2,
+    -0.8
+   ],
+   "temperature": 1.0
+  },
+  "time": 210,
+  "frame": "f_000210.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Attention Mechanism Complete",
+  "explanation": "The teacher explains how scaling attention scores by the square root of the dimension size prevents gradient vanishing and enables stable training, which is essential for the attention mechanism to function correctly during backpropagation and parallel computation of all positions simultaneously",
+  "params": {
+   "q": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ],
+   "k": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ],
+   "sliders": [
+    {
+     "name": "d_k",
+     "min": 1,
+     "max": 1000,
+     "value": 64
+    }
+   ]
+  },
+  "time": 220,
+  "frame": "f_000220.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "softmax",
+  "title": "Softmax for attention weights",
+  "explanation": "Transforms raw scores into probability distributions for attention mechanisms, enabling gradient-based learning and parallel computation in neural networks",
+  "params": {
+   "logits": [
+    1.0,
+    2.0,
+    3.0
+   ],
+   "temperature": 1.0
+  },
+  "time": 230,
+  "frame": "f_000230.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "attention",
+  "title": "Attention Mechanism in Transformer Models",
+  "explanation": "The attention mechanism computes differentiable, parallelizable weights that sum to one to aggregate value vectors, with quadratic complexity in sequence length enabling efficient parallel processing on modern hardware",
+  "params": {
+   "q": [
+    [
+     0.5,
+     0.3,
+     0.2
+    ],
+    [
+     0.1,
+     0.4,
+     0.5
+    ]
+   ],
+   "k": [
+    [
+     0.7,
+     0.2,
+     0.1
+    ],
+    [
+     0.3,
+     0.6,
+     0.1
+    ]
+   ]
+  },
+  "time": 240,
+  "frame": "f_000240.jpg"
+ }
+]

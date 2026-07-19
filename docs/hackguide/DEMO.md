@@ -18,8 +18,8 @@ Confirm the local Nemotron endpoint is up. Open `http://dev.localhost:5174/` and
 
 The graph must show:
 
-- 69 concepts and 145 real frame exemplars.
-- Six videos from five named teachers.
+- 71 concepts and 163 real frame exemplars.
+- Eight videos from seven named teachers.
 - Cold: 64/64 frames, 64 VLM calls.
 - Warm: 15/64 frames, seven reuses, eight VLM calls.
 - 87.5% fewer actual calls, 88.3% less elapsed time, and 100% known-concept recall.
@@ -38,7 +38,7 @@ Manipulate a live widget beside the synchronized Karpathy lecture. Name yt-dlp, 
 
 ### 3. Persistent memory — 1:15–1:48
 
-Open the graph. Point to the six-video source library, then choose Self-attention from the concept dropdown. Explain knowledge graph + compressed episodic memory + self-RAG.
+Open the graph. Point to the eight-video source library, then choose Self-attention from the concept dropdown. Show its 23 exemplars across four videos and four teachers. Explain knowledge graph + compressed episodic memory + self-RAG.
 
 ### 4. Recursive proof — 1:48–2:37
 
@@ -48,7 +48,7 @@ Say the exact delta: **64 calls and 553.1 s cold → eight calls and 64.7 s warm
 
 ### 5. Mechanism — 2:37–3:06
 
-Click Self-attention. Show Andrej Karpathy and VisualAI together. Explain transcript matching, validated spec reuse, exploration, and graph reinforcement.
+Click Self-attention. Show Andrej Karpathy, VisualAI, GoodLearningMachines, and Krish Naik together. Explain transcript matching, validated spec reuse, exploration, and graph reinforcement.
 
 ### 6. Agent and containment — 3:06–3:39
 

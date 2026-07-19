@@ -17,7 +17,7 @@ This is the record-ready script. Its metrics match executed experiment `p2026071
 1. Start the app with `./run.sh` and confirm the local Nemotron endpoint is available.
 2. Open the landing page, a Karpathy attention widget, `?view=graph`, and `?view=agent` in that order.
 3. Use the dark theme and a browser width near 1440 px so the graph and run table fit together.
-4. Confirm the graph shows 69 concepts, 145 exemplars, six videos, five teachers, and the 64 → 8 actual-call delta.
+4. Confirm the graph shows 71 concepts, 163 exemplars, eight videos, seven teachers, and the 64 → 8 actual-call delta.
 5. Do not click **test unseen teacher**. VisualAI joined the graph after the held-out experiment was recorded.
 6. Keep the containment proof ready in a terminal. If it is slow, show the already-persisted status in the agent dashboard.
 7. Replace the repository URL on the final end card only if the public URL changes.
@@ -64,11 +64,11 @@ This is the record-ready script. Its metrics match executed experiment `p2026071
 
 ## 1:15–1:48 — Show persistent memory
 
-**On screen:** Open `?view=graph`. Sweep across the six-video source library, then use the concept dropdown to choose Self-attention and show its grounded teacher exemplars.
+**On screen:** Open `?view=graph`. Sweep across the eight-video source library, then use the concept dropdown to choose Self-attention and show its grounded teacher exemplars.
 
 **Say:**
 
-> This is the agent’s persistent memory: 69 concepts and 145 grounded moments across six real lectures from five teachers, built from model outputs rather than a diagram or slide.
+> This is the agent’s persistent memory: 71 concepts and 163 grounded moments across eight real lectures from seven teachers, built from model outputs rather than a diagram or slide.
 
 > Each teachable moment is normalized into a concept node. Repeated explanations collapse onto that node, while every source frame remains attached as a grounded exemplar.
 
@@ -92,11 +92,11 @@ This is the record-ready script. Its metrics match executed experiment `p2026071
 
 ## 2:37–3:06 — Show the recursive mechanism
 
-**On screen:** Click **Self-attention**. Show both Andrej Karpathy and VisualAI in the exemplar list.
+**On screen:** Click **Self-attention**. Show Andrej Karpathy, VisualAI, GoodLearningMachines, and Krish Naik in the exemplar list.
 
 **Say:**
 
-> After the held-out result was recorded, VisualAI and four more analyzed lectures were admitted. Self-attention now has 15 exemplars across two teachers, while the full library spans five teachers.
+> After the held-out result was recorded, the source library expanded without changing either measured condition. Self-attention now has 23 grounded exemplars across four videos and four teachers, while the full library spans eight videos and seven teachers.
 
 > On a warm run, transcript overlap ranks frames against known concepts. A known moment retrieves its best validated widget spec. Exploration frames still use the full Nemotron vision path.
 
@@ -145,7 +145,7 @@ This is the record-ready script. Its metrics match executed experiment `p2026071
 - Warm: 15 selected frames, seven graph reuses, eight actual calls, 64.7 seconds, zero errors.
 - Delta: 87.5% fewer calls, 88.3% less elapsed time, 100% known recall and retrieval precision.
 - Overall cold-concept recall: 66.7%.
-- Graph after post-experiment expansion: 69 concepts, 145 exemplars, six videos, five teachers.
+- Graph after post-experiment expansion: 71 concepts, 163 exemplars, eight videos, seven teachers.
 
 ## Do not claim or show
 

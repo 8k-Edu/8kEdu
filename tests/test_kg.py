@@ -48,6 +48,22 @@ class SourceMetadataTests(unittest.TestCase):
         self.assertEqual(observations[0]["channel"], "The AI Hacker")
         self.assertEqual(observations[0]["video_title"], "Illustrated Guide to Transformers Neural Network")
 
+    def test_new_attention_sources_keep_distinct_teacher_identity(self):
+        spec = [{
+            "time": 180,
+            "title": "Query-Key-Value attention mechanism",
+            "explanation": "Queries and keys produce attention weights.",
+            "widget": "attention",
+            "params": {"q": [[1, 0]], "k": [[1, 0]]},
+        }]
+        good_learning = observations_from_specs("LudWfvu3ong", "ai_stem", spec)[0]
+        krish = observations_from_specs("csWluHwfsB8", "ai_stem", spec)[0]
+
+        self.assertEqual(good_learning["name"], "self-attention")
+        self.assertEqual(good_learning["channel"], "GoodLearningMachines")
+        self.assertEqual(krish["name"], "self-attention")
+        self.assertEqual(krish["channel"], "Krish Naik")
+
 
 if __name__ == "__main__":
     unittest.main()
