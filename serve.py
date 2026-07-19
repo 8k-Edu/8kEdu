@@ -8,6 +8,9 @@ POST /api/widget {"text": "...", "time": 1234.5, "ask": "let me play with the ma
 import argparse
 import hashlib
 import json
+import os
+import time
+from collections import OrderedDict
 from pathlib import Path
 
 import uvicorn
@@ -23,6 +26,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 DATA = Path("data")
 DEFAULT_VIDEO = "42L1q1Z4Ojc"  # has keyframes on disk → live-ask never 404s on the fallback
 PROMPT_VERSION = "v1"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
+WIDGET_MAX_PX = int(os.environ.get("TACTILE_MAX_PX", "768"))
 _frames_cache: dict[str, list] = {}
 backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
@@ -30,8 +34,23 @@ info = {"backend": "?", "model": "?", "mode": "?"}
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
     from agent import db as _db
+    _db.load_env()  # AGENT_HANDLE must be set before the first request logs an event
 except Exception:
     _db = None
+
+
+def _handle() -> str:
+    return os.environ.get("AGENT_HANDLE", "demo")
+
+
+def _fire_event(payload: dict) -> None:
+    if not _db:
+        return
+    _db.enqueue_widget_event(payload)
+
+
+def _ms(t0: float) -> int:
+    return int((time.perf_counter() - t0) * 1000)
 
 
 def _prompt_hash(video: str, frame: str, context: str) -> str:
@@ -39,16 +58,41 @@ def _prompt_hash(video: str, frame: str, context: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def _region_hash(video: str, frame: str, x: float, y: float, w: float, h: float) -> str:
+    box = f"{x:.2f},{y:.2f},{w:.2f},{h:.2f}"  # what's in the box drives the result, not the words
+    key = f"{PROMPT_VERSION}|region|{info.get('model','?')}|{video}|{frame}|{box}"
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+_lru: "OrderedDict[str, dict]" = OrderedDict()
+_LRU_MAX = 256
+
+
 def _cache_get(h: str):
+    hit = _lru.get(h)
+    if hit is not None:
+        _lru.move_to_end(h)
+        return hit
     if not _db:
         return None
     try:
-        return _db.cache_get(h)
+        result = _db.cache_get(h)
     except Exception:
         return None
+    if result is not None:
+        _lru_put(h, result)
+    return result
+
+
+def _lru_put(h: str, result: dict):
+    _lru[h] = result
+    _lru.move_to_end(h)
+    while len(_lru) > _LRU_MAX:
+        _lru.popitem(last=False)
 
 
 def _cache_put(h: str, video: str, result: dict):
+    _lru_put(h, result)
     if not _db:
         return
     try:
@@ -76,6 +120,7 @@ def nearest_frame(video: str, t: float) -> dict:
 
 @app.post("/api/widget")
 def make_widget(req: Ask):
+    t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     context = (
         f'Teacher is saying: "{req.text[:1200]}"\n\n'
@@ -84,25 +129,58 @@ def make_widget(req: Ask):
         + "\nHonor the student's request if it maps to an available widget type."
         + "\nEmit the concept spec JSON."
     )
+    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "widget", "model": info.get("model")}
+
+    t0 = time.perf_counter()
     h = _prompt_hash(req.video, fr["file"], context)
     cached = _cache_get(h)
+    ev["t_cache_lookup_ms"] = _ms(t0)
+
     if cached is not None:
         cached["cached"] = True
+        ev.update(cache_hit=True, spec_valid=("widget" in cached),
+                  widget_kind=cached.get("widget", "answer"),
+                  t_backend_ask_ms=0, t_parse_validate_ms=0,
+                  t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return cached
-    raw = backend.ask(DATA / req.video / "frames" / fr["file"], context)
+
+    t0 = time.perf_counter()
+    try:
+        raw = backend.ask(DATA / req.video / "frames" / fr["file"], context, max_px=WIDGET_MAX_PX)
+    except Exception as e:
+        ev.update(cache_hit=False, spec_valid=False, error=str(e)[:200],
+                  t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        raise
+    ev["t_backend_ask_ms"] = _ms(t0)
+
+    t0 = time.perf_counter()
     spec = extract_json(raw)
-    if not valid(spec):
+    is_valid = valid(spec)
+    ev["t_parse_validate_ms"] = _ms(t0)
+    ev["cache_hit"] = False
+
+    if not is_valid:
         # not manipulable — still be useful: return the model's explanation as an answer card
         answer = (spec or {}).get("explanation") or raw.strip()[:600]
         if answer:
             out = {"answer": answer, "time": req.time, "frame": fr["file"]}
             _cache_put(h, req.video, out)
+            ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
+            _fire_event(ev)
             return out
+        ev.update(spec_valid=False, widget_kind="none",
+                  error="no widget found for this moment", t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return {"error": "no widget found for this moment", "raw": raw[:400]}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
     _cache_put(h, req.video, spec)
+    ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
+    _fire_event(ev)
     return spec
 
 
@@ -122,7 +200,24 @@ def make_region_widget(req: RegionAsk):
     """Click-the-whiteboard: crop what the student pointed at, make THAT alive."""
     from PIL import Image
 
+    t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
+    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "region", "model": info.get("model")}
+
+    t0 = time.perf_counter()
+    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h)
+    cached = _cache_get(h)
+    ev["t_cache_lookup_ms"] = _ms(t0)
+    if cached is not None:
+        cached["cached"] = True
+        ev.update(cache_hit=True, spec_valid=("widget" in cached),
+                  widget_kind=cached.get("widget", "answer"),
+                  t_backend_ask_ms=0, t_parse_validate_ms=0, t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return cached
+    ev["cache_hit"] = False
+
     src = DATA / req.video / "frames" / fr["file"]
     img = Image.open(src)
     W, H = img.size
@@ -147,16 +242,39 @@ def make_region_widget(req: RegionAsk):
         + (f' They added: "{req.ask[:200]}"' if req.ask else "")
         + "\nEmit the concept spec JSON for what is in this region."
     )
-    raw = backend.ask(path, context)
+    t0 = time.perf_counter()
+    try:
+        raw = backend.ask(path, context)
+    except Exception as e:
+        ev.update(spec_valid=False, error=str(e)[:200],
+                  t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        raise
+    ev["t_backend_ask_ms"] = _ms(t0)
+
+    t0 = time.perf_counter()
     spec = extract_json(raw)
-    if not valid(spec):
+    is_valid = valid(spec)
+    ev["t_parse_validate_ms"] = _ms(t0)
+
+    if not is_valid:
         answer = (spec or {}).get("explanation") or ""
         if answer:
-            return {"answer": answer, "time": req.time}
+            out = {"answer": answer, "time": req.time}
+            _cache_put(h, req.video, out)
+            ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
+            _fire_event(ev)
+            return out
+        ev.update(spec_valid=False, widget_kind="none",
+                  error="couldn't read that region", t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return {"error": "couldn't read that region", "raw": raw[:300]}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
+    _cache_put(h, req.video, spec)
+    ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
+    _fire_event(ev)
     return spec
 
 
