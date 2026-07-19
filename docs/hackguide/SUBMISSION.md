@@ -9,7 +9,7 @@ new uploads. It reasons with **Nemotron**, is contained by **NemoClaw + OpenShel
 + caches everything in **Supabase** so the marginal cost of the next learner is ~$0.
 
 - **Live app:** `http://localhost:5173` (or `dev.localhost:5174` on the dev branch)
-- **Watch the agent work:** `/?view=agent` · **Learn flow:** `/?view=learn` · **Remix feed:** `/?view=community`
+- **Recursive proof:** `/?view=graph` · **Agent:** `/?view=agent` · **Learn:** `/?view=learn` · **Remix:** `/?view=community`
 - **Containment proof:** `bash claw-agent/contain_demo.sh`
 - **Repo:** github.com/8k-Edu/8kEdu · **Run:** see [`../../README.md`](../../README.md)
 
@@ -70,14 +70,15 @@ unreachable → heuristic fallback; tool failure → logged error run; it never 
 | **Technical execution & completeness** | 30 | Heartbeat loop + 4 real tools + omni brain + 2-tier Supabase; completes the core workflow and doesn't crash (hardened with fallbacks). Live agent dashboard. |
 | **Use of sponsor tech** | 30 | Six load-bearing sponsors above, each with a one-line "why" (the 15 points most teams skip). |
 | **Value & impact** | 20 | Paste a goal → a maintained, interactive course. Four named markets. Dynamic curriculum + remix network. |
-| **Frontier factor** | 20 | A *contained* code-generating learning agent — novel combo — plus a measured cost moat (shared cache, A3B active params, frame-level hit-rate). |
+| **Frontier factor** | 20 | Cross-teacher memory cuts a held-out replay from 64 to 8 planned VLM calls at 100% known-concept recall, alongside a contained code-generating agent. |
 
 ---
 
 ## Tracks
 
-- **Recursive Intelligence** — quiz/mastery feeds back each cycle → the agent re-sequences the
-  course and re-picks sources (schema + loop in place).
+- **Recursive Intelligence** — a persistent cross-teacher concept graph retrieves validated prior
+  teaching specs and ranks new frames. Held-out replay: 64→8 planned VLM calls, 87.5% fewer, with
+  100% known-concept recall and retrieval precision. See `/?view=graph`.
 - **HiddenLayer Runtime Security** — the OpenShell containment + OCSF audit story.
 - **Red Hat Live Data** — Apify live channel monitoring.
 
@@ -93,5 +94,7 @@ unreachable → heuristic fallback; tool failure → logged error run; it never 
 - Breadth: `how_to` genre lens + a real How-To course (scrambled eggs) in the gallery.
 - Curator: a 2nd autonomous agent that grows the library per genre — visible on the dashboard
   ("Library, growing itself"), compounding the cache moat with no human in the loop.
+- Recursive memory: 15 concepts, 59 real exemplars, two teachers, 11 reinforced nodes, and persisted
+  cold/warm experiment rows in Supabase. The benchmark is replayed from cached real full-sweep output.
 
 *Companion docs:* [`DEMO.md`](DEMO.md) (runbook) · [`PLAN.md`](PLAN.md) (status) · [`STRATEGY.md`](STRATEGY.md) · [`ROADMAP.md`](ROADMAP.md) · [`../architecture.pdf`](../architecture.pdf).

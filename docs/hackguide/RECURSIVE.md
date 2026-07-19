@@ -1,9 +1,22 @@
-# 8kEdu — Recursive Intelligence plan
+# 8kEdu — Recursive Intelligence plan and implementation status
 
 **Track:** "Build an agent that measurably gets smarter the more it runs."
 **Judged on:** performance delta (first run → last run: completion time, accuracy, decision quality) + a clear learning mechanism (knowledge graph / RAG-from-self-context / compressed episodic memory).
 
-8kEdu hits all three bonus mechanisms with **one** structure: a **cross-teacher concept knowledge graph** built as the byproduct of the widget pipeline. This doc is the buildable plan.
+8kEdu hits all three bonus mechanisms with **one** structure: a **cross-teacher concept knowledge graph** built as the byproduct of the widget pipeline. This doc records both the design and what shipped.
+
+## Shipped proof
+
+| Evidence | Current result |
+|---|---|
+| Persistent graph | 15 concepts · 59 real frame exemplars · 2 teachers · 11 reinforced concepts |
+| Controlled target | VisualAI lecture · 64 frames · held out before experiment `e9d586862cb6` |
+| Cold baseline | 64 frames analyzed · 64 VLM calls |
+| Warm plan | 15 frames analyzed · 7 graph reuses · 8 exploratory VLM calls |
+| Delta | 56 calls saved · 87.5% reduction · 100% known-concept recall · 100% retrieval precision |
+| Viewer | `?view=graph`, backed by persisted Supabase graph and run rows |
+
+The benchmark replays cached real full-sweep outputs. It measures retrieval coverage and planned VLM calls, not fresh paired wall-clock runtime.
 
 ---
 
@@ -64,9 +77,9 @@ Reuses existing `concepts` (frame → widget spec) and `runs` (episodic history)
 ## 3. Build pass — `kg_build(topic)`  (agent/kg.py)
 
 1. Pull all `concepts` for the topic's videos.
-2. **Canonicalize** each concept name with Nemotron: *"map this concept to a short canonical label"* → `softmax`. Cache the mapping (title → canonical) to avoid re-calling.
+2. **Canonicalize** each concept with deterministic aliases plus exact/fuzzy matching. The current demo covers the attention-domain overlap without spending another model call.
 3. **Dedupe / link:** match canonical name to an existing `kg_concept` (exact + fuzzy). Match → insert `kg_frame_link` (new exemplar, `exemplar_count++`). No match → new `kg_concept` (record `first_run`).
-4. **Edges:** concepts co-occurring in the same video within a time window → `related` (weight++). Then one batched Nemotron call labels `prereq` direction on the top-weighted edges.
+4. **Edges:** concepts co-occurring in one video within four minutes become weighted `related` edges. A small audited seed map supplies the current `prereq` edges.
 5. **best_link** per concept: highest `quality` exemplar (completeness of params / reuse count).
 
 Idempotent — safe to re-run as the curator adds videos.
@@ -77,9 +90,9 @@ Idempotent — safe to re-run as the curator adds videos.
 
 When processing a **new** video under topic T:
 
-- **A. Frame ranking (fragment/find).** Score each frame by transcript-window overlap with known concept names in the graph; analyze top-ranked first; stop when K consecutive frames yield nothing new (coverage plateau). *Cold graph = uniform sweep. Warm = targeted → fewer calls, higher yield.*
-- **B. Concept retrieval (generate widgets).** For each detected concept: canonicalize → look up `kg_concept`. **Known** → link this frame as another exemplar + reuse the best exemplar's spec (adapt params) → **0 / cheap VLM call**. **Unknown** → full VLM generate → add node. *This is RAG-from-self-context.*
-- **C. Episodic widget-kind prior.** Bias generation toward the widget kind that historically validated for this concept (`kg_widget_prior`) → higher first-try validity.
+- **A. Frame ranking (fragment/find).** Score transcript windows against known graph concepts, retain separated high-confidence matches, and reserve 12.5% of the frame set for exploration. *Cold = full sweep. Warm = retrieval plus exploration.*
+- **B. Concept retrieval (generate widgets).** A known moment reuses the best validated exemplar spec at the new timestamp. Exploration frames use the full vision path; valid outputs then reinforce the graph. *This is RAG-from-self-context.*
+- **C. Episodic widget-kind prior.** `kg_widget_prior` records tried and valid widget kinds. Feeding that prior back into generation is a next step, not part of the measured delta.
 - **D. Log** `frames_analyzed, vlm_calls, widgets_new/reused, novel/known_concepts, build_ms, yield` → `topic_runs`.
 
 ---
@@ -92,14 +105,14 @@ When processing a **new** video under topic T:
 | Metric (per run) | Direction | Why |
 |---|---|---|
 | VLM calls / video | ↓ | known concepts retrieved, not regenerated |
-| build time (ms) / video | ↓ | RAG-from-self-context |
+| planned VLM calls / video | ↓ | RAG-from-self-context |
 | yield (valid widgets ÷ frames analyzed) | ↑ | graph ranks which frames matter |
 | first-try widget validity | ↑ | episodic widget-kind prior |
 | novel-concept rate | ↓ | domain saturates → agent "knows the shape" |
 | exemplars / concept | ↑ | cross-teacher coverage grows |
 | prereq violations in the course | ↓ | topological sort of prereq edges |
 
-**First run vs last run on these = the delta the judges score.** Anchor points already real: Karpathy = 55 concepts cached; 2nd learner on it = **0 VLM calls**.
+**Cold versus warm calls, with recall and precision beside them, form the judged delta.** The controlled replay is persisted under one experiment ID so the conditions remain auditable.
 
 **Honesty guardrail:** the delta must come from real overlap → retrieval. No hardcoded "warm is faster." A run with genuinely no overlap won't improve — and we report that honestly.
 
@@ -107,11 +120,11 @@ When processing a **new** video under topic T:
 
 ## 6. The demo  (`?view=graph`)
 
-- **Left — the knowledge graph, live.** Force-directed. Concept nodes sized by `exemplar_count`, edges = prereq/related. Replay the topic's videos: new nodes pop green; reinforced nodes pulse and their exemplar count ticks up. Click `softmax` → "explained by Karpathy 57:11 · VisualAI 3:10" (cross-teacher exemplars with channel labels).
-- **Right — the delta.** Run-over-run table + sparklines: VLM calls, build time, yield, novel-concept rate. Headline: **"Run 1: 20 min, 9% yield, random order. Run 8: 2 min, 60% yield, correct prerequisites — same task, no retraining."**
-- **Replay button** — fast-forwards the topic ingestion (or steps through the cached `topic_runs`) so the graph densifies on camera.
+- **Graph — persistent memory, live.** Nodes are sized by `exemplar_count`; edges distinguish related and prerequisite links. Click Self-attention to show Karpathy and VisualAI exemplars together.
+- **Delta — persisted cold/warm rows.** The cards show 64→8 planned calls, 87.5% reduction, and 100% known-concept recall. Both rows share experiment `e9d586862cb6`.
+- **Demo controls.** `learn Karpathy` builds the initial memory; `test unseen teacher` records the held-out replay and then admits VisualAI. Do not rerun the held-out button after admission when filming.
 
-Product payoff shown in the same view: stuck on one teacher's softmax → the node offers every other teacher's version; the sequencer auto-assembles a **"best of every teacher"** course (best exemplar per concept, prereq order).
+Product payoff shown in the same view: if one teacher's explanation does not click, the node offers grounded moments from another teacher. Prerequisite-sorted “best of every teacher” course assembly is the next product step.
 
 ---
 
@@ -119,10 +132,10 @@ Product payoff shown in the same view: stuck on one teacher's softmax → the no
 
 | Tier | What | Files | Payoff |
 |---|---|---|---|
-| **T1 — KG engine** | schema + `kg_build(topic)`: canonicalize → dedupe → link → edges. Run on existing Karpathy+VisualAI concepts → real cross-teacher links | `agent/db.py`, `agent/kg.py` | the graph exists, off real data |
-| **T2 — recursion metrics** | `topic_runs` logging in the processing path; graph-guided retrieval (§4 A/B); replay a topic in order → the declining-cost curve | `agent/kg.py`, `analyze.py`/`tools.py`, `agent/api.py` | the judged delta |
-| **T3 — the viewer** | `?view=graph`: force-directed KG + cross-teacher exemplars + delta panel + replay button | `app/src/App.jsx`, `/agent/graph` endpoint | the wow |
-| **T4 — bonus** | episodic widget-kind prior (`kg_widget_prior`) → first-try validity; prereq topological course sequencing | `agent/db.py`, `analyze.py`, `agent/loop.py` | accuracy + decision-quality deltas |
+| **T1 — KG engine ✅** | schema + `kg_build(topic)`: canonicalize → dedupe → link → edges. Run on Karpathy+VisualAI → real cross-teacher links | `agent/kg.py` | the graph exists, off real data |
+| **T2 — recursion metrics ✅** | `topic_runs` logging; graph-guided retrieval; held-out replay with recall and precision | `agent/kg.py`, `analyze.py`, `agent/api.py` | the judged delta |
+| **T3 — the viewer ✅** | `?view=graph`: knowledge graph + cross-teacher exemplars + delta panel + controls | `app/src/App.jsx`, `/agent/graph` | the wow |
+| **T4 — partial** | widget prior is persisted and prereq edges render; generation bias and topological sequencing remain | migration, `agent/kg.py` | next accuracy/decision delta |
 
 **Recommended order given the freeze:** T1 → T3 (graph visible off real data — the wow) → T2 (the measured delta — the judging core) → T4 if time.
 
@@ -130,9 +143,9 @@ Product payoff shown in the same view: stuck on one teacher's softmax → the no
 
 ## 8. Endpoints (agent/api.py)
 - `GET /agent/graph?topic=` → `{nodes, edges, exemplars}` for the viewer.
-- `POST /agent/kg/build?topic=` → run `kg_build`, return node/edge counts.
+- `POST /agent/kg/build` → build a topic from supplied video IDs and return node/edge counts.
 - `GET /agent/recursion?topic=` → `topic_runs` rows (the delta curve).
-- `POST /agent/recursion/replay?topic=` → replay the topic's videos in order (demo), streaming run metrics.
+- `POST /agent/recursion/replay` → record one cold/warm held-out replay and optionally admit the target to the graph.
 
 ---
 

@@ -1,194 +1,168 @@
-# 8kEdu — Recursive Intelligence demo video transcript
+# 8kEdu — Recursive Intelligence demo transcript
 
-**Project:** 8kEdu  
-**Team:** Team 8kEdu  
-**Track:** Recursive Intelligence  
-**Target runtime:** 4:10–4:35  
-**Format:** Loom screen recording, camera on, mostly one continuous take
+**Project:** 8kEdu — Lectures You Can Touch
 
-This script is deliberately built around the track's required proof: the same held-out lecture is
-processed once with an empty memory and once after the agent has learned from another teacher. Replace
-every bracketed metric with a value from a real recorded run before filming.
+**Team:** Team 8kEdu — Andy Khan and Nickolas Scipione
 
-## Recording setup
+**Track:** Recursive Intelligence
 
-Have these ready before starting Loom:
+**Target runtime:** 4:05–4:25
 
-1. Landing page, with the Karpathy lecture available.
-2. One interactive lecture view at an attention or softmax moment.
-3. Recursive Intelligence view with an empty/cold state and a learned/warm state.
-4. The held-out VisualAI lecture experiment, run against identical frames in both conditions.
-5. Agent dashboard with a real heartbeat history and **Wake now** working.
-6. OpenShell containment status or the short blocked-egress terminal proof.
+**Format:** Loom, camera on, one continuous product walkthrough
 
-Use the same model, prompt version, frame set, and target video for both experiment conditions. The
-warm graph may contain Karpathy-derived knowledge, but it must not contain the held-out VisualAI video
-before the warm run.
+This is the record-ready script. Its metrics match experiment `e9d586862cb6`, persisted in Supabase and visible in `?view=graph`.
+
+## Before recording
+
+1. Start the app with `./run.sh` and confirm the local Nemotron endpoint is available.
+2. Open the landing page, a Karpathy attention widget, `?view=graph`, and `?view=agent` in that order.
+3. Use the dark theme and a browser width near 1440 px so the graph and run table fit together.
+4. Confirm the graph shows 15 concepts, 59 exemplars, two teachers, and the 64 → 8 run delta.
+5. Do not click **test unseen teacher**. VisualAI joined the graph after the held-out experiment was recorded.
+6. Keep the containment proof ready in a terminal. If it is slow, show the already-persisted status in the agent dashboard.
+7. Replace the repository URL on the final end card only if the public URL changes.
+
+## 0:00–0:17 — Team, project, and track
+
+**On screen:** Begin with both cameras large. Reveal the landing page before the final sentence.
+
+**Andy:**
+
+> Hi, we’re Team 8kEdu. I’m Andy Khan. I built the autonomous agent, learning engine, frontend, and containment workflow.
+
+**Nickolas:**
+
+> I’m Nickolas Scipione. I built performance, observability, and database infrastructure. We’re competing in the Recursive Intelligence Track.
+
+**If only one person records:**
+
+> Hi, we’re Team 8kEdu. I’m Andy Khan. My teammate Nickolas Scipione and I built the agent, learning engine, product experience, observability, and infrastructure for the Recursive Intelligence Track.
+
+## 0:17–0:43 — Elevator pitch
+
+**On screen:** Show the landing animation and briefly scroll the multi-topic gallery.
+
+**Say:**
+
+> YouTube may be the world’s largest classroom, but watching is passive. Worse, most AI systems start from zero on every new lecture.
+
+> 8kEdu is an autonomous learning agent that turns lecture moments into live widgets and remembers concepts across teachers.
+
+> As that memory grows, the next unseen lecture needs fewer model calls while preserving concept coverage. The agent gets measurably better without retraining the model.
+
+## 0:43–1:15 — Show the learner experience
+
+**On screen:** Open the Karpathy lecture at an attention or softmax moment. Manipulate the widget and show the synchronized timestamp.
+
+**Say:**
+
+> Here, Karpathy is explaining attention. 8kEdu turns that frozen explanation into a live model I can manipulate beside the original teaching moment.
+
+> The same engine produces matrices, plots, calculators, and real Python notebooks.
+
+> yt-dlp and FFmpeg derive the transcript and keyframes. Nemotron reads each frame with its transcript window and emits a validated concept spec. React renders that structured spec deterministically.
+
+## 1:15–1:48 — Show persistent memory
+
+**On screen:** Open `?view=graph`. Point to the 15 concepts, 59 real frame exemplars, two teachers, and 11 reinforced concepts.
+
+**Say:**
+
+> This is the agent’s persistent memory, built from real model outputs rather than a diagram or slide.
+
+> Each teachable moment is normalized into a concept node. Repeated explanations collapse onto that node, while every source frame remains attached as a grounded exemplar.
+
+> Supabase preserves this graph across runs. It acts as a knowledge graph, compressed episodic memory, and the agent’s own retrieval source.
+
+## 1:48–2:37 — Prove Recursive Intelligence
+
+**On screen:** Hold on the metric cards and the persisted cold and warm rows. Keep the experiment ID and the 64-frame denominator visible.
+
+**Say:**
+
+> Now the controlled test. VisualAI was held out when this experiment ran. The target was the same 64-frame lecture in both conditions.
+
+> To keep the comparison reproducible, we replay real cached full-sweep outputs. The cold baseline analyzes all 64 frames, requiring 64 vision-model calls.
+
+> With memory learned only from Karpathy, the warm planner analyzes 15 frames. Seven known moments reuse validated graph exemplars, and eight remain exploration calls for possible novelty.
+
+> That saves 56 calls: an 87.5 percent reduction. Against the full sweep, known-concept recall is 100 percent and retrieval precision is 100 percent.
+
+> This is cross-teacher transfer, not a same-video cache hit. The persisted rows share one experiment ID so the comparison stays auditable.
+
+## 2:37–3:06 — Show the recursive mechanism
+
+**On screen:** Click **Self-attention**. Show both Andrej Karpathy and VisualAI in the exemplar list.
+
+**Say:**
+
+> After the held-out result was recorded, VisualAI was admitted to memory. Self-attention now has 13 exemplars across two teachers.
+
+> On a warm run, transcript overlap ranks frames against known concepts. A known moment retrieves its best validated widget spec. Exploration frames still use the full Nemotron vision path.
+
+> Any valid new observation reinforces the graph for the next run. Every teacher helps the learner now and makes the agent cheaper on future teachers.
+
+## 3:06–3:39 — Architecture, autonomy, and containment
+
+**On screen:** Open `?view=agent`. Show the heartbeat history, persistent curriculum, library, and containment status. Wake the agent only if the local model is already warm.
+
+**Say:**
+
+> This is a Claw Agent, not a chatbot. A heartbeat reads persistent state and chooses the next action: find a source, process a lecture, sequence a course, or monitor a creator.
+
+> FastAPI exposes the tools. Supabase stores decisions, concepts, graph memory, and experiment metrics. Apify supplies fresh channel data, and React presents the learner experience.
+
+> The capable parts run behind NemoClaw and OpenShell policy. Approved services are reachable, while unapproved exfiltration is blocked and written to the audit log.
+
+## 3:39–4:10 — Product payoff and “so what?”
+
+**On screen:** Return to Self-attention in the graph, then briefly show the interactive lecture again.
+
+**Say:**
+
+> If one explanation of attention does not click, 8kEdu can surface another teacher’s grounded exemplar instead of trapping the learner in one playlist.
+
+> Learners get active lessons instead of passive video. Educators get reusable interactive material. The system becomes cheaper and more useful as the shared library grows.
+
+> Today it learned attention across teachers. Next, the same memory can learn which explanations improve mastery for each learner.
+
+> That is 8kEdu: every lecture teaches the student—and the agent.
+
+## 4:10–4:20 — Final identification
+
+**On screen:** End card: **8kEdu · Team 8kEdu · Recursive Intelligence · github.com/8k-Edu/8kEdu**.
+
+**Say:**
+
+> We’re Team 8kEdu, competing in the Recursive Intelligence Track. Thank you.
 
 ---
 
-## 0:00–0:15 — Team and track
+## Claims visible in the recording
 
-**On screen:** Camera large for the first sentence, then reveal the 8kEdu landing page. Keep the project
-name visible.
+- Controlled target: VisualAI, 64 frames, held out before experiment `e9d586862cb6`.
+- Cold baseline: 64 frames analyzed and 64 VLM calls.
+- Warm plan: 15 frames analyzed, seven graph reuses, and eight exploratory VLM calls.
+- Delta: 56 calls saved, 87.5% reduction, 100% known-concept recall, 100% retrieval precision.
+- Graph after admission: 15 concepts, 59 exemplars, two teachers, 11 reinforced concepts.
+- The comparison is a replay over cached real full-sweep outputs, not a fresh wall-clock benchmark.
 
-**Say:**
+## Do not claim or show
 
-> Hi, we're Team 8kEdu. I'm **[NAME]**, and I built **[ROLE / COMPONENT]**. **[TEAMMATE NAME]** built
-> **[ROLE / COMPONENT]**. We built 8kEdu for the **Recursive Intelligence Track**.
+- Do not claim a measured cold-versus-warm wall-clock improvement.
+- Do not say the warm path extracts new parameters; it currently reuses the best validated prior spec.
+- Do not call the held-out result a same-video cache hit.
+- Do not click **test unseen teacher** after VisualAI is already in the graph.
+- Do not mention a **Best of every teacher** button or prerequisite-sorted course; those are next steps.
+- Do not say Nemotron performs canonicalization. The current canonicalizer is deterministic and auditable.
 
-If solo, use:
-
-> Hi, I'm **[NAME]**, the builder behind 8kEdu. I built the learning engine, autonomous agent, and
-> interactive app for the **Recursive Intelligence Track**.
-
-## 0:15–0:42 — Elevator pitch
-
-**On screen:** Landing animation: lecture enters the system and interactive artifacts emerge. Briefly
-scroll the multi-topic gallery.
-
-**Say:**
-
-> YouTube may be the world's largest classroom, but watching is passive—and every AI tool starts from
-> zero on every new lecture. 8kEdu is an autonomous learning agent that watches a lecture, turns its
-> teachable moments into live widgets, and remembers the concepts across teachers. As that memory
-> grows, the next unseen lecture takes fewer model calls to process while preserving teaching quality.
-> It gets measurably better without retraining the model.
-
-## 0:42–1:12 — Show the product before the machinery
-
-**On screen:** Open the Karpathy lecture. Seek to an attention or softmax moment. Drag a value or
-temperature slider and show the result recompute. Point briefly to the synchronized video moment and
-transcript.
-
-**Say:**
-
-> Here is the learner experience. At this exact moment, the teacher is explaining attention. 8kEdu
-> turns the frozen explanation into a live model I can manipulate. The same engine works for matrices,
-> plots, financial calculators, and real Python notebooks.
->
-> Under the hood, yt-dlp and FFmpeg produce the transcript and keyframes. Nemotron reads both and emits
-> a validated concept spec—structured data, not arbitrary interface code. Our React widget kit renders
-> that spec deterministically, which keeps the result interactive, grounded, and reliable.
-
-## 1:12–1:47 — First run: the agent forms memory
-
-**On screen:** Switch to `?view=graph`. Start from the cold state, then replay or run ingestion of the
-Karpathy source. Show concept nodes appearing and repeated observations collapsing into canonical
-nodes such as **softmax**, **self-attention**, and **multi-head attention**.
-
-**Say:**
-
-> On its first run, the agent does not know this domain. It analyzes the lecture and distills each
-> useful frame into a canonical concept node. Repeated explanations collapse onto the same node, while
-> each teaching moment remains attached as an exemplar.
->
-> This graph is the agent's persistent memory: a knowledge graph, compressed experience, and its own
-> retrieval source. Supabase preserves it across heartbeat cycles. Nothing here is model retraining.
-
-## 1:47–2:34 — The Recursive Intelligence proof
-
-**On screen:** Display the controlled cold-versus-warm comparison for the held-out VisualAI lecture.
-Make the condition labels and identical target/frame count obvious. Animate or run the warm condition,
-then hold on the result cards long enough to read them.
-
-**Say:**
-
-> Now we test whether that memory actually changes performance. This VisualAI lecture is held out: the
-> graph has never seen it. We process the exact same **[FRAME_COUNT] frames** twice with the same model
-> and prompt.
->
-> With an empty graph, the cold agent needed **[COLD_CALLS] VLM calls**, took **[COLD_TIME]**, and found
-> **[COLD_VALID] valid concepts**. After learning only from a different teacher, the warm agent needed
-> **[WARM_CALLS] calls**, took **[WARM_TIME]**, and found **[WARM_VALID] valid concepts** with
-> **[WARM_RECALL]% concept recall** against the full sweep.
->
-> That is **[CALL_REDUCTION]% fewer model calls** on the same unseen task, with quality held constant or
-> improved. This is cross-teacher transfer—not a same-video cache hit.
-
-## 2:34–3:03 — Explain why the improvement is real
-
-**On screen:** Click the **self-attention** node. Show exemplars from Karpathy and VisualAI. Highlight
-the selected widget prior/template and the new frame's separately extracted parameters.
-
-**Say:**
-
-> The warm agent recognizes a known concept from the new transcript and frame. It retrieves the widget
-> type and successful teaching template from its own history, then extracts the new teacher's actual
-> values so the result remains grounded. Novel concepts still go through the full vision path and join
-> the graph for the next cycle.
->
-> Every new teacher therefore does two jobs: they teach the learner, and they make the agent better at
-> understanding future teachers.
-
-## 3:03–3:35 — Show that it is a Claw Agent
-
-**On screen:** Open `?view=agent`. Show the timestamped heartbeat feed, persistent curriculum, and
-library totals. Press **Wake now** and let one real decision appear.
-
-**Say:**
-
-> This learning does not wait for a chat prompt. The agent wakes on a heartbeat, reads its persistent
-> state, and Nemotron chooses whether to find a source, process a lecture, reinforce the graph, sequence
-> a course, or monitor a creator for new uploads. FastAPI exposes the tools, Supabase remembers every
-> decision and observation, and Apify supplies fresh channel data. If the model or a tool fails, the
-> cycle records the failure and recovers instead of dying.
-
-## 3:35–3:52 — Capability with containment
-
-**On screen:** Show the OpenShell containment card. If reliable, cut to the prepared terminal and run
-the shortest proof: approved destination succeeds; `webhook.site` is denied and logged.
-
-**Say:**
-
-> An always-on agent that reaches the web and runs generated notebooks is useful—but dangerous.
-> NemoClaw runs it inside OpenShell. YouTube, Apify, Supabase, and local inference are allowed;
-> unapproved exfiltration is blocked by policy and written to the audit log. The safety boundary does
-> not depend on the model choosing to behave.
-
-## 3:52–4:20 — Product payoff and “so what?”
-
-**On screen:** Return to the graph, click **Best of every teacher**, then show the resulting ordered
-course or learner path. End on the product name and the headline recursive delta.
-
-**Say:**
-
-> The product payoff is a course built from the best explanation of each concept—not one teacher's
-> playlist. If I struggle with Karpathy's explanation of attention, 8kEdu can offer another teacher's
-> exemplar while preserving the prerequisite path.
->
-> So what? Learners get active lessons instead of passive video, educators get reusable interactive
-> material, and the system becomes cheaper and more capable as the shared library grows. Today it
-> learned attention across teachers. Next, the same loop can learn which explanations actually improve
-> mastery for each learner. That's 8kEdu: every lecture teaches the student—and the agent.
-
-## 4:20–4:28 — Final identification
-
-**On screen:** Clean end card: **8kEdu · Team 8kEdu · Recursive Intelligence Track · repository URL**.
-
-**Say:**
-
-> We're Team 8kEdu, competing in the Recursive Intelligence Track. Thank you.
-
----
-
-## Claims that must be proven before recording
-
-- Replace every bracketed metric with values from persisted experiment logs.
-- Cold and warm conditions use the same held-out video, frames, model, and prompt version.
-- The held-out target is absent from the graph before the warm run.
-- Report concept recall or an equivalent quality guardrail alongside speed and call reduction.
-- Do not present the same-video Supabase cache as the Recursive Intelligence result.
-- If the graph view or best-of-teachers sequencing is not implemented, remove that shot and claim;
-  never substitute a mock without labeling it clearly.
-
-## Architecture covered naturally in the narration
+## Architecture covered by the narration
 
 - **Frontend:** React + Vite lecture, graph, learner, and agent views.
-- **Engine:** yt-dlp + FFmpeg ingestion; transcript/keyframe analysis.
-- **Model:** Nemotron vision, canonicalization, reasoning, and agent decisions.
-- **Memory:** Supabase concepts, graph, exemplars, learner state, metrics, and run history.
+- **Engine:** yt-dlp + FFmpeg ingestion and transcript/keyframe analysis.
+- **Model:** Nemotron vision for widget generation and reasoning for agent decisions.
+- **Memory:** Supabase concepts, graph nodes, exemplars, run metrics, and learner state.
+- **Recursion:** deterministic canonicalization, transcript matching, self-RAG spec reuse, and exploration.
 - **Autonomy:** learner and curator heartbeat loops through FastAPI tools.
 - **Freshness:** Apify channel monitoring.
 - **Containment:** NemoClaw + OpenShell allowlist and audit log.
-

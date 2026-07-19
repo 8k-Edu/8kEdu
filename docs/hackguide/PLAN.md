@@ -3,7 +3,7 @@
 **Event:** AITX × NVIDIA Claw Agent Hackathon · Jul 17–19 2026 · Antler VC, 800 Brazos St #340, Austin
 **Hack window:** Fri 6:45 PM → Sun 11:00 AM code freeze (~40h) · **Team: 2–3**
 **Build:** a fresh **autonomous learning agent** — *YouTube video → interactive learning dashboard*
-**Last updated:** Sat Jul 18 2026, ~14:35 (T-20h to code freeze) — P2 + P3 + JOB2 done; roadmap R1–R4 all have a working slice built
+**Last updated:** Sun Jul 19 2026 — recursive KG, held-out replay, graph viewer, submission docs, and final Loom script complete
 
 ---
 
@@ -81,11 +81,18 @@ user's own IP via a browser extension (screen-capture permission?). Beyond YouTu
 - [x] dashboard panel "Watching for new uploads" (@AndrejKarpathy · last checked · 📡 via Apify)
 - [x] proven live: bootstrap → 0 added (baseline), then 2 new uploads detected → curriculum 1→3
 
+**P3.5 — Recursive Intelligence** ✅ done — the primary-track proof
+- [x] persistent cross-teacher graph: 15 concepts, 59 real exemplars, two teachers, 11 reinforced nodes
+- [x] controlled held-out replay: 64 cold calls → eight warm exploration calls + seven graph reuses
+- [x] quality guardrails: 100% known-concept recall and 100% retrieval precision
+- [x] `?view=graph`: live graph, cross-teacher exemplars, persisted cold/warm rows, demo controls
+- [x] truth-labeled as cached full-sweep replay, not a fresh wall-clock benchmark
+
 **P4 — submit (Sun AM)**
 - [x] Harden the loop — heuristic fallback + per-action/-channel error isolation + failed runs logged; never crashes
 - [x] [`SUBMISSION.md`](SUBMISSION.md) — what-it-is, 6 sponsor "why" blurbs, 100-pt rubric self-map
-- [x] [`DEMO.md`](DEMO.md) — 2-min runbook (5 scenes) + `run.sh` one-command startup + `contain_demo.sh`
-- [ ] **YOURS:** record the demo video (follow DEMO.md) · submit on the platform by 11:00
+- [x] [`DEMO.md`](DEMO.md) + [`DEMO_VIDEO_TRANSCRIPT.md`](DEMO_VIDEO_TRANSCRIPT.md) — record-ready 4:20 Loom flow
+- [ ] **YOURS:** record the Loom video · paste its URL into README · submit on the platform
 
 ---
 
