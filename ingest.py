@@ -6,6 +6,7 @@ Outputs: <out>/video.mp4, <out>/transcript.json, <out>/frames/f_<sec>.jpg
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -13,6 +14,10 @@ import sys
 
 # host uses `uv run yt-dlp`; the sandbox has yt-dlp on PATH but no uv
 YTDLP = ["uv", "run", "yt-dlp"] if shutil.which("uv") else ["yt-dlp"]
+# inside the OpenShell sandbox, TLS is MITM'd by the egress proxy (which is the real security
+# boundary — it allowlists youtube/googlevideo); yt-dlp's certifi doesn't trust that CA.
+if os.environ.get("KEDU_SANDBOX") == "1":
+    YTDLP = YTDLP + ["--no-check-certificates"]
 from pathlib import Path
 
 MAX_FRAMES = 120
@@ -109,7 +114,7 @@ def extract_frames(video: Path, out: Path) -> list[dict]:
 
 def fetch_chapters(url: str, out: Path) -> list[dict]:
     p = subprocess.run(
-        ["uv", "run", "yt-dlp", "--skip-download", "--print", "%(chapters)j", url],
+        YTDLP + ["--skip-download", "--print", "%(chapters)j", url],
         capture_output=True, text=True,
     )
     try:
