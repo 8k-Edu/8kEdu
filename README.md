@@ -1,5 +1,7 @@
 # 8kEdu — lectures you can touch
 
+![8kEdu](app/public/assets/8kEdu_banner.png)
+
 8kEdu turns a YouTube lecture into an interactive learning dashboard. It finds teachable moments, generates editable widgets, and learns from earlier lectures so later runs need less model work.
 
 ## Demo

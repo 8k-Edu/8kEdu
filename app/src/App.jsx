@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
+import markUrl from './assets/mark.png'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
 import { restore, signInGuest, signOut } from './supa.js'
@@ -1046,21 +1047,13 @@ function LandingStyles({ acc }) {
 
 // 8kEdu mark — a pixel grid that "upscales": dim/sparse corner → bright/dense corner (720p → 8K)
 function Logo({ size = 40, wordColor = '#f2f6ec' }) {
-  const N = 4, gap = size * 0.14, cell = (size - gap * (N - 1)) / N
-  const cells = []
-  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
-    cells.push({ r, c, lit: (r + c) / (2 * (N - 1)), i: r * N + c })
+  // brand mark: play-button dissolving into the pixel-8 (assets/mark.png, transparent)
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.32 }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="8kEdu logo">
-        {cells.map(({ r, c, lit, i }) => (
-          <motion.rect key={i}
-            x={c * (cell + gap)} y={r * (cell + gap)} width={cell} height={cell} rx={cell * 0.28}
-            fill={`rgb(${Math.round(30 + lit * 90)},${Math.round(70 + lit * 140)},${Math.round(25 + lit * 50)})`}
-            initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 0.4 + lit * 0.6, scale: 1 }}
-            transition={{ delay: 0.15 + lit * 0.5, type: 'spring', stiffness: 260, damping: 18 }} />
-        ))}
-      </svg>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.3 }}>
+      <motion.img src={markUrl} alt="8kEdu logo" width={Math.round(size * 1.07)} height={size}
+        style={{ display: 'block', objectFit: 'contain' }}
+        initial={{ opacity: 0, scale: 0.6, rotate: -8 }} animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 16 }} />
       <span style={{ fontSize: size * 0.7, fontWeight: 800, letterSpacing: '-.03em', color: wordColor }}>
         <span style={{ color: '#63b524' }}>8k</span>Edu
       </span>
