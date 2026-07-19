@@ -37,7 +37,7 @@ flowchart TB
     end
 
     subgraph EXT["External / sponsors"]
-        Nemotron["LM Studio :1234<br/>Nemotron-3-Nano-Omni (brain)"]
+        Nemotron["LM Studio :1234 or vllm-mlx<br/>Nemotron-3-Nano-Omni (brain)"]
         YT["YouTube via yt-dlp"]
         Apify["Apify<br/>channel monitoring"]
     end

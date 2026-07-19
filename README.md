@@ -75,7 +75,7 @@ To process a **new** video and/or use live "make it interactive":
 ```bash
 # 1) ingest + analyze a video (local model, free)
 uv run ingest.py "https://www.youtube.com/watch?v=<id>"
-uv run analyze.py --backend mlx --video <id>     # or --backend lmstudio / gemini
+uv run analyze.py --backend mlx --video <id>     # or --backend lmstudio / vllm / gemini
 
 # 2) start the ask backend (live widget minting)
 uv run serve.py --backend mlx                    # :8756, vite proxies /api → here
@@ -84,7 +84,7 @@ uv run serve.py --backend mlx                    # :8756, vite proxies /api → 
 cd app && npm run dev                            # http://localhost:5173
 ```
 
-Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` / `openai` (any OpenAI-compatible endpoint via `TACTILE_BASE_URL`/`TACTILE_MODEL`) · `gemini` (BYOK).
+Backends (`--backend`): `mlx` (in-process, local) · `lmstudio` · `vllm` (local [vllm-mlx](https://github.com/waybarrios/vllm-mlx) on Apple Silicon, via `VLLM_BASE_URL`/`VLLM_MODEL`) · `openai` (any OpenAI-compatible endpoint via `TACTILE_BASE_URL`/`TACTILE_MODEL`) · `gemini` (BYOK). For `run.sh` and the agent jobs, pick the vision backend with `TACTILE_BACKEND` (default `lmstudio`).
 
 ### The autonomous agent + live dashboard
 
@@ -115,7 +115,7 @@ Then open **http://localhost:5173/?view=agent** (or `dev.localhost:5174` on the 
 heartbeat feed, the curriculum building itself, the cache moat, and the OpenShell containment status.
 Containment is applied + proven separately: see [`claw-agent/`](claw-agent/).
 
-> **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `TACTILE_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`) is unrestricted. Secrets live in a gitignored `.env`.
+> **Cost guard:** cloud backends (`gemini`/`openai`) are **blocked by default** — set `TACTILE_ALLOW_CLOUD=1` to deliberately spend. Local (`mlx`/`lmstudio`/`vllm`) is unrestricted. Secrets live in a gitignored `.env` (see `.env.example`).
 
 Pyodide (for notebook widgets) is vendored under `data/pyodide-dist/` for offline use.
 
