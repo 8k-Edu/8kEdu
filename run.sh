@@ -5,8 +5,14 @@
 # Stop everything:  ./run.sh --stop
 set -uo pipefail
 cd "$(dirname "$0")"
-export DOCKER_HOST="${DOCKER_HOST:-unix:///Users/azehady/.orbstack/run/docker.sock}"
-export TACTILE_MODEL="${TACTILE_MODEL:-nvidia/nemotron-3-nano-omni}"
+
+# Source .env before spawning children so TACTILE_MODEL / NEMOTRON_MODEL /
+# DOCKER_HOST etc. from the developer's own config take effect. Python's
+# db.load_env() uses os.environ.setdefault(), which won't overwrite anything
+# already exported — so if we exported hardcoded defaults here, .env would be
+# silently ignored.
+[ -f .env ] && set -a && . ./.env && set +a
+
 LOGDIR="/tmp/8kedu-logs"; mkdir -p "$LOGDIR"
 
 stop() {
