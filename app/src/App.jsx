@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
+import { auth } from './supa.js'
 
 const TYPE_ICON = {
   matrix_mul: '✕', attention: '◧', softmax: '▮', function_plot: '∿', composite: '⧉', notebook: '🐍',
@@ -1618,6 +1619,8 @@ function CommunityView({ onExit, onOpen }) {
   const [sort, setSort] = useState('hot')
   const [items, setItems] = useState([])
   const [err, setErr] = useState(null)
+  const [sess, setSess] = useState(null)   // {client, uid} from anonymous Supabase auth
+  useEffect(() => { auth().then(setSess) }, [])
   const load = async (s) => {
     try {
       const r = await fetch(`/pub/feed?sort=${s ?? sort}`); const d = await r.json()
@@ -1625,8 +1628,23 @@ function CommunityView({ onExit, onOpen }) {
     } catch (e) { setErr('agent api offline — start agent/api.py') }
   }
   useEffect(() => { load() }, [sort])
+  const setVotes = (id, n) => setItems(x => x.map(a => a.id === id ? { ...a, votes: n } : a))
+  const upvoteVia = async (id) => {
+    const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: sess?.uid || `me-${Math.floor(Date.now() / 1)}` }) })
+    const d = await r.json(); if (d.ok) setVotes(id, d.votes)
+  }
   const upvote = async (id) => {
-    try { const r = await fetch('/pub/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id, voter: `me-${Math.floor(Date.now() / 1)}` }) }); const d = await r.json(); if (d.ok) setItems(x => x.map(a => a.id === id ? { ...a, votes: d.votes } : a)) } catch (e) {}
+    // Real per-user vote: RLS lets each anon identity vote once (PK artifact_id+voter).
+    if (sess?.client && sess?.uid) {
+      try {
+        const { error } = await sess.client.from('votes').insert({ artifact_id: id, voter: sess.uid })
+        if (error && error.code !== '23505') return upvoteVia(id)   // 23505 = already voted → no-op
+        const { count } = await sess.client.from('votes').select('*', { count: 'exact', head: true }).eq('artifact_id', id)
+        if (typeof count === 'number') setVotes(id, count)
+        return
+      } catch (e) { return upvoteVia(id) }
+    }
+    try { await upvoteVia(id) } catch (e) {}
   }
   const remix = async (id) => {
     try { await fetch('/pub/fork', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artifact_id: id }) }); load() } catch (e) {}
@@ -1686,7 +1704,7 @@ function CommunityView({ onExit, onOpen }) {
         </div>
         {!items.length && !err && <div style={{ color: T.faint, textAlign: 'center', marginTop: 40 }}>no public artifacts yet</div>}
         <div style={{ textAlign: 'center', marginTop: 26, fontFamily: mono, fontSize: 12, color: T.faint }}>
-          a remix is just a URL · publish is one tap · <span style={{ color: T.muted }}>identity + profiles land with Supabase Auth (next)</span>
+          a remix is just a URL · publish is one tap · <span style={{ color: T.muted }}>{sess?.uid ? `signed in · one vote each (RLS) · id ${sess.uid.slice(0, 8)}` : 'anonymous voting via Supabase Auth'}</span>
         </div>
       </div>
     </div>
