@@ -14,3 +14,7 @@ dist/
 .agents/
 .claude/skills/
 skills-lock.json
+
+# never commit env backups
+.env.bak*
+.env.*.bak

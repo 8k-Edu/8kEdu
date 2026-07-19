@@ -1,0 +1,19 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Index Fund Performance Calculator",
+  "explanation": "Shows how changes in the S&P 500 directly affect the value of an index fund investment.",
+  "params": {
+   "cells": [
+    "principal = 10000\ns_p_change = 1\nfinal_value = principal * (1 + s_p_change/100)\nprint(f\"Final value: ${final_value:.2f}\")"
+   ],
+   "sliders": {
+    "principal": 10000,
+    "s_p_change": 1
+   }
+  },
+  "time": 110,
+  "frame": "f_000110.jpg"
+ }
+]
