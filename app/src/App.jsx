@@ -2162,7 +2162,10 @@ function RecursiveDashboard({ onExit }) {
       if (!graphData.ok) throw new Error(graphData.error || 'graph unavailable')
       setGraph(graphData)
       setRuns(runsData.runs || [])
-      setSelected(current => current ? graphData.nodes.find(node => node.id === current.id) || graphData.nodes[0] : graphData.nodes[0])
+      const crossTeacher = graphData.nodes.find(node => (node.teachers || []).length > 1)
+      setSelected(current => current
+        ? graphData.nodes.find(node => node.id === current.id) || crossTeacher || graphData.nodes[0]
+        : crossTeacher || graphData.nodes[0])
       setErr(null)
     } catch (error) {
       setErr(error.message || 'agent api offline')
@@ -2198,7 +2201,7 @@ function RecursiveDashboard({ onExit }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
       <LandingStyles acc={T.acc} />
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '18px 24px 64px' }}>
+      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '18px 24px 64px', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button onClick={onExit} style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.text, borderRadius: 999, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}>← site</button>
