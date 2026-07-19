@@ -925,7 +925,14 @@ function Lecture({ videoId, role }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, position: 'sticky', top: 14 }}>
           {analyzed && <GlobalAsk onAsk={askGlobal} busy={busy} concepts={concepts} time={time} />}
           {active ? (
-            <div style={{ border: '1px solid #30363d', borderRadius: 14, background: 'linear-gradient(180deg,#11161d,#0d1117)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 12px 34px #0006' }}>
+            <div style={{ position: 'relative', border: '1px solid #30363d', borderRadius: 14, background: 'linear-gradient(180deg,#11161d,#0d1117)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 12px 34px #0006' }}>
+              {busy && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 5, borderRadius: 14, background: '#0d1117d8', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                  <span className="kedu-spin" style={{ width: 26, height: 26, border: '3px solid #2f81f755', borderTopColor: '#2f81f7', borderRadius: '50%' }} />
+                  <div style={{ color: '#58a6ff', fontWeight: 600, fontSize: 14 }}>regenerating this widget…</div>
+                  <div style={{ fontSize: 12, color: '#8b949e' }}>{engine?.mode === 'local' ? '~30s on the free local model' : 'a few seconds on the cloud model'}</div>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#56d364', marginBottom: 4 }}>● live widget · {active.widget}</div>
