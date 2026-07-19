@@ -9,6 +9,9 @@ import argparse
 import hashlib
 import json
 import os
+import re
+import subprocess
+import sys
 import threading
 import time
 from collections import OrderedDict
@@ -447,6 +450,75 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
 @app.get("/api/info")
 def get_info():
     return info
+
+
+# ---------- live ingest: drop a YouTube URL → ingest + analyze → widgets ----------
+ROOT = Path(__file__).resolve().parent
+_jobs: dict[str, dict] = {}
+_jobs_lock = threading.Lock()
+
+
+def _extract_id(v: str) -> str:
+    m = re.search(r"(?:v=|youtu\.be/|/shorts/|/embed/)([A-Za-z0-9_-]{11})", v)
+    return m.group(1) if m else v.strip()
+
+
+def _set_job(vid: str, **kw):
+    with _jobs_lock:
+        _jobs.setdefault(vid, {}).update(**kw)
+
+
+def _run_ingest(vid: str, url: str, limit: int, backend: str):
+    py = sys.executable
+    # cloud (OpenRouter) batches frames concurrently → a live drop finishes in ~30-60s,
+    # vs. a sequential local reasoning model taking minutes. Fan out when on cloud.
+    env = {**os.environ}
+    if backend == "openrouter":
+        env["KEDU_CONCURRENCY"] = env.get("KEDU_CONCURRENCY", "6")
+    try:
+        vd = ROOT / "data" / vid
+        if not (vd / "frames.json").exists():
+            _set_job(vid, step="downloading video + transcript + keyframes")
+            subprocess.run([py, "ingest.py", url], cwd=ROOT, check=True, timeout=900, env=env)
+        _set_job(vid, step="analyzing frames → widgets")
+        subprocess.run([py, "analyze.py", "--backend", backend, f"--video={vid}", "--limit", str(limit)],
+                       cwd=ROOT, check=True, timeout=2400, env=env)
+        n = len(json.loads((vd / "concepts.json").read_text())) if (vd / "concepts.json").exists() else 0
+        _set_job(vid, state="done", step="done", widgets=n)
+    except subprocess.TimeoutExpired:
+        _set_job(vid, state="error", error="timed out")
+    except Exception as e:
+        _set_job(vid, state="error", error=str(e)[:200])
+
+
+class IngestReq(BaseModel):
+    video: str          # 11-char id or a full YouTube URL
+    limit: int = 12
+
+
+@app.post("/api/ingest")
+def ingest(req: IngestReq):
+    """Kick off ingest + analyze for a video in the background; poll /api/ingest/status."""
+    vid = _extract_id(req.video)
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", vid):
+        return {"state": "error", "error": "not a YouTube URL or 11-char id"}
+    url = req.video if req.video.startswith("http") else f"https://www.youtube.com/watch?v={vid}"
+    with _jobs_lock:
+        if _jobs.get(vid, {}).get("state") == "running":
+            return {"video": vid, **_jobs[vid]}
+        _jobs[vid] = {"state": "running", "step": "starting", "widgets": 0}
+    # prefer cloud for live ingest (fast, concurrent); fall back to whatever's configured locally
+    backend = (os.environ.get("KEDU_INGEST_BACKEND")
+               or ("openrouter" if os.environ.get("OPENROUTER_API_KEY") else (os.environ.get("KEDU_BACKEND") or "vllm")))
+    threading.Thread(target=_run_ingest, args=(vid, url, req.limit, backend), daemon=True).start()
+    return {"video": vid, "state": "running", "step": "starting"}
+
+
+@app.get("/api/ingest/status")
+def ingest_status(video: str):
+    vid = _extract_id(video)
+    with _jobs_lock:
+        return {"video": vid, **(_jobs.get(vid) or {"state": "idle"})}
 
 
 class KeyReq(BaseModel):

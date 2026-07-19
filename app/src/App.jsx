@@ -693,6 +693,28 @@ function Lecture({ videoId, role }) {
     }
   }
 
+  const [proc, setProc] = useState(null)   // live ingest job: {state, step, widgets, error}
+  const processVideo = async () => {
+    setProc({ state: 'running', step: 'starting' })
+    try {
+      await fetch('/api/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video: videoId }) })
+    } catch { setProc({ state: 'error', error: 'ingest endpoint offline — run serve.py' }); return }
+    const poll = setInterval(async () => {
+      try {
+        const s = await fetch(`/api/ingest/status?video=${videoId}`).then(r => r.json())
+        setProc(s)
+        if (s.state === 'done') {
+          clearInterval(poll)
+          const cs = await fetch(`/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
+          setConcepts(cs)
+          if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
+          fetch(`/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
+          fetch(`/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
+        } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
+      } catch { /* keep polling */ }
+    }, 2500)
+  }
+
   const active = selected
   const Widget = active ? WIDGETS[active.widget] : null
 
@@ -857,9 +879,26 @@ function Lecture({ videoId, role }) {
       {ask && <AskBox ask={ask} busy={busy} onClose={() => setAsk(null)} onCreate={createWidget} />}
       {shareUrl && <ShareModal url={shareUrl} onClose={() => setShareUrl(null)} />}
       {!analyzed && (
-        <div style={{ color: '#d29922', fontSize: 13, border: '1px solid #d2992255', borderRadius: 10, padding: '10px 14px' }}>
-          this video isn't analyzed yet — run <code>uv run ingest.py "&lt;url&gt;" && uv run analyze.py</code> to mint its widgets
+        <div style={{ fontSize: 13, border: '1px solid #30363d', borderRadius: 10, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10, background: '#0d1117' }}>
+          {proc?.state === 'running' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#58a6ff' }}>
+              <span className="kedu-spin" style={{ width: 14, height: 14, border: '2px solid #58a6ff55', borderTopColor: '#58a6ff', borderRadius: '50%', display: 'inline-block' }} />
+              <span>agent working — <b>{proc.step || 'starting'}</b>… <span style={{ color: '#8b949e' }}>(downloads the video, extracts keyframes, then a vision model turns each teachable moment into a widget)</span></span>
+            </div>
+          ) : (
+            <>
+              <div style={{ color: '#e6edf3' }}>This video isn't analyzed yet. Let the agent process it — it ingests the transcript + keyframes and mints interactive widgets.</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <button onClick={processVideo} style={{ background: '#238636', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⚡ Process this video</button>
+                <span style={{ color: '#6e7681', fontSize: 12 }}>~1–2 min · {engine ? (engine.mode === 'local' ? 'free local model' : 'cloud model') : 'model'}</span>
+              </div>
+            </>
+          )}
         </div>
+      )}
+      <style>{`@keyframes kedu-spin{to{transform:rotate(360deg)}} .kedu-spin{animation:kedu-spin .8s linear infinite}`}</style>
+      {proc?.state === 'done' && !analyzed && (
+        <div style={{ color: '#56d364', fontSize: 13 }}>done — {proc.widgets} widgets minted. reloading…</div>
       )}
       {toast && (
         <div style={{
