@@ -9,7 +9,6 @@ import argparse
 import hashlib
 import json
 import os
-import threading
 import time
 from pathlib import Path
 
@@ -44,10 +43,10 @@ def _handle() -> str:
 
 
 def _fire_event(payload: dict) -> None:
-    """Write one widget_events row in a background thread — never blocks the response."""
+    """Hand the event to db's single-writer queue — a microsecond put_nowait, never blocks."""
     if not _db:
         return
-    threading.Thread(target=_db.log_widget_event, args=(payload,), daemon=True).start()
+    _db.enqueue_widget_event(payload)
 
 
 def _ms(t0: float) -> int:
