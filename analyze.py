@@ -81,11 +81,18 @@ If the frame teaches a concept a student could MANIPULATE, emit a spec:
 - matrix_mul: a matrix multiplication is shown/discussed → params {a, b} (2D number arrays)
 - attention: queries/keys/attention weights → params {q, k} (2D arrays, same col count)
 - softmax: logits→probabilities / sampling / temperature → params {logits} (numbers)
-- function_plot: a plottable function/curve → params {expr (JS, in x + slider names), sliders}
-- notebook: CODE is visible in the frame, or the concept needs real computation/simulation
+- function_plot: a 2D single-variable curve y=f(x) ONLY → params {expr (JS, in x + slider names), sliders}.
+  Do NOT use this for a surface, a 3D shape, or a two-variable function — it cannot render those.
+- notebook: CODE is visible in the frame, the concept needs real computation/simulation, OR the
+  concept is inherently 3D or multi-variable (a surface z=f(x,y) like a loss landscape θ1²+θ2², a
+  3D structure like a DNA double helix, a vector field, a trajectory in space).
   → params {cells: [python source strings], sliders}. Python runs in-browser with numpy and
-  matplotlib (plt.show() to display). Translate the frame's code faithfully (torch → numpy).
-  Slider names are injected as global variables (floats — wrap int(x) as needed).
+  matplotlib (call plt.show() to display — figures render as images).
+  For anything 3D use a 3D axis: `ax = plt.figure().add_subplot(projection='3d')` then
+  ax.plot_surface / ax.plot / ax.scatter (e.g. a helix: x=cos t, y=sin t, z=t). Prefer a 3D
+  matplotlib plot over squeezing a spatial concept into a flat widget.
+  Translate the frame's code faithfully (torch → numpy). Slider names are injected as global
+  variables (floats — wrap int(x) as needed).
   params.cells is REQUIRED for notebook — 1-3 python strings that actually compute and
   print/plot the result. A notebook spec without cells is INVALID and will be discarded.
 - spreadsheet: an Excel/spreadsheet screen (a grid of cells) is shown → params
