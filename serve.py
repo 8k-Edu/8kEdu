@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from analyze import BACKEND_CHOICES, extract_json, make_backend, valid
+from analyze import BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend, valid
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -53,14 +53,19 @@ def _ms(t0: float) -> int:
     return int((time.perf_counter() - t0) * 1000)
 
 
-def _prompt_hash(video: str, frame: str, context: str) -> str:
-    key = f"{PROMPT_VERSION}|{info.get('model','?')}|{video}|{frame}|{context}"
+# The genre segment is appended only for a real lens (not None/"general"), so the legacy call
+# (genre omitted) reproduces the pre-genre key byte-for-byte — existing cached widgets still hit.
+def _prompt_hash(video: str, frame: str, context: str, genre: str | None = None) -> str:
+    g = f"|g={genre}" if genre and genre != "general" else ""
+    key = f"{PROMPT_VERSION}|{info.get('model','?')}|{video}|{frame}|{context}{g}"
     return hashlib.sha256(key.encode()).hexdigest()
 
 
-def _region_hash(video: str, frame: str, x: float, y: float, w: float, h: float) -> str:
+def _region_hash(video: str, frame: str, x: float, y: float, w: float, h: float,
+                 genre: str | None = None) -> str:
     box = f"{x:.2f},{y:.2f},{w:.2f},{h:.2f}"  # what's in the box drives the result, not the words
-    key = f"{PROMPT_VERSION}|region|{info.get('model','?')}|{video}|{frame}|{box}"
+    g = f"|g={genre}" if genre and genre != "general" else ""
+    key = f"{PROMPT_VERSION}|region|{info.get('model','?')}|{video}|{frame}|{box}{g}"
     return hashlib.sha256(key.encode()).hexdigest()
 
 
@@ -101,6 +106,36 @@ def _cache_put(h: str, video: str, result: dict):
         pass
 
 
+def _cache_get_first(hashes: list[str]):
+    """Try candidate hashes in order (new genre-keyed first, legacy second) and serve the first
+    hit — so pre-genre widgets keep serving untouched; only a full miss generates + writes new."""
+    for h in hashes:
+        r = _cache_get(h)
+        if r is not None:
+            return r
+    return None
+
+
+_genre_cache: dict[str, str] = {}
+
+
+def _genre_for(video: str, text: str) -> str:
+    """Genre lens for this video: curator-assigned (db) if known, else detected from the passage,
+    else 'general' (base prompt → legacy cache key). Resolved once per video, then in-process."""
+    g = _genre_cache.get(video)
+    if g is not None:
+        return g
+    g = None
+    if _db:
+        try:
+            g = _db.video_genre(video)
+        except Exception:
+            g = None
+    g = g or detect_genre([{"text": text or "", "start": 0.0}])
+    _genre_cache[video] = g
+    return g
+
+
 class Ask(BaseModel):
     text: str
     time: float
@@ -132,9 +167,11 @@ def make_widget(req: Ask):
     ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "widget", "model": info.get("model")}
 
+    genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
-    h = _prompt_hash(req.video, fr["file"], context)
-    cached = _cache_get(h)
+    h = _prompt_hash(req.video, fr["file"], context, genre)
+    cands = [h] if genre == "general" else [h, _prompt_hash(req.video, fr["file"], context)]
+    cached = _cache_get_first(cands)
     ev["t_cache_lookup_ms"] = _ms(t0)
 
     if cached is not None:
@@ -148,7 +185,8 @@ def make_widget(req: Ask):
 
     t0 = time.perf_counter()
     try:
-        raw = backend.ask(DATA / req.video / "frames" / fr["file"], context, max_px=WIDGET_MAX_PX)
+        raw = backend.ask(DATA / req.video / "frames" / fr["file"], context,
+                          max_px=WIDGET_MAX_PX, system=compose_system(genre))
     except Exception as e:
         ev.update(cache_hit=False, spec_valid=False, error=str(e)[:200],
                   t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
@@ -205,9 +243,12 @@ def make_region_widget(req: RegionAsk):
     ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "region", "model": info.get("model")}
 
+    genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
-    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h)
-    cached = _cache_get(h)
+    h = _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h, genre)
+    cands = [h] if genre == "general" else [
+        h, _region_hash(req.video, fr["file"], req.x, req.y, req.w, req.h)]
+    cached = _cache_get_first(cands)
     ev["t_cache_lookup_ms"] = _ms(t0)
     if cached is not None:
         cached["cached"] = True
@@ -244,7 +285,7 @@ def make_region_widget(req: RegionAsk):
     )
     t0 = time.perf_counter()
     try:
-        raw = backend.ask(path, context)
+        raw = backend.ask(path, context, system=compose_system(genre))
     except Exception as e:
         ev.update(spec_valid=False, error=str(e)[:200],
                   t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))

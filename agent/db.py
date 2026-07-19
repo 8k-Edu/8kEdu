@@ -270,6 +270,14 @@ def is_cached(video_id):
         return cur.fetchone()[0] > 0
 
 
+def video_genre(video_id):
+    """Curator-assigned genre for a video, or None if unknown/uncached (→ caller falls back)."""
+    with conn() as c, c.cursor() as cur:
+        cur.execute("select genre from videos where video_id=%s", (video_id,))
+        row = cur.fetchone()
+        return row[0] if row and row[0] else None
+
+
 def library_stats():
     """Per-genre: how many videos are cached, and how many widgets total."""
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
