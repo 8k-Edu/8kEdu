@@ -76,7 +76,7 @@ This is the record-ready script. Its metrics match experiment `e9d586862cb6`, pe
 
 ## 1:48–2:37 — Prove Recursive Intelligence
 
-**On screen:** Hold on the metric cards and the persisted cold and warm rows. Keep the experiment ID and the 64-frame denominator visible.
+**On screen:** Trace the learning curve from run one to run two, then hold on the persisted cold and warm rows. Keep the experiment ID and 64-frame denominator visible.
 
 **Say:**
 
