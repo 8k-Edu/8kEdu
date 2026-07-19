@@ -39,6 +39,49 @@ def ensure_learner(handle="demo"):
         return _one(cur)["user_id"]
 
 
+# ---------- credits: cloud (OpenRouter) inference is metered; local stays free ----------
+def user_billing(handle="demo"):
+    """Credits + whether this learner brought their own OpenRouter key."""
+    uid = ensure_learner(handle)
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("select credits, (openrouter_key is not null and openrouter_key <> '') as has_key "
+                    "from learners where user_id=%s", (uid,))
+        row = _one(cur) or {"credits": 0, "has_key": False}
+        return {"handle": handle, "credits": int(row["credits"]), "has_own_key": bool(row["has_key"])}
+
+
+def set_openrouter_key(handle, key):
+    """Store (or clear, when key is falsy) a learner's own OpenRouter key → unmetered cloud."""
+    uid = ensure_learner(handle)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("update learners set openrouter_key=%s where user_id=%s", (key or None, uid))
+        c.commit()
+    return True
+
+
+def own_key(handle):
+    uid = ensure_learner(handle)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("select openrouter_key from learners where user_id=%s", (uid,))
+        r = cur.fetchone()
+        return (r[0] or None) if r else None
+
+
+def spend_credit(handle, model="", n=1):
+    """Atomically debit n credits. Returns the new balance, or None if insufficient."""
+    uid = ensure_learner(handle)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("update learners set credits = credits - %s where user_id=%s and credits >= %s "
+                    "returning credits", (n, uid, n))
+        row = cur.fetchone()
+        if not row:
+            return None
+        cur.execute("insert into credit_ledger(user_id, delta, reason, model) values (%s,%s,%s,%s)",
+                    (uid, -n, "cloud inference", model))
+        c.commit()
+        return int(row[0])
+
+
 def set_goal(user_id, goal_text):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select id from goals where user_id=%s and goal_text=%s and status='active'",

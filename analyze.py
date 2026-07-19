@@ -369,7 +369,7 @@ def load_dotenv() -> None:
             os.environ.setdefault(k.strip(), v.strip().strip("'\""))
 
 
-CLOUD_BACKENDS = {"gemini", "openai"}
+CLOUD_BACKENDS = {"gemini", "openai", "openrouter"}
 
 
 def make_backend(name: str):
@@ -406,6 +406,11 @@ def make_backend(name: str):
             api_key=key,
             model=os.environ.get("KEDU_MODEL", "gemini-3-pro-preview"),
         )
+    if name == "openrouter":
+        key = os.environ.get("OPENROUTER_API_KEY")
+        if not key:
+            raise SystemExit("openrouter backend needs OPENROUTER_API_KEY")
+        return openrouter_backend(key)
     # generic BYOK / vLLM pod
     return OpenAIBackend(
         base_url=os.environ.get("KEDU_BASE_URL", "http://localhost:8000/v1"),
@@ -414,7 +419,17 @@ def make_backend(name: str):
     )
 
 
-BACKEND_CHOICES = ["mlx", "lmstudio", "vllm", "gemini", "openai"]
+def openrouter_backend(api_key: str, model: str | None = None):
+    """OpenRouter (OpenAI-compatible) vision backend. Used per-request by the server, where
+    the credit system — not the CLI KEDU_ALLOW_CLOUD guard — meters the spend."""
+    return OpenAIBackend(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+        model=model or os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
+    )
+
+
+BACKEND_CHOICES = ["mlx", "lmstudio", "vllm", "gemini", "openai", "openrouter"]
 
 
 def main() -> None:
