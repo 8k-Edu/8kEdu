@@ -92,7 +92,9 @@ The agent stack (`?view=agent`, `?view=learn`, `?view=community`) persists to
 Supabase. One-time setup:
 
 1. Create a Supabase project → Project Settings → Database → copy the connection URI.
-2. Add it to `.env`: `SUPABASE_DB_URL="postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres"`.
+2. Add it to `.env`. **Prefer the Transaction pooler** (IPv4, port 6543) — the direct
+   `db.<ref>.supabase.co:5432` endpoint is **IPv6-only** and fails on networks without an IPv6 route:
+   `SUPABASE_DB_URL="postgresql://postgres.<ref>:<pw>@aws-0-<region>.pooler.supabase.com:6543/postgres"`
 3. Apply the schema — pick one:
    - **Tracked** (Supabase CLI, brew install supabase/tap/supabase):
      `supabase link --project-ref <ref> && supabase db push`
