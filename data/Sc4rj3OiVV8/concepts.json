@@ -1,0 +1,99 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Macro Calculator",
+  "explanation": "It lets viewers input their daily calories and desired macro percentages to compute gram amounts for carbs, protein, and fat.",
+  "params": {
+   "cells": [
+    "def calculate():\n    carbs_g = total_calories * (carbs_pct / 100) / 4\n    protein_g = total_calories * (protein_pct / 100) / 4\n    fat_g = total_calories * (fat_pct / 100) / 9\n    print(f\"Carbs: {carbs_g:.1f}\u202fg, Protein: {protein_g:.1f}\u202fg, Fat: {fat_g:.1f}\u202fg\")"
+   ],
+   "sliders": [
+    {
+     "name": "total_calories",
+     "default": 2000,
+     "min": 500,
+     "max": 5000,
+     "step": 10
+    },
+    {
+     "name": "carbs_pct",
+     "default": 40,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    },
+    {
+     "name": "protein_pct",
+     "default": 30,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    },
+    {
+     "name": "fat_pct",
+     "default": 30,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    }
+   ]
+  },
+  "time": 20,
+  "frame": "f_000020.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Calorie calculator based on food weight",
+  "explanation": "It lets viewers instantly see how many calories they consume by weighing their food in grams.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\ndef calories(grams):\n    # Peanut butter ~588 kcal per 100 g\n    return grams * 5.88\n\nprint(f\"Calories for {grams} g: {calories(grams):.1f}\")"
+   ],
+   "sliders": [
+    "grams"
+   ]
+  },
+  "time": 110,
+  "frame": "f_000110.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "function_plot",
+  "title": "Convert grams of peanut butter to tablespoons",
+  "explanation": "Shows how many tablespoons correspond to a chosen gram amount, enabling precise portion control.",
+  "params": {
+   "expr": "tablespoons = grams / 16",
+   "sliders": [
+    "grams"
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Peanut Butter Calorie Calculator",
+  "explanation": "Allows users to set a gram amount of peanut butter and instantly see the corresponding calories and tablespoon serving size.",
+  "params": {
+   "cells": [
+    "# Compute calories per gram based on known values\ncal_per_gram = 95 / 16",
+    "# Calculate total calories for entered grams\ndef calculate_calories(grams):\n    return grams * cal_per_gram",
+    "# Optional: compute tablespoons from grams\ntbsp = grams / 16"
+   ],
+   "sliders": [
+    {
+     "name": "grams",
+     "default": 16,
+     "min": 0,
+     "max": 100,
+     "step": 1
+    }
+   ]
+  },
+  "time": 130,
+  "frame": "f_000130.jpg"
+ }
+]
