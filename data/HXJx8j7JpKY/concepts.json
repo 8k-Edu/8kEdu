@@ -2,12 +2,19 @@
  {
   "has_concept": true,
   "widget": "function_plot",
-  "title": "Tie Position vs Wide End Length",
-  "explanation": "Shows how adjusting the wide end length changes where the tie ends, helping you set it correctly quickly.",
+  "title": "Tie Length Adjustment",
+  "explanation": "Changing the length of the tie's wide end directly affects how low the finished tie hangs, letting you customize its final position.",
   "params": {
-   "expr": "finalPos = wide_end - 4",
+   "expr": "tie_height = 30 - 2 * wide_len",
    "sliders": [
-    "wide_end"
+    {
+     "name": "wide_len",
+     "label": "Wide end length (inches)",
+     "min": 2,
+     "max": 10,
+     "step": 0.5,
+     "default": 5
+    }
    ]
   },
   "time": 40,
