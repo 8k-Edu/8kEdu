@@ -81,12 +81,20 @@ def parse_vtt(out: Path) -> list[dict]:
 
 
 def duration_sec(video: Path) -> float:
-    p = subprocess.run(
-        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
-         "-of", "csv=p=0", str(video)],
-        capture_output=True, text=True, check=True,
-    )
-    return float(p.stdout.strip())
+    if shutil.which("ffprobe"):
+        p = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "csv=p=0", str(video)],
+            capture_output=True, text=True, check=True,
+        )
+        return float(p.stdout.strip())
+    # sandbox: only ffmpeg (via imageio-ffmpeg) — parse "Duration: HH:MM:SS.ss" from its stderr
+    p = subprocess.run(["ffmpeg", "-i", str(video)], capture_output=True, text=True)
+    m = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.?\d*)", p.stderr)
+    if not m:
+        return float(MAX_FRAMES * 10)  # unknown → default sampling cadence
+    h, mm, ss = m.groups()
+    return int(h) * 3600 + int(mm) * 60 + float(ss)
 
 
 def extract_frames(video: Path, out: Path) -> list[dict]:
