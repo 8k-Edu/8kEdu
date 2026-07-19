@@ -764,14 +764,14 @@ function Lecture({ videoId, role }) {
   const Widget = active ? WIDGETS[active.widget] : null
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-        <a href="/" title="back to start" style={{ textDecoration: 'none', color: '#e6edf3' }}>
-          <h1 style={{ fontSize: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: '#8b949e', fontSize: 15 }}>←</span> 8kEdu
-          </h1>
+    <div style={{ maxWidth: 1560, margin: '0 auto', padding: '16px 24px 28px', display: 'flex', flexDirection: 'column', gap: 14, position: 'relative' }}>
+      {/* ambient glow so the workspace doesn't sit on flat black */}
+      <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: -1, background: 'radial-gradient(900px 500px at 78% 8%, #1f6feb14, transparent 60%), radial-gradient(700px 420px at 12% 92%, #23863611, transparent 60%)' }} />
+      <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <a href="/" title="back to start" style={{ textDecoration: 'none', color: '#e6edf3', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: '#8b949e', fontSize: 15 }}>←</span> <Logo size={26} wordColor="#e6edf3" />
         </a>
-        <span style={{ color: '#8b949e', fontSize: 14 }}>YouTube video → interactive learning dashboard</span>
+        <span style={{ color: '#8b949e', fontSize: 13.5 }}>video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} />
           {roleCfg && (
@@ -787,7 +787,8 @@ function Lecture({ videoId, role }) {
         </span>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 14, alignItems: 'start' }}>
+      {/* widget workspace gets the bigger share — it's the product, the video is the source */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.25fr)', gap: 18, alignItems: 'start' }}>
         <div style={{ minWidth: 0 }}>
           <div id="player-box" style={{ borderRadius: 12, overflow: 'hidden', border: touchMode ? '1px solid #388bfd' : '1px solid #30363d' }}>
             <div ref={holder} />
@@ -890,14 +891,15 @@ function Lecture({ videoId, role }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, position: 'sticky', top: 14 }}>
           {analyzed && <GlobalAsk onAsk={askGlobal} busy={busy} concepts={concepts} time={time} />}
           {active ? (
-            <>
+            <div style={{ border: '1px solid #30363d', borderRadius: 14, background: 'linear-gradient(180deg,#11161d,#0d1117)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 12px 34px #0006' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>{active.title}</div>
-                  <div style={{ fontSize: 13, color: '#8b949e', marginTop: 4 }}>{active.explanation}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#56d364', marginBottom: 4 }}>● live widget · {active.widget}</div>
+                  <div style={{ fontSize: 17.5, fontWeight: 650, letterSpacing: '-.01em' }}>{active.title}</div>
+                  <div style={{ fontSize: 13, color: '#8b949e', marginTop: 4, lineHeight: 1.5 }}>{active.explanation}</div>
                 </div>
                 <button onClick={share} style={{
                   background: '#238636', color: 'white', border: 'none', borderRadius: 8,
@@ -913,9 +915,10 @@ function Lecture({ videoId, role }) {
                     ? <>made from your selection · <button onClick={() => setFollowVideo(true)} style={{ background: 'none', border: 'none', color: '#2f81f7', fontSize: 11, padding: 0, textDecoration: 'underline' }}>back to the lecture</button></>
                     : <>remixed spec — loaded from the link · <button onClick={() => setFollowVideo(true)} style={{ background: 'none', border: 'none', color: '#2f81f7', fontSize: 11, padding: 0, textDecoration: 'underline' }}>back to the lecture</button></>}
               </div>
-            </>
+            </div>
           ) : (
-            <div style={{ color: '#8b949e', fontSize: 14, padding: 30, textAlign: 'center', border: '1px dashed #30363d', borderRadius: 12 }}>
+            <div style={{ color: '#8b949e', fontSize: 14, padding: '52px 30px', textAlign: 'center', border: '1px dashed #30363d', borderRadius: 14, background: '#0d111788', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 26, marginBottom: 10 }}>⚡</div>
               play the lecture — or select a transcript passage and ask for the widget you want
             </div>
           )}
