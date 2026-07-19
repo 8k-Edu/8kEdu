@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8kEdu widget hot-path — performance progression</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --surface:#ffffff; --panel:#eceff3; --line:#e0e4ea; --line-2:#ccd3dc;
+    --ink:#161c23; --muted:#54606f; --faint:#8b95a3;
+    --accent:#0f9e8b; --before:#bd7f2b; --pr4:#3a6fd4; --pr5:#0f9e8b; --danger:#cf3f4c;
+    --shadow:0 1px 2px rgba(16,24,32,.06),0 8px 24px rgba(16,24,32,.05);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d1217; --surface:#151b22; --panel:#1a212a; --line:#25303a; --line-2:#33404d;
+      --ink:#e7ecf1; --muted:#93a0ae; --faint:#606c79;
+      --accent:#2ed0b6; --before:#d69a46; --pr4:#5d8ef0; --pr5:#2ed0b6; --danger:#e8616c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f6f8; --surface:#ffffff; --panel:#eceff3; --line:#e0e4ea; --line-2:#ccd3dc;
+    --ink:#161c23; --muted:#54606f; --faint:#8b95a3;
+    --accent:#0f9e8b; --before:#bd7f2b; --pr4:#3a6fd4; --pr5:#0f9e8b; --danger:#cf3f4c;
+    --shadow:0 1px 2px rgba(16,24,32,.06),0 8px 24px rgba(16,24,32,.05);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1217; --surface:#151b22; --panel:#1a212a; --line:#25303a; --line-2:#33404d;
+    --ink:#e7ecf1; --muted:#93a0ae; --faint:#606c79;
+    --accent:#2ed0b6; --before:#d69a46; --pr4:#5d8ef0; --pr5:#2ed0b6; --danger:#e8616c;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html{background:var(--bg)}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 24px 72px;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);}
+
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand b{font-size:16px;letter-spacing:-.01em;}
+  .brand span{font-family:var(--mono);font-size:12px;color:var(--faint);}
+  .toggle{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;}
+  .toggle:hover{border-color:var(--line-2);color:var(--ink);}
+  .toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  h1{font-size:clamp(27px,4.2vw,42px);letter-spacing:-.03em;line-height:1.05;margin:12px 0 0;
+    text-wrap:balance;max-width:18ch;}
+  .lede{color:var(--muted);font-size:16px;margin:14px 0 0;max-width:66ch;}
+  .lede b{color:var(--ink);font-weight:650;}
+
+  .heroes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px;}
+  .hero{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+    box-shadow:var(--shadow);}
+  .hero .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);}
+  .hero .f{font-family:var(--mono);font-size:clamp(30px,5vw,40px);font-weight:600;letter-spacing:-.02em;
+    color:var(--accent);margin-top:8px;line-height:1;}
+  .hero .path{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:10px;font-variant-numeric:tabular-nums;}
+  .hero .path s{text-decoration:none;color:var(--faint);}
+  .hero .path .arr{color:var(--line-2);padding:0 4px;}
+
+  section{margin-top:40px;}
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px;}
+  .head h2{font-size:18px;letter-spacing:-.01em;margin:0;}
+  .head .hint{font-family:var(--mono);font-size:11.5px;color:var(--faint);}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);}
+
+  .metric{padding:18px 20px;border-bottom:1px solid var(--line);}
+  .metric:last-child{border-bottom:none;}
+  .metric .mtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .metric .mname{font-size:14.5px;font-weight:600;}
+  .metric .msub{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:2px;font-weight:400;}
+  .badge{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);
+    background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);
+    border-radius:999px;padding:3px 10px;white-space:nowrap;}
+
+  .rel{margin:2px 0;}
+  .row{display:grid;grid-template-columns:64px 1fr 66px;align-items:center;gap:12px;}
+  .row .stg{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .track{position:relative;height:15px;background:var(--panel);border-radius:5px;overflow:hidden;}
+  .fill{height:100%;width:var(--w);border-radius:5px;min-width:3px;
+    animation:grow .9s cubic-bezier(.22,.61,.36,1) both;}
+  .fill.i0{background:var(--before);} .fill.i1{background:var(--pr4);} .fill.i2{background:var(--pr5);}
+  .row .val{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);}
+  .budget{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--danger);opacity:.85;}
+  .budget::after{content:"5 s budget";position:absolute;top:-14px;left:5px;font-family:var(--mono);
+    font-size:9.5px;letter-spacing:.03em;color:var(--danger);white-space:nowrap;}
+  @keyframes grow{from{width:0}to{width:var(--w)}}
+  @media (prefers-reduced-motion:reduce){.fill{animation:none;}}
+
+  /* attribution caption — says WHERE the boost came from, on each release */
+  .cap{padding:3px 0 5px 76px;font-family:var(--mono);font-size:11.5px;line-height:1.35;color:var(--muted);
+    display:flex;gap:7px;align-items:baseline;}
+  .cap .d{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .cap.i0{color:var(--faint);} .cap.i1 .d{color:var(--pr4);} .cap.i2 .d{color:var(--pr5);}
+  .cap .why{color:var(--muted);}
+  .cap.held .d{color:var(--faint);}
+
+  .rel.ghost .track{background:transparent;border:1px dashed var(--line-2);}
+  .rel.ghost .stg,.rel.ghost .val{color:var(--faint);}
+  .rel.ghost .cap{color:var(--faint);}
+  .rel.ghost .cap .d{color:var(--accent);opacity:.85;}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;padding:13px 20px;border-top:1px solid var(--line);}
+  .legend .li{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .swatch{width:11px;height:11px;border-radius:3px;flex:none;}
+  .swatch.ghost{background:transparent;border:1px dashed var(--line-2);}
+
+  .ships{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .ship{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 17px;box-shadow:var(--shadow);}
+  .ship .st{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none;}
+  .ship ul{list-style:none;margin:12px 0 0;padding:0;}
+  .ship li{position:relative;padding:6px 0 6px 16px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);}
+  .ship li:first-child{border-top:none;}
+  .ship li::before{content:"";position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:var(--line-2);}
+  .ship li b{color:var(--ink);font-weight:600;}
+
+  .note{margin-top:26px;padding:15px 18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    font-size:13px;color:var(--muted);line-height:1.6;}
+  .note b{color:var(--ink);font-weight:600;}
+  .note code{font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 5px;}
+
+  @media (max-width:720px){
+    .heroes{grid-template-columns:1fr;} .ships{grid-template-columns:1fr;}
+    .row{grid-template-columns:54px 1fr 60px;} .cap{padding-left:66px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><b>8kEdu</b><span>· widget hot path</span></div>
+    <button class="toggle" id="themeBtn" aria-label="Toggle light or dark theme">◐ theme</button>
+  </div>
+
+  <div class="eyebrow">performance progression</div>
+  <h1>Time to first widget, release over release.</h1>
+  <p class="lede">The mint hot path went from <b>over the 5-second budget</b> to <b>well under 1.5 s</b> — and each
+    drop is tagged with the change that caused it. More vLLM tuning is in flight, so the <b>next</b> slot is left
+    open on purpose.</p>
+
+  <div class="heroes" id="heroes"></div>
+
+  <section>
+    <div class="head">
+      <h2>Latency by release — and what drove each drop</h2>
+      <div class="hint">bars scaled per metric · lower is faster</div>
+    </div>
+    <div class="card">
+      <div id="metrics"></div>
+      <div class="legend">
+        <div class="li"><span class="swatch" style="background:var(--before)"></span>baseline (pre-#4)</div>
+        <div class="li"><span class="swatch" style="background:var(--pr4)"></span>PR&nbsp;#4 · caching &amp; downscale</div>
+        <div class="li"><span class="swatch" style="background:var(--pr5)"></span>PR&nbsp;#5 · vLLM</div>
+        <div class="li"><span class="swatch ghost"></span>next · in progress</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Full changelog</h2></div>
+    <div class="ships">
+      <div class="ship">
+        <div class="st"><span class="dot" style="background:var(--before)"></span>Baseline</div>
+        <ul>
+          <li>Full-resolution frame sent to the VLM every call</li>
+          <li>A <b>fresh DB connection + query</b> per cache lookup</li>
+          <li>No region cache — every whiteboard tap re-ran the model</li>
+        </ul>
+      </div>
+      <div class="ship">
+        <div class="st"><span class="dot" style="background:var(--pr4)"></span>PR&nbsp;#4</div>
+        <ul>
+          <li><b>Downscale frame</b> to ≤768&nbsp;px before the VLM call</li>
+          <li><b>In-process LRU</b> + persistent cache connection</li>
+          <li><b>Cache <code>/api/region</code></b> by (video, frame, bbox)</li>
+          <li>Single-writer telemetry queue + the live <code>?view=perf</code> dashboard</li>
+        </ul>
+      </div>
+      <div class="ship">
+        <div class="st"><span class="dot" style="background:var(--pr5)"></span>PR&nbsp;#5</div>
+        <ul>
+          <li><b>vLLM (vllm-mlx)</b> backend alongside LM Studio — <b>parity</b> on the VLM call (~1.33&nbsp;s vs ~1.40&nbsp;s)</li>
+          <li>Client + server <b>request timeouts</b> &amp; a <b>warmup ping</b></li>
+          <li>Kills the disconnected-client pileup that spiked tail latency to <b>100&nbsp;s+</b> under load</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="note">
+    <b>Method.</b> PR&nbsp;#4 deltas are its measured before/after on the Excel lecture (<code>qwen3-vl-4b</code>).
+    PR&nbsp;#5 figures are a same-method benchmark on video <code>5IgOP7Lpk5g</code> — identical model, direct-to-server,
+    warmed, sequential — giving <b>~1.33&nbsp;s</b> (vLLM) vs <b>~1.40&nbsp;s</b> (LM&nbsp;Studio). Warm-hit and region wins come
+    from PR&nbsp;#4 caching; PR&nbsp;#5 changes the model server, not the cache, so it holds them.
+    <b>Adding the next release:</b> append one entry to a metric's <code>stages[]</code> in this file and shift the ghost — the bars, deltas and factors recompute.
+  </div>
+</div>
+
+<script>
+  const fmtMs = v => v == null ? "—" : (v >= 1000 ? `${(v/1000).toFixed(v%1000===0?0:1)} s` : `${v} ms`);
+
+  const heroes = [
+    {k:"cold-miss · first widget", f:"4.3× faster", was:"5.7 s", now:"1.33 s"},
+    {k:"warm cache hit", f:"280× faster", was:"560 ms", now:"~2 ms"},
+    {k:"region re-ask (warm)", f:"400× faster", was:"1.2 s", now:"~3 ms"},
+  ];
+  document.getElementById("heroes").innerHTML = heroes.map(h=>`
+    <div class="hero">
+      <div class="k">${h.k}</div>
+      <div class="f">${h.f}</div>
+      <div class="path"><s>${h.was}</s><span class="arr">→</span>${h.now}</div>
+    </div>`).join("");
+
+  // ── the data. To log the next release: append to stages[] and update `next`. ──
+  const metrics = [
+    { name:"Cold-miss · time to first widget", sub:"p50, end-to-end", budget:5000,
+      stages:[
+        {rel:"baseline", v:5700, disp:"5.7 s",  driver:"full-res frame · fresh DB conn per call"},
+        {rel:"PR #4",    v:1900, disp:"1.9 s",  driver:"frame downscale ≤768px + persistent cache conn"},
+        {rel:"PR #5",    v:1330, disp:"1.33 s", driver:"vLLM (vllm-mlx) backend"},
+      ], next:"more vLLM tuning — concurrency, kv-cache quant" },
+    { name:"Warm cache hit", sub:"identical ask, served from cache",
+      stages:[
+        {rel:"baseline", v:560, disp:"560 ms", driver:"no in-process cache"},
+        {rel:"PR #4",    v:2,   disp:"~2 ms",  driver:"in-process LRU + persistent connection"},
+        {rel:"PR #5",    v:2,   disp:"~2 ms",  driver:"caching win preserved"},
+      ], next:null },
+    { name:"Region re-ask · same whiteboard box", sub:"cached by (video, frame, bbox)",
+      stages:[
+        {rel:"baseline", v:1200, disp:"1.2 s", driver:"no region cache"},
+        {rel:"PR #4",    v:3,    disp:"~3 ms", driver:"cache /api/region by (video, frame, bbox)"},
+        {rel:"PR #5",    v:3,    disp:"~3 ms", driver:"caching win preserved"},
+      ], next:null },
+  ];
+
+  document.getElementById("metrics").innerHTML = metrics.map(m=>{
+    const max = Math.max(...m.stages.map(s=>s.v));
+    const last = m.stages[m.stages.length-1].v, first = m.stages[0].v;
+    const factor = first/last >= 10 ? `${Math.round(first/last)}× faster` : `${(first/last).toFixed(1)}× faster`;
+    const rels = m.stages.map((s,i)=>{
+      const pct = Math.max(0.4,(s.v/max)*100).toFixed(2);
+      const bud = (m.budget && i===0) ? `<span class="budget" style="left:${((m.budget/max)*100).toFixed(1)}%"></span>` : "";
+      let cap;
+      if(i===0){ cap = `<div class="cap i0"><span class="why">${s.driver}</span></div>`; }
+      else{
+        const d = m.stages[i-1].v - s.v;
+        if(d>0){ cap = `<div class="cap i${i}"><span class="d">▼ −${fmtMs(d)}</span><span class="why">${s.driver}</span></div>`; }
+        else{ cap = `<div class="cap i${i} held"><span class="d">= held</span><span class="why">${s.driver}</span></div>`; }
+      }
+      return `<div class="rel">
+        <div class="row"><span class="stg">${s.rel}</span>
+          <div class="track">${bud}<div class="fill i${i}" style="--w:${pct}%" title="${s.rel}: ${s.disp}"></div></div>
+          <span class="val">${s.disp}</span></div>
+        ${cap}</div>`;
+    }).join("");
+    const ghost = m.next ? `<div class="rel ghost">
+      <div class="row"><span class="stg">next</span>
+        <div class="track"></div><span class="val">—</span></div>
+      <div class="cap"><span class="d">◇ soon</span><span class="why">${m.next}</span></div></div>` : "";
+    return `<div class="metric">
+      <div class="mtop"><div><div class="mname">${m.name}</div><div class="msub">${m.sub}</div></div>
+        <span class="badge">${factor}</span></div>
+      ${rels}${ghost}</div>`;
+  }).join("");
+
+  const root = document.documentElement, btn = document.getElementById("themeBtn");
+  btn.addEventListener("click", ()=>{
+    const dark = matchMedia("(prefers-color-scheme:dark)").matches;
+    const cur = root.getAttribute("data-theme") || (dark ? "dark" : "light");
+    root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+</script>
+</body>
+</html>
