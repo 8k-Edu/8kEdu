@@ -66,7 +66,7 @@ def process_new(video_id, genre, title="", channel=""):
     if not (vd / "frames.json").exists():
         subprocess.run(["uv", "run", "ingest.py", f"https://www.youtube.com/watch?v={video_id}"],
                        cwd=ROOT, timeout=900, check=True)
-    subprocess.run(["uv", "run", "analyze.py", "--backend", "lmstudio",
+    subprocess.run(["uv", "run", "analyze.py", "--backend", os.environ.get("TACTILE_BACKEND", "lmstudio"),
                     "--video", video_id, "--genre", genre, "--limit", "16",
                     "--recursive-topic", genre, "--recursive-mode", "warm", "--max-px", "512"],
                    cwd=ROOT, timeout=2400, check=True)

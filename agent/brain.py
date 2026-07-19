@@ -1,5 +1,6 @@
-"""The agent's brain — Nemotron Omni via the local LM Studio OpenAI-compatible server.
+"""The agent's brain — Nemotron Omni via a local OpenAI-compatible server (LM Studio or vllm-mlx).
 One model: vision (reads video frames) + reasoning + tool-calling. Local, $0.
+Endpoint: NEMOTRON_BASE_URL / NEMOTRON_MODEL (default LM Studio on :1234).
 """
 import json
 import os

@@ -2,11 +2,15 @@
 
 Usage:
   uv run analyze.py --backend mlx [--limit N]          # local, in-process (M4 Max)
+  uv run analyze.py --backend vllm [--limit N]         # local vllm-mlx server (Apple Silicon)
   uv run analyze.py --backend openai [--limit N]       # vLLM pod / any OpenAI-compat server
 
 Env (openai backend):
   TACTILE_BASE_URL  endpoint, e.g. http://<pod>:8000/v1
   TACTILE_MODEL     served model name
+Env (vllm backend):
+  VLLM_BASE_URL     local vllm-mlx endpoint (default http://localhost:8000/v1)
+  VLLM_MODEL        served MLX repo, e.g. mlx-community/Qwen2.5-VL-7B-Instruct-4bit
 Outputs: <data>/concepts.json
 """
 
@@ -271,7 +275,14 @@ class OpenAIBackend:
         from openai import OpenAI
         self.model = model
         self.model_name = model
-        self.client = OpenAI(base_url=base_url, api_key=api_key)
+        # Bound every call and disable SDK retries. vllm-mlx keeps generating for a client
+        # that has gone away, so an untimed client is how a slow request cascades into a
+        # 100s+ pileup under load; a timeout closes the socket → the server cancels it.
+        self.client = OpenAI(
+            base_url=base_url, api_key=api_key,
+            timeout=float(os.environ.get("TACTILE_TIMEOUT", "60")),
+            max_retries=0,
+        )
 
     def ask(self, frame: Path, context: str, max_px: int | None = None) -> str:
         img = base64.standard_b64encode(_jpeg_bytes(frame, max_px)).decode()
@@ -324,7 +335,7 @@ CLOUD_BACKENDS = {"gemini", "openai"}
 
 
 def make_backend(name: str):
-    """local: mlx (in-process) · lmstudio (local server) — BYOK: gemini · openai (generic/vLLM)."""
+    """local: mlx (in-process) · lmstudio · vllm (local servers) — BYOK: gemini · openai (generic/vLLM)."""
     load_dotenv()
     # cost guard: cloud vision (Gemini/OpenAI) is OFF unless explicitly allowed.
     # a runaway batch over hundreds of frames is how a bill explodes.
@@ -341,6 +352,12 @@ def make_backend(name: str):
             base_url=os.environ.get("TACTILE_BASE_URL", "http://127.0.0.1:1234/v1"),
             api_key="lm-studio",
             model=os.environ.get("TACTILE_MODEL", "qwen2.5-vl-7b-instruct"),
+        )
+    if name == "vllm":  # local vllm-mlx server, OpenAI-compatible — own config, local ⇒ no cost guard
+        return OpenAIBackend(
+            base_url=os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1"),
+            api_key=os.environ.get("VLLM_API_KEY", "none"),
+            model=os.environ.get("VLLM_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit"),
         )
     if name == "gemini":
         key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -359,7 +376,7 @@ def make_backend(name: str):
     )
 
 
-BACKEND_CHOICES = ["mlx", "lmstudio", "gemini", "openai"]
+BACKEND_CHOICES = ["mlx", "lmstudio", "vllm", "gemini", "openai"]
 
 
 def main() -> None:
