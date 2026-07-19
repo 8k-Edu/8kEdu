@@ -6,7 +6,7 @@ Target: a tight **~2-minute** demo video that hits all four judging criteria. Re
 ```bash
 ./run.sh            # serve + agent-api + frontend  (add --loop to run the live heartbeat)
 ```
-Confirm the LLM server is up — LM Studio serving `nvidia/nemotron-3-nano-omni` on :1234, or vllm-mlx via `./scripts/serve-vllm.sh` (then `TACTILE_BACKEND=vllm`) — and the scoutclaw sandbox is up
+Confirm the LLM server is up — LM Studio serving `nvidia/nemotron-3-nano-omni` on :1234, or vllm-mlx via `./scripts/serve-vllm.sh` (then `KEDU_BACKEND=vllm`) — and the scoutclaw sandbox is up
 (`nemoclaw scoutclaw status`). Open the app at `http://dev.localhost:5174/`.
 
 Have two terminals ready: one for the app, one for `claw-agent/contain_demo.sh`.

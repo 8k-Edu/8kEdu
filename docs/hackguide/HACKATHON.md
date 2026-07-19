@@ -46,7 +46,7 @@ The whole product is **the concept-spec schema**: `{widget, title, explanation, 
 1. `uv init --python 3.12 && uv add yt-dlp mlx-vlm openai fastapi uvicorn pillow`
 2. **ingest.py** (142 lines) — `video_id()`, `download()`, `parse_vtt()` (keep last line per cue, dedupe rolling captions), `extract_frames()` (uniform `fps=1/interval`, cap 120, name `f_<sec>.jpg`), `fetch_chapters()`. Default out = `data/<id>`.
 3. Run ingest on the Karpathy URL → get frames while you code the rest.
-4. **analyze.py** (308) — `CONCEPT_SCHEMA`, `SYSTEM` prompt, `valid()` (per-widget param shape check), `MlxBackend` / `OpenAIBackend`, `make_backend()` with **cloud guard** (`TACTILE_ALLOW_CLOUD=1` gate), CLI `--backend --video --limit --out-name`.
+4. **analyze.py** (308) — `CONCEPT_SCHEMA`, `SYSTEM` prompt, `valid()` (per-widget param shape check), `MlxBackend` / `OpenAIBackend`, `make_backend()` with **cloud guard** (`KEDU_ALLOW_CLOUD=1` gate), CLI `--backend --video --limit --out-name`.
 5. `cd app && npm create vite@latest . -- --template react && npm i qrcode pyodide` ; `vite.config.js`: `publicDir: '../data'` + proxy `/api → 127.0.0.1:8756`.
 6. **widgets.jsx** (533) — the 4 kit widgets + composite + notebook + `WIDGETS` map. All take `{params, onState}`.
 7. **App.jsx** (844) — `useYouTube` hook, timeline ticks, `Transcript` (select→AskBox), `Moments` list, `GlobalAsk` omnibox, `TouchOverlay` (drag→region), `ShareModal` (QR), `Landing` (categories + role cards), export bar. Router: `?v=<id>&role=<role>`, `#s=<b64spec>` remix.
@@ -61,7 +61,7 @@ The whole product is **the concept-spec schema**: `{widget, title, explanation, 
 ## Run it
 ```bash
 # backend (local, free — no cloud possible without explicit flag)
-TACTILE_MLX_MODEL=mlx-community/Qwen2.5-VL-32B-Instruct-4bit uv run serve.py --backend mlx
+KEDU_MLX_MODEL=mlx-community/Qwen2.5-VL-32B-Instruct-4bit uv run serve.py --backend mlx
 # frontend
 cd app && npm run dev            # http://localhost:5173
 # batch-extract a video's widgets (local)
@@ -70,7 +70,7 @@ uv run ingest.py "<youtube-url>" && uv run analyze.py --backend mlx --video <id>
 Models on disk: `Qwen2.5-VL-7B-Instruct-4bit` (fast) and `-32B-` (strong). 32B reads tight crops far better.
 
 ## Cost guard (LEARNED THE HARD WAY — $3k Gemini blowup)
-`make_backend()` **refuses gemini/openai unless `TACTILE_ALLOW_CLOUD=1`**. Batch × cloud frames is how a bill explodes. Local MLX = $0, unrestricted. Keep it this way for the demo. `.env` holds `GEMINI_API_KEY` (gitignored) — but keys got abuse-banned; demo on local.
+`make_backend()` **refuses gemini/openai unless `KEDU_ALLOW_CLOUD=1`**. Batch × cloud frames is how a bill explodes. Local MLX = $0, unrestricted. Keep it this way for the demo. `.env` holds `GEMINI_API_KEY` (gitignored) — but keys got abuse-banned; demo on local.
 
 ## Offline safety (venue wifi WILL fail)
 - **pyodide vendored** → `data/pyodide-dist/` (45MB closure incl scipy/sympy); `widgets.jsx` loads `indexURL: '/pyodide-dist/'`. Re-vendor script in git history if missing.

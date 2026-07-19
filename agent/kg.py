@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import re
+import threading
 import time
 import unicodedata
 from collections import Counter
@@ -22,6 +23,8 @@ from agent import db
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 MIGRATION = ROOT / "supabase" / "migrations" / "20260719043000_recursive_intelligence.sql"
+_SCHEMA_LOCK = threading.Lock()
+_SCHEMA_READY = False
 
 DEMO_VIDEO_META = {
     "kCc8FmEb1nY": {
@@ -134,9 +137,16 @@ def load_observations(video_id: str, topic: str) -> list[dict]:
 
 
 def ensure_schema() -> None:
-    with db.conn() as connection, connection.cursor() as cursor:
-        cursor.execute(MIGRATION.read_text())
-        connection.commit()
+    global _SCHEMA_READY
+    if _SCHEMA_READY:
+        return
+    with _SCHEMA_LOCK:
+        if _SCHEMA_READY:
+            return
+        with db.conn() as connection, connection.cursor() as cursor:
+            cursor.execute(MIGRATION.read_text())
+            connection.commit()
+        _SCHEMA_READY = True
 
 
 def _next_run_seq(cursor, topic: str) -> int:

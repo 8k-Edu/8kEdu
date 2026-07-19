@@ -6,8 +6,8 @@ Usage:
   uv run analyze.py --backend openai [--limit N]       # vLLM pod / any OpenAI-compat server
 
 Env (openai backend):
-  TACTILE_BASE_URL  endpoint, e.g. http://<pod>:8000/v1
-  TACTILE_MODEL     served model name
+  KEDU_BASE_URL  endpoint, e.g. http://<pod>:8000/v1
+  KEDU_MODEL     served model name
 Env (vllm backend):
   VLLM_BASE_URL     local vllm-mlx endpoint (default http://localhost:8000/v1)
   VLLM_MODEL        served MLX repo, e.g. mlx-community/Qwen2.5-VL-7B-Instruct-4bit
@@ -22,7 +22,7 @@ import re
 import time
 from pathlib import Path
 
-MLX_MODEL = os.environ.get("TACTILE_MLX_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit")
+MLX_MODEL = os.environ.get("KEDU_MLX_MODEL", "mlx-community/Qwen2.5-VL-7B-Instruct-4bit")
 
 CONCEPT_SCHEMA = {
     "type": "object",
@@ -280,7 +280,7 @@ class OpenAIBackend:
         # 100s+ pileup under load; a timeout closes the socket → the server cancels it.
         self.client = OpenAI(
             base_url=base_url, api_key=api_key,
-            timeout=float(os.environ.get("TACTILE_TIMEOUT", "60")),
+            timeout=float(os.environ.get("KEDU_TIMEOUT", "60")),
             max_retries=0,
         )
 
@@ -339,19 +339,19 @@ def make_backend(name: str):
     load_dotenv()
     # cost guard: cloud vision (Gemini/OpenAI) is OFF unless explicitly allowed.
     # a runaway batch over hundreds of frames is how a bill explodes.
-    if name in CLOUD_BACKENDS and os.environ.get("TACTILE_ALLOW_CLOUD") != "1":
+    if name in CLOUD_BACKENDS and os.environ.get("KEDU_ALLOW_CLOUD") != "1":
         raise SystemExit(
             f"cloud backend '{name}' is BLOCKED (cost guard).\n"
             f"Local backends (mlx / lmstudio) are free and unrestricted.\n"
-            f"To deliberately spend on cloud vision, set TACTILE_ALLOW_CLOUD=1 for this one run."
+            f"To deliberately spend on cloud vision, set KEDU_ALLOW_CLOUD=1 for this one run."
         )
     if name == "mlx":
         return MlxBackend()
     if name == "lmstudio":
         return OpenAIBackend(
-            base_url=os.environ.get("TACTILE_BASE_URL", "http://127.0.0.1:1234/v1"),
+            base_url=os.environ.get("KEDU_BASE_URL", "http://127.0.0.1:1234/v1"),
             api_key="lm-studio",
-            model=os.environ.get("TACTILE_MODEL", "qwen2.5-vl-7b-instruct"),
+            model=os.environ.get("KEDU_MODEL", "qwen2.5-vl-7b-instruct"),
         )
     if name == "vllm":  # local vllm-mlx server, OpenAI-compatible — own config, local ⇒ no cost guard
         return OpenAIBackend(
@@ -366,13 +366,13 @@ def make_backend(name: str):
         return OpenAIBackend(
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             api_key=key,
-            model=os.environ.get("TACTILE_MODEL", "gemini-3-pro-preview"),
+            model=os.environ.get("KEDU_MODEL", "gemini-3-pro-preview"),
         )
     # generic BYOK / vLLM pod
     return OpenAIBackend(
-        base_url=os.environ.get("TACTILE_BASE_URL", "http://localhost:8000/v1"),
-        api_key=os.environ.get("TACTILE_API_KEY", "none"),
-        model=os.environ.get("TACTILE_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct"),
+        base_url=os.environ.get("KEDU_BASE_URL", "http://localhost:8000/v1"),
+        api_key=os.environ.get("KEDU_API_KEY", "none"),
+        model=os.environ.get("KEDU_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct"),
     )
 
 

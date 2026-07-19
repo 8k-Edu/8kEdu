@@ -10,7 +10,7 @@
 #   ./scripts/serve-vllm.sh --stop   # stop
 #
 # Then bring up the app against vLLM:
-#   TACTILE_BACKEND=vllm ./run.sh
+#   KEDU_BACKEND=vllm ./run.sh
 #   (and set NEMOTRON_BASE_URL=http://localhost:8001/v1 in .env for the brain)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -31,7 +31,7 @@ VISION_PORT="${VLLM_PORT:-8000}"
 #   NEMOTRON_BASE_URL=http://localhost:8001/v1   and   NEMOTRON_MODEL=<this same served repo>
 BRAIN_MODEL="${VLLM_BRAIN_MODEL:-$VISION_MODEL}"
 BRAIN_PORT="${BRAIN_VLLM_PORT:-8001}"
-# Server-side request timeout (s). Backstop pairing with analyze.py's client-side TACTILE_TIMEOUT:
+# Server-side request timeout (s). Backstop pairing with analyze.py's client-side KEDU_TIMEOUT:
 # vllm-mlx keeps generating for a client that has gone away, so without a cap slow requests pile
 # up and cascade to 100s+ under load. Cancel them instead.
 REQ_TIMEOUT="${VLLM_TIMEOUT:-180}"

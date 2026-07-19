@@ -6,7 +6,7 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 
-# Source .env before spawning children so TACTILE_MODEL / NEMOTRON_MODEL /
+# Source .env before spawning children so KEDU_MODEL / NEMOTRON_MODEL /
 # DOCKER_HOST etc. from the developer's own config take effect. Python's
 # db.load_env() uses os.environ.setdefault(), which won't overwrite anything
 # already exported — so if we exported hardcoded defaults here, .env would be
@@ -27,8 +27,8 @@ stop() {
 [ "${1:-}" = "--stop" ] && { stop; exit 0; }
 
 stop; sleep 1
-echo "→ ask backend (vision · ${TACTILE_BACKEND:-lmstudio}) on :8756"
-uv run serve.py --backend "${TACTILE_BACKEND:-lmstudio}" --port 8756 > "$LOGDIR/serve.log" 2>&1 &
+echo "→ ask backend (vision · ${KEDU_BACKEND:-lmstudio}) on :8756"
+uv run serve.py --backend "${KEDU_BACKEND:-lmstudio}" --port 8756 > "$LOGDIR/serve.log" 2>&1 &
 
 echo "→ agent dashboard API on :8787"
 uv run python -m agent.api --port 8787 > "$LOGDIR/agent_api.log" 2>&1 &
