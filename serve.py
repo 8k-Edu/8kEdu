@@ -490,9 +490,19 @@ def _run_ingest(vid: str, url: str, limit: int, backend: str):
         if not (vd / "frames.json").exists():
             _set_job(vid, step="downloading video + transcript + keyframes")
             subprocess.run([py, "ingest.py", url], cwd=ROOT, check=True, timeout=900, env=env)
-        _set_job(vid, step="analyzing frames → widgets")
-        subprocess.run([py, "analyze.py", "--backend", backend, f"--video={vid}", "--limit", str(limit)],
-                       cwd=ROOT, check=True, timeout=2400, env=env)
+        # Download stays host-side (YouTube CDN can't be allowlisted); the reasoning over
+        # untrusted frames is the part worth containing. KEDU_CONTAINED=1 runs analyze.py
+        # inside the Docker egress-allowlist sandbox (deploy/containment/) — cloud analog of
+        # the OpenShell/scoutclaw demo. Off by default → the plain host path.
+        contained = os.environ.get("KEDU_CONTAINED") == "1"
+        _set_job(vid, step="analyzing frames → widgets" + (" (contained)" if contained else ""),
+                 contained=contained)
+        if contained:
+            subprocess.run(["bash", "deploy/containment/analyze-contained.sh", vid, str(limit)],
+                           cwd=ROOT, check=True, timeout=2400, env=env)
+        else:
+            subprocess.run([py, "analyze.py", "--backend", backend, f"--video={vid}", "--limit", str(limit)],
+                           cwd=ROOT, check=True, timeout=2400, env=env)
         n = len(json.loads((vd / "concepts.json").read_text())) if (vd / "concepts.json").exists() else 0
         _set_job(vid, state="done", step="done", widgets=n)
     except subprocess.TimeoutExpired:
