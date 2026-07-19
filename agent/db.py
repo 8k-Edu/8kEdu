@@ -146,6 +146,20 @@ def library_stats():
         return [dict(r) for r in cur.fetchall()]
 
 
+def library_videos():
+    """Every cached video with its genre, title, and widget count — powers the live gallery."""
+    with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "select co.video_id, coalesce(v.genre,'unknown') as genre, "
+            "coalesce(v.title, co.video_id) as title, coalesce(v.channel_name,'') as channel, "
+            "count(*) as widgets, array_agg(distinct co.widget) as widget_kinds "
+            "from concepts co left join videos v on v.video_id=co.video_id "
+            "where co.widget is not null and co.widget <> 'none' "
+            "group by co.video_id, v.genre, v.title, v.channel_name "
+            "order by count(*) desc")
+        return [dict(r) for r in cur.fetchall()]
+
+
 def add_channel(user_id, channel_id):
     with conn() as c, c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("select id from monitored_channels where user_id=%s and channel_id=%s",

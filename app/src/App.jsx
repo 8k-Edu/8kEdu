@@ -64,6 +64,36 @@ const CATEGORIES = [
 const VIDEOS = CATEGORIES.flatMap(c => c.videos.map(v => ({ ...v, tag: c.name })))
 const INGESTED = VIDEOS.map(v => v.id)
 
+// map the agent's genres to gallery shelves (+ icons for shelves the curator invents)
+const GENRE_TO_CAT = { ai_stem: 'AI & STEM', how_to: 'How-To', real_estate: 'Real estate', finance: 'Fintech & markets', cooking: 'Cooking', fitness: 'Fitness', unknown: 'More' }
+const CAT_ICON = { 'AI & STEM': '🧠', 'How-To': '🍳', 'Real estate': '🏠', 'Fintech & markets': '💰', 'Cooking': '🍜', 'Fitness': '🏋️', 'More': '✨' }
+const WKIND_COLOR = { softmax: '#ff9bce', attention: '#ffab70', matrix_mul: '#79c0ff', function_plot: '#56d364', notebook: '#b48eff', composite: '#79c0ff' }
+
+// merge curator-discovered videos (from Supabase) into the hardcoded featured shelves
+function mergeGallery(live) {
+  const cats = CATEGORIES.map(c => ({ ...c, videos: [...c.videos] }))
+  const byName = Object.fromEntries(cats.map(c => [c.name, c]))
+  const seen = new Set(VIDEOS.map(v => v.id))
+  for (const v of (live || [])) {
+    if (seen.has(v.video_id)) continue
+    seen.add(v.video_id)
+    const name = GENRE_TO_CAT[v.genre] || 'More'
+    let cat = byName[name]
+    if (!cat) { cat = { name, icon: CAT_ICON[name] || '✨', videos: [] }; byName[name] = cat; cats.push(cat) }
+    const kinds = (v.widget_kinds || []).filter(Boolean)
+    const mix = kinds.length ? kinds.map(k => [WKIND_COLOR[k] || '#8ee23e', 1]) : [['#8ee23e', 1]]
+    cat.videos.push({
+      id: v.video_id, title: v.title, agent: true,
+      inside: {
+        count: `${v.widgets} widget${v.widgets === 1 ? '' : 's'} · added by the curator`,
+        mix,
+        peek: [['new', 'freshly framed by Nemotron', '#8ee23e'], ['live', `${v.widgets} interactive widgets`, '#79c0ff']],
+      },
+    })
+  }
+  return cats
+}
+
 const parseVideoId = (url) => {
   const m = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/) || url.match(/^([\w-]{11})$/)
   return m ? m[1] : null
@@ -1438,6 +1468,11 @@ function Landing({ onOpen }) {
     localStorage.setItem('8kedu-theme', theme)
     document.documentElement.style.background = T.solid
   }, [theme, T.solid])
+  const [live, setLive] = useState(null)
+  useEffect(() => {
+    fetch('/agent/library').then(r => r.json()).then(d => { if (d.ok) setLive(d.videos) }).catch(() => {})
+  }, [])
+  const gallery = useMemo(() => mergeGallery(live), [live])
   const go = () => {
     const id = parseVideoId(url.trim())
     if (!id) { setErr('paste a YouTube link (or 11-char video id)'); return }
@@ -1549,7 +1584,7 @@ function Landing({ onOpen }) {
           <div style={{ fontFamily: 'ui-monospace,monospace', color: T.faint, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.14em', textAlign: 'center' }}>
             ready to touch — any topic, not just code
           </div>
-          {CATEGORIES.map((cat, ci) => (
+          {gallery.map((cat, ci) => (
             <motion.div key={cat.name}
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}

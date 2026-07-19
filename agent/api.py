@@ -56,6 +56,15 @@ def tick():
 _containment_cache = {"data": None}
 
 
+@app.get("/agent/library")
+def library():
+    """Cached videos grouped by genre — the live gallery, grown by the curator."""
+    try:
+        return {"ok": True, "videos": db.library_videos()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200], "videos": []}
+
+
 @app.get("/agent/containment")
 def containment():
     """Live policy status from the scoutclaw sandbox (cached — the sandbox call is slow)."""
