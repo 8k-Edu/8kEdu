@@ -8,6 +8,9 @@ POST /api/widget {"text": "...", "time": 1234.5, "ask": "let me play with the ma
 import argparse
 import hashlib
 import json
+import os
+import threading
+import time
 from pathlib import Path
 
 import uvicorn
@@ -30,8 +33,25 @@ info = {"backend": "?", "model": "?", "mode": "?"}
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
     from agent import db as _db
+    _db.load_env()  # so AGENT_HANDLE is populated before the first request logs an event
 except Exception:
     _db = None
+
+
+def _handle() -> str:
+    """AGENT_HANDLE for observability — identifies whose serve.py logged the event."""
+    return os.environ.get("AGENT_HANDLE", "demo")
+
+
+def _fire_event(payload: dict) -> None:
+    """Write one widget_events row in a background thread — never blocks the response."""
+    if not _db:
+        return
+    threading.Thread(target=_db.log_widget_event, args=(payload,), daemon=True).start()
+
+
+def _ms(t0: float) -> int:
+    return int((time.perf_counter() - t0) * 1000)
 
 
 def _prompt_hash(video: str, frame: str, context: str) -> str:
@@ -76,6 +96,7 @@ def nearest_frame(video: str, t: float) -> dict:
 
 @app.post("/api/widget")
 def make_widget(req: Ask):
+    t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     context = (
         f'Teacher is saying: "{req.text[:1200]}"\n\n'
@@ -84,25 +105,58 @@ def make_widget(req: Ask):
         + "\nHonor the student's request if it maps to an available widget type."
         + "\nEmit the concept spec JSON."
     )
+    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "widget", "model": info.get("model")}
+
+    t0 = time.perf_counter()
     h = _prompt_hash(req.video, fr["file"], context)
     cached = _cache_get(h)
+    ev["t_cache_lookup_ms"] = _ms(t0)
+
     if cached is not None:
         cached["cached"] = True
+        ev.update(cache_hit=True, spec_valid=("widget" in cached),
+                  widget_kind=cached.get("widget", "answer"),
+                  t_backend_ask_ms=0, t_parse_validate_ms=0,
+                  t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return cached
-    raw = backend.ask(DATA / req.video / "frames" / fr["file"], context)
+
+    t0 = time.perf_counter()
+    try:
+        raw = backend.ask(DATA / req.video / "frames" / fr["file"], context)
+    except Exception as e:
+        ev.update(cache_hit=False, spec_valid=False, error=str(e)[:200],
+                  t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        raise
+    ev["t_backend_ask_ms"] = _ms(t0)
+
+    t0 = time.perf_counter()
     spec = extract_json(raw)
-    if not valid(spec):
+    is_valid = valid(spec)
+    ev["t_parse_validate_ms"] = _ms(t0)
+    ev["cache_hit"] = False
+
+    if not is_valid:
         # not manipulable — still be useful: return the model's explanation as an answer card
         answer = (spec or {}).get("explanation") or raw.strip()[:600]
         if answer:
             out = {"answer": answer, "time": req.time, "frame": fr["file"]}
             _cache_put(h, req.video, out)
+            ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
+            _fire_event(ev)
             return out
+        ev.update(spec_valid=False, widget_kind="none",
+                  error="no widget found for this moment", t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return {"error": "no widget found for this moment", "raw": raw[:400]}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
     _cache_put(h, req.video, spec)
+    ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
+    _fire_event(ev)
     return spec
 
 
@@ -122,6 +176,7 @@ def make_region_widget(req: RegionAsk):
     """Click-the-whiteboard: crop what the student pointed at, make THAT alive."""
     from PIL import Image
 
+    t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     src = DATA / req.video / "frames" / fr["file"]
     img = Image.open(src)
@@ -140,6 +195,10 @@ def make_region_widget(req: RegionAsk):
     path = crops / f"c_{int(req.time)}_{int(req.x * 100)}_{int(req.y * 100)}.jpg"
     crop.convert("RGB").save(path, quality=88)
 
+    ev = {"handle": _handle(), "video_id": req.video, "t_s": req.time,
+          "frame_file": fr["file"], "kind": "region", "model": info.get("model"),
+          "cache_hit": False, "t_cache_lookup_ms": 0}
+
     context = (
         f'Teacher is saying: "{req.text[:1000]}"\n\n'
         "The image is the EXACT region of the screen the student just circled — "
@@ -147,16 +206,36 @@ def make_region_widget(req: RegionAsk):
         + (f' They added: "{req.ask[:200]}"' if req.ask else "")
         + "\nEmit the concept spec JSON for what is in this region."
     )
-    raw = backend.ask(path, context)
+    t0 = time.perf_counter()
+    try:
+        raw = backend.ask(path, context)
+    except Exception as e:
+        ev.update(spec_valid=False, error=str(e)[:200],
+                  t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        raise
+    ev["t_backend_ask_ms"] = _ms(t0)
+
+    t0 = time.perf_counter()
     spec = extract_json(raw)
-    if not valid(spec):
+    is_valid = valid(spec)
+    ev["t_parse_validate_ms"] = _ms(t0)
+
+    if not is_valid:
         answer = (spec or {}).get("explanation") or ""
         if answer:
+            ev.update(spec_valid=False, widget_kind="answer", t_total_ms=_ms(t_start))
+            _fire_event(ev)
             return {"answer": answer, "time": req.time}
+        ev.update(spec_valid=False, widget_kind="none",
+                  error="couldn't read that region", t_total_ms=_ms(t_start))
+        _fire_event(ev)
         return {"error": "couldn't read that region", "raw": raw[:300]}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
+    ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
+    _fire_event(ev)
     return spec
 
 
