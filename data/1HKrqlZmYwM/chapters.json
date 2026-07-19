@@ -1,0 +1,37 @@
+[
+ {
+  "start": 0,
+  "end": 47,
+  "title": "Intro"
+ },
+ {
+  "start": 47,
+  "end": 88,
+  "title": "Dose"
+ },
+ {
+  "start": 88,
+  "end": 118,
+  "title": "Yield"
+ },
+ {
+  "start": 118,
+  "end": 153,
+  "title": "Shot Ratio"
+ },
+ {
+  "start": 153,
+  "end": 207,
+  "title": "Shot Time"
+ },
+ {
+  "start": 207,
+  "end": 305,
+  "title": "Technique"
+ },
+ {
+  "start": 305,
+  "end": 365,
+  "title": "Outro"
+ }
+]

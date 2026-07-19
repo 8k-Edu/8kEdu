@@ -1,0 +1,77 @@
+[
+ {
+  "time": 0,
+  "frame": "f_000000.jpg",
+  "title": "Couch to 5K Training Volume Planner",
+  "params": {
+   "expr": "(weeks - 3) * minutes_per_run",
+   "sliders": [
+    "weeks",
+    "minutes_per_run"
+   ]
+  },
+  "widget": "function_plot",
+  "explanation": "Allows viewers to adjust the plan length and daily run time to see how total training volume changes.",
+  "has_concept": true,
+  "recursive_reuse": {
+   "concept": "couch-5k-training-volume-planner",
+   "confidence": 0.6,
+   "source_video": "oLjatOYru1k",
+   "source_time": 50.0
+  }
+ },
+ {
+  "time": 110,
+  "frame": "f_000110.jpg",
+  "title": "Couch to 5K Training Volume Planner",
+  "params": {
+   "expr": "(weeks - 3) * minutes_per_run",
+   "sliders": [
+    "weeks",
+    "minutes_per_run"
+   ]
+  },
+  "widget": "function_plot",
+  "explanation": "Allows viewers to adjust the plan length and daily run time to see how total training volume changes.",
+  "has_concept": true,
+  "recursive_reuse": {
+   "concept": "couch-5k-training-volume-planner",
+   "confidence": 0.6,
+   "source_video": "oLjatOYru1k",
+   "source_time": 50.0
+  }
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Couch to 5K Training Plan Calculator",
+  "explanation": "This interactive tool lets users customize an 8-week Couch to 5K plan with sliders for fitness level and recovery needs, while notebook cells compute weekly progress and plot training volume to prevent overtraining and guide progression decisions",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# User-defined parameters\nweeks = 8\ncurrent_week = 1\nrepeat_week = 1\n\n# Defaults based on 8-week plan\nbase_runs_per_week = 3\ncross_train_days = 1\nrest_days = 3\n\n# Adjust for difficulty\nif repeat_week > 0:\n    current_week = min(weeks, current_week + repeat_week)\n\n# Calculate weekly volume\nruns_per_week = base_runs_per_week + (1 if cross_train_days > 0 else 0)\nvolume_per_week = runs_per_week * 30  # 30 min runs\n\n# Generate training log\nweeks_data = []\nfor w in range(1, weeks + 1):\n    if w >= current_week and w < current_week + repeat_week:\n        # Repeat the same week\n        weeks_data.append({\n            'week': w,\n            'runs': runs_per_week,\n            'volume': volume_per_week,\n            'type': 'repeat'\n        })\n    else:\n        weeks_data.append({\n            'week': w,\n            'runs': runs_per_week,\n            'volume': volume_per_week,\n            'type': 'new'\n        })\n\n# Plot volume over time\nweeks_list = [d['week'] for d in weeks_data]\nvolumes = [d['volume'] for d in weeks_data]\n\nplt.figure(figsize=(10, 5))\nplt.plot(weeks_list, volumes, marker='o')\nplt.title('Weekly Training Volume')\nplt.xlabel('Week')\nplt.ylabel('Volume (minutes)')\nplt.grid(True)\nplt.show()\n\nprint(f\"Current week: {current_week}/{weeks}\")\nprint(f\"Weekly volume: {volume_per_week} minutes\")\nprint(f\"Training type: {'Repeat' if repeat_week > 0 else 'New'}\")"
+   ],
+   "sliders": [
+    {
+     "name": "weeks",
+     "min": 4,
+     "max": 10,
+     "value": 8
+    },
+    {
+     "name": "current_week",
+     "min": 1,
+     "max": 8,
+     "value": 1
+    },
+    {
+     "name": "repeat_week",
+     "min": 0,
+     "max": 8,
+     "value": 1
+    }
+   ]
+  },
+  "time": 120,
+  "frame": "f_000120.jpg"
+ }
+]

@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.139.0",
     "matplotlib>=3.11.0",
-    "mlx-vlm>=0.6.4",
+    "mlx-vlm>=0.6.4; sys_platform == 'darwin'",  # Apple-Silicon local vision only; skipped on Linux servers (use cloud/OpenRouter)
     "numpy>=2.5.1",
     "openai>=2.45.0",
     "pillow>=12.3.0",
