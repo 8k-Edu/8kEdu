@@ -225,9 +225,14 @@ export function Softmax({ params, onState }) {
 }
 
 export function FunctionPlot({ params, onState }) {
-  const sliders = params.sliders ?? []
+  // the VLM sometimes emits sliders as bare names ("w") and exprs as equations ("y = w*x") —
+  // normalize both so a loose spec renders instead of crashing the app
+  const sliders = (params.sliders ?? []).map(s =>
+    typeof s === 'string'
+      ? { name: s, min: -5, max: 5, value: 1 }
+      : { name: s.name ?? 'k', min: s.min ?? -5, max: s.max ?? 5, value: s.value ?? 1 })
   const [vals, setVals] = useState(Object.fromEntries(sliders.map(s => [s.name, s.value])))
-  const expr = params.expr ?? 'Math.sin(x)'
+  const expr = String(params.expr ?? 'Math.sin(x)').replace(/^\s*[A-Za-z_]\w*\s*=\s*/, '')
   useEffect(() => {
     onState?.({ expr, sliders: sliders.map(s => ({ ...s, value: vals[s.name] ?? s.value })) })
   }, [vals, expr, onState]) // eslint-disable-line react-hooks/exhaustive-deps
