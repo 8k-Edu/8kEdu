@@ -2197,6 +2197,9 @@ function RecursiveDashboard({ onExit }) {
   const edges = graph?.edges || []
   const summary = graph?.summary || {}
   const exemplars = selected?.exemplars || []
+  const teacherLeads = [...new Map(exemplars.map(exemplar => [exemplar.channel || 'Unknown teacher', exemplar])).values()]
+  const teacherLeadIds = new Set(teacherLeads.map(exemplar => exemplar.id))
+  const featuredExemplars = [...teacherLeads, ...exemplars.filter(exemplar => !teacherLeadIds.has(exemplar.id))]
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text }}>
@@ -2249,9 +2252,9 @@ function RecursiveDashboard({ onExit }) {
           <div style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 18, padding: 16, minHeight: 430 }}>
             <div style={{ fontFamily: mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '.14em', color: T.acc }}>selected concept</div>
             <h2 style={{ margin: '8px 0 4px', fontSize: 25, letterSpacing: '-.025em' }}>{selected?.label || 'No concept selected'}</h2>
-            {selected && <div style={{ color: T.sub, fontSize: 13 }}>{selected.exemplar_count} exemplars · {(selected.widgets || []).join(' + ')}</div>}
+            {selected && <div style={{ color: T.sub, fontSize: 13 }}>{selected.exemplar_count} exemplars · {(selected.teachers || []).length} teachers · {(selected.widgets || []).join(' + ')}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-              {exemplars.slice(0, 6).map(exemplar => (
+              {featuredExemplars.slice(0, 6).map(exemplar => (
                 <a key={exemplar.id} href={`?v=${exemplar.video_id}`} style={{ textDecoration: 'none', border: `1px solid ${T.line}`, background: theme === 'dark' ? '#0b0f08' : '#fbfdf8', borderRadius: 10, padding: '9px 10px', color: T.text }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><strong style={{ fontSize: 12.5 }}>{exemplar.channel || 'Unknown teacher'}</strong><span style={{ fontFamily: mono, fontSize: 10.5, color: T.acc }}>{fmt(exemplar.t_s)}</span></div>
                   <div style={{ fontSize: 11.5, color: T.faint, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{exemplar.spec?.title || exemplar.video_title}</div>
