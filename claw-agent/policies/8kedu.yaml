@@ -94,6 +94,10 @@ network_policies:
         protocol: rest
         enforcement: enforce
         allowed_ips:
+          # OpenShell's host gateway (host.openshell.internal) resolves to 0.250.250.254
+          # inside the sandbox — not a standard private range, so it must be allowlisted
+          # explicitly or the SSRF guard 403s the model call.
+          - 0.250.250.0/24
           - 10.0.0.0/8
           - 172.16.0.0/12
           - 192.168.0.0/16
