@@ -532,6 +532,23 @@ function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refresh
   )
 }
 
+// Chat box under a widget: type an instruction → regenerate the widget honoring it.
+function RefineBox({ onRefine, busy }) {
+  const [v, setV] = useState('')
+  const send = () => { if (v.trim() && !busy) { onRefine(v.trim()); setV('') } }
+  return (
+    <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+      <input value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} disabled={busy}
+        placeholder={busy ? 'regenerating…' : '↻ refine this widget — e.g. add a slider, use bigger numbers, explain it simpler'}
+        style={{ flex: 1, background: '#0d1117', border: '1px solid #30363d', borderRadius: 8, color: '#e6edf3', padding: '8px 11px', fontSize: 12.5, outline: 'none' }} />
+      <button onClick={send} disabled={busy || !v.trim()}
+        style={{ background: '#1f6feb', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: (busy || !v.trim()) ? 'default' : 'pointer', opacity: (busy || !v.trim()) ? .6 : 1 }}>
+        {busy ? '…' : '↻ regenerate'}
+      </button>
+    </div>
+  )
+}
+
 function Lecture({ videoId, role }) {
   const roleCfg = ROLES[role]
   const [concepts, setConcepts] = useState([])
@@ -685,6 +702,34 @@ function Lecture({ videoId, role }) {
       setSelected(spec)
       setFollowVideo(false)
       setAsk(null)
+    } catch {
+      setToast('ask endpoint offline — run: uv run serve.py')
+    } finally {
+      setBusy(false)
+      setTimeout(() => setToast(null), 4000)
+    }
+  }
+
+  const refineWidget = async (instruction) => {
+    const cur = selected
+    if (!cur) return
+    setBusy(true)
+    try {
+      const around = cues.filter(c => Math.abs(c.start - (cur.time ?? time)) < 35).map(c => c.text).join(' ')
+      const ask = `The current widget is a "${cur.widget}" titled "${cur.title}". Regenerate it, applying this change: ${instruction}`
+      const r = await fetch('/api/widget', {
+        method: 'POST', headers: requestHeaders,
+        body: JSON.stringify({ text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud }),
+      })
+      const spec = await r.json()
+      if (applyBilling(spec)) return
+      if (spec.error) { setToast(`couldn't refine: ${spec.error}`); return }
+      if (spec.answer) { setToast(String(spec.answer).slice(0, 150)); return }
+      const refined = { ...spec, user_made: true }
+      setConcepts(cs => { const i = cs.indexOf(cur); if (i >= 0) { const n = [...cs]; n[i] = refined; return n } return [...cs, refined].sort((a, b) => a.time - b.time) })
+      setSelected(refined)
+      liveParams.current = null
+      setFollowVideo(false)
     } catch {
       setToast('ask endpoint offline — run: uv run serve.py')
     } finally {
@@ -860,6 +905,7 @@ function Lecture({ videoId, role }) {
                 }}>share remix</button>
               </div>
               {Widget ? <Widget key={`${active.time}-${active.widget}`} params={active.params ?? {}} onState={onState} /> : null}
+              {Widget ? <RefineBox onRefine={refineWidget} busy={busy} /> : null}
               <div style={{ fontSize: 11, color: '#8b949e' }}>
                 {followVideo
                   ? <>extracted at {Math.floor((active.time ?? 0) / 60)}:{String(Math.floor((active.time ?? 0) % 60)).padStart(2, '0')} · {active.user_made ? 'asked for by a viewer' : 'spec by VLM'} · rendered live</>
