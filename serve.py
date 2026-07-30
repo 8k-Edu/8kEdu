@@ -218,11 +218,60 @@ def _no_keyframes(kind: str) -> dict:
     return {"error": f"this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable {kind} asks"}
 
 
+_recovering: dict[tuple[str, str], threading.Lock] = {}
+_recovering_lock = threading.Lock()
+
+
+def _fetch_one_frame(video: str, t_s: float, frame_file: str, frames_dir: Path) -> Path | None:
+    """Imported lazily so analyze.py stays importable in the contained image, which has
+    neither agent/ nor yt-dlp."""
+    from ingest import fetch_one_frame
+    return fetch_one_frame(video, t_s, frame_file, frames_dir,
+                           timeout=int(os.environ.get("KEDU_RECOVER_TIMEOUT", "60")))
+
+
+def _publish_recovered(video: str, t_s: float, path: Path) -> None:
+    """So the next machine reads it out of the bucket instead of downloading it again."""
+    from agent import db, storage
+    if storage.enabled():
+        db.upsert_frames(video, [(t_s, storage.upload_frame(video, path))])
+
+
+def _recover_frame(video: str, fr: dict, src: Path) -> tuple[Path, str, int]:
+    """Last resort for a frame on no disk and in no bucket: pull that one moment straight from
+    YouTube. Never raises — on any failure it returns `src` untouched, so the caller's existing
+    not-on-disk handling fires and the learner sees the same message as before.
+
+    Single-flighted per (video, frame): scrubbing one moment must not spawn a yt-dlp per click."""
+    if os.environ.get("KEDU_RECOVER_FRAMES", "1") == "0":
+        return src, "off", 0
+    with _recovering_lock:
+        lock = _recovering.setdefault((video, fr["file"]), threading.Lock())
+    t0 = time.perf_counter()
+    with lock:
+        if src.exists():  # another thread recovered it while we waited
+            return src, "recovered", _ms(t0)
+        try:
+            got = _fetch_one_frame(video, fr["time"], fr["file"], src.parent)
+        except Exception:
+            return src, "miss", _ms(t0)
+        if got is None:
+            return src, "miss", _ms(t0)
+        try:
+            _publish_recovered(video, fr["time"], got)
+        except Exception:
+            pass  # the learner still gets their widget; the next machine just re-recovers
+        return got, "recovered", _ms(t0)
+
+
 def _frame_path(ev: dict, video: str, fr: dict) -> Path:
-    """Local jpg if it's there, else pulled from Supabase Storage. Records where it came
-    from on the event; a miss returns the absent path so the caller's own not-on-disk
-    handling fires unchanged."""
+    """Local jpg, else Supabase Storage, else that one frame pulled from YouTube. Only reached
+    on a cache miss, so a cached widget never triggers a download. A miss at every tier returns
+    the absent path so the caller's own not-on-disk handling fires unchanged."""
     src, frame_source, t_fetch = resolve_frame(DATA / video / "frames" / fr["file"], video)
+    if frame_source == "miss":
+        src, frame_source, t_recover = _recover_frame(video, fr, src)
+        t_fetch += t_recover
     ev.update(frame_source=frame_source, t_frame_fetch_ms=t_fetch)
     return src
 

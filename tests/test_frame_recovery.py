@@ -12,6 +12,7 @@ import agent
 import agent.db       # noqa: F401  — importing binds these as `agent` package attributes,
 import agent.storage  # noqa: F401    which is the seam `from agent import db, storage` reads
 import ingest
+import serve
 
 
 class FetchOneFrameTests(unittest.TestCase):
@@ -175,6 +176,117 @@ class ReconcileTests(unittest.TestCase):
                                    {0.0: "vid/f_000000.jpg"})
         self.assertEqual(storage.removed, [])
         self.assertEqual(db.deleted, [])
+
+
+class RecoverFrameTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.absent = Path(self.tmp.name) / "frames" / "f_000210.jpg"
+        serve._recovering.clear()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+        serve._recovering.clear()
+
+    def _fr(self):
+        return {"time": 210.0, "file": "f_000210.jpg"}
+
+    def _fetched(self):
+        p = Path(self.tmp.name) / "recovered" / "f_000210.jpg"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(b"\xff\xd8jpeg")
+        return p
+
+    def test_recovers_uploads_and_records(self):
+        fetched, published = self._fetched(), []
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "1"}), \
+                patch.object(serve, "_fetch_one_frame", lambda *a, **k: fetched), \
+                patch.object(serve, "_publish_recovered", lambda v, t, p: published.append((v, t, p))):
+            path, source, ms = serve._recover_frame("vid", self._fr(), self.absent)
+
+        self.assertEqual((path, source), (fetched, "recovered"))
+        self.assertEqual(published, [("vid", 210.0, fetched)])
+        self.assertGreaterEqual(ms, 0)
+
+    def test_failure_returns_the_original_absent_path(self):
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "1"}), \
+                patch.object(serve, "_fetch_one_frame", lambda *a, **k: None):
+            path, source, _ms = serve._recover_frame("vid", self._fr(), self.absent)
+        self.assertEqual((path, source), (self.absent, "miss"))
+
+    def test_a_raising_fetch_does_not_escape(self):
+        def boom(*a, **k):
+            raise RuntimeError("yt-dlp exploded")
+
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "1"}), \
+                patch.object(serve, "_fetch_one_frame", boom):
+            path, source, _ms = serve._recover_frame("vid", self._fr(), self.absent)
+        self.assertEqual((path, source), (self.absent, "miss"))
+
+    def test_a_failing_publish_still_serves_the_frame(self):
+        fetched = self._fetched()
+
+        def boom(*a):
+            raise RuntimeError("bucket down")
+
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "1"}), \
+                patch.object(serve, "_fetch_one_frame", lambda *a, **k: fetched), \
+                patch.object(serve, "_publish_recovered", boom):
+            path, source, _ms = serve._recover_frame("vid", self._fr(), self.absent)
+        self.assertEqual((path, source), (fetched, "recovered"))
+
+    def test_kill_switch_skips_the_download_entirely(self):
+        called = []
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "0"}), \
+                patch.object(serve, "_fetch_one_frame", lambda *a, **k: called.append(1)):
+            path, source, ms = serve._recover_frame("vid", self._fr(), self.absent)
+        self.assertEqual((path, source, ms), (self.absent, "off", 0))
+        self.assertEqual(called, [])
+
+    def test_concurrent_asks_for_one_frame_download_once(self):
+        import threading
+        calls, gate = [], threading.Event()
+
+        # fetch_one_frame writes to frames_dir/frame_file — i.e. exactly `src`. That is what
+        # lets the threads queued behind the lock short-circuit instead of re-downloading.
+        def slow(*a, **k):
+            calls.append(1)
+            gate.wait(2)
+            self.absent.parent.mkdir(parents=True, exist_ok=True)
+            self.absent.write_bytes(b"\xff\xd8jpeg")
+            return self.absent
+
+        with patch.dict(os.environ, {"KEDU_RECOVER_FRAMES": "1"}), \
+                patch.object(serve, "_fetch_one_frame", slow), \
+                patch.object(serve, "_publish_recovered", lambda *a: None):
+            threads = [threading.Thread(target=serve._recover_frame,
+                                        args=("vid", self._fr(), self.absent)) for _ in range(3)]
+            for t in threads:
+                t.start()
+            gate.set()
+            for t in threads:
+                t.join(5)
+
+        self.assertEqual(len(calls), 1)
+
+
+class FramePathTests(unittest.TestCase):
+    def test_a_storage_miss_escalates_to_recovery_and_sums_the_timings(self):
+        ev = {}
+        absent = Path("/nonexistent/frames/f_000210.jpg")
+        with patch.object(serve, "resolve_frame", return_value=(absent, "miss", 40)), \
+                patch.object(serve, "_recover_frame", return_value=(absent, "recovered", 7000)):
+            serve._frame_path(ev, "vid", {"time": 210.0, "file": "f_000210.jpg"})
+        self.assertEqual(ev["frame_source"], "recovered")
+        self.assertEqual(ev["t_frame_fetch_ms"], 7040)
+
+    def test_a_local_hit_never_attempts_recovery(self):
+        ev, called = {}, []
+        with patch.object(serve, "resolve_frame", return_value=(Path("x.jpg"), "local", 0)), \
+                patch.object(serve, "_recover_frame", lambda *a: called.append(1)):
+            serve._frame_path(ev, "vid", {"time": 1.0, "file": "x.jpg"})
+        self.assertEqual(called, [])
+        self.assertEqual(ev["frame_source"], "local")
 
 
 if __name__ == "__main__":
