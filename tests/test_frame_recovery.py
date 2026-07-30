@@ -289,5 +289,30 @@ class FramePathTests(unittest.TestCase):
         self.assertEqual(ev["frame_source"], "local")
 
 
+class ReprocessGateTests(unittest.TestCase):
+    """The download was gated on the manifest being absent, so reprocessing a video with a
+    committed frames.json and no jpgs skipped straight to an analyze pass that could only fail."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.vd = Path(self.tmp.name) / "vid"
+        (self.vd / "frames").mkdir(parents=True)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_manifest_with_no_jpgs_needs_a_download(self):
+        (self.vd / "frames.json").write_text("[]")
+        self.assertTrue(serve._needs_download(self.vd))
+
+    def test_manifest_with_jpgs_does_not(self):
+        (self.vd / "frames.json").write_text("[]")
+        (self.vd / "frames" / "f_000000.jpg").write_bytes(b"\xff\xd8")
+        self.assertFalse(serve._needs_download(self.vd))
+
+    def test_no_manifest_at_all_needs_a_download(self):
+        self.assertTrue(serve._needs_download(self.vd))
+
+
 if __name__ == "__main__":
     unittest.main()

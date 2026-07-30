@@ -120,6 +120,7 @@ def perf(limit: int = 50, scope: str = "mine"):
                 "t_backend_ask_p90_ms": _pctile(vlms, 90),
                 "frame_fetch_p50_ms": _pctile(fetches, 50),
                 "frame_remote_rate": rate("remote"),
+                "frame_recover_rate": rate("recovered"),
                 "frame_miss_rate": rate("miss"),
             },
         }

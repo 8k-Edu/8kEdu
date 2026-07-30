@@ -572,6 +572,12 @@ def _set_job(vid: str, **kw):
         _jobs.setdefault(vid, {}).update(**kw)
 
 
+def _needs_download(vd: Path) -> bool:
+    """A committed frames.json with no jpgs beside it still needs the video — analyze.py would
+    error on every frame and SystemExit into the job as a bare failure."""
+    return not (vd / "frames.json").exists() or not any((vd / "frames").glob("*.jpg"))
+
+
 def _run_ingest(vid: str, url: str, limit: int, backend: str):
     py = sys.executable
     # cloud (OpenRouter) batches frames concurrently → a live drop finishes in ~30-60s,
@@ -581,7 +587,7 @@ def _run_ingest(vid: str, url: str, limit: int, backend: str):
         env["KEDU_CONCURRENCY"] = env.get("KEDU_CONCURRENCY", "6")
     try:
         vd = ROOT / "data" / vid
-        if not (vd / "frames.json").exists():
+        if _needs_download(vd):
             _set_job(vid, step="downloading video + transcript + keyframes")
             subprocess.run([py, "ingest.py", url], cwd=ROOT, check=True, timeout=900, env=env)
         # Download stays host-side (YouTube CDN can't be allowlisted); the reasoning over
