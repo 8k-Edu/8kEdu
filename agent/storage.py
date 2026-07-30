@@ -127,6 +127,17 @@ def ensure_bucket() -> None:
             raise
 
 
+def remove_objects(keys: list[str]) -> int:
+    if not keys or not enabled():
+        return 0
+    _bucket().remove(keys)
+    with _neg_lock:
+        for k in keys:
+            vid, _, name = k.partition("/")
+            _neg.pop((vid, name), None)
+    return len(keys)
+
+
 def remove_video(video_id: str) -> int:
     """Re-extracting at a different interval renames every frame, and scrub_video.py's
     cold-retest loop drops the local dir — without this both leak a whole video of objects."""

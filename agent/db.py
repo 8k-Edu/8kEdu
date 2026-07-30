@@ -137,10 +137,28 @@ def frames_manifest(video_id):
         return [{"time": float(t_s), "file": path.rsplit("/", 1)[-1]} for t_s, path in cur.fetchall()]
 
 
+def frames_rows(video_id):
+    """t_s → storage_path for everything already published, so a reprocess can skip what it
+    already has instead of dropping and re-uploading the lot."""
+    with conn() as c, c.cursor() as cur:
+        cur.execute("select t_s, storage_path from frames where video_id=%s", (video_id,))
+        return {float(t_s): path for t_s, path in cur.fetchall()}
+
+
 def delete_frames(video_id):
     with conn() as c, c.cursor() as cur:
         cur.execute("delete from frames where video_id=%s", (video_id,))
         c.commit()
+
+
+def delete_frames_at(video_id, t_values):
+    if not t_values:
+        return 0
+    with conn() as c, c.cursor() as cur:
+        cur.execute("delete from frames where video_id=%s and t_s = any(%s)",
+                    (video_id, list(t_values)))
+        c.commit()
+        return cur.rowcount
 
 
 def add_to_curriculum(goal_id, video_id, rationale, title="", channel_name=""):

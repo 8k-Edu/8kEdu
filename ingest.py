@@ -177,29 +177,41 @@ def fetch_chapters(url: str, out: Path) -> list[dict]:
     return chapters
 
 
-def upload_frames(vid: str, out: Path, frames: list[dict], prune: bool = False,
-                  on_upload=None) -> int:
-    """Push the keyframes in `frames` to Supabase Storage and record them in public.frames.
-    Raises — callers decide whether a failure is fatal. scripts/backfill_frames.py drives
-    this over frames already on disk, so this is the one place the publish rules live.
+def upload_frames(vid: str, out: Path, frames: list[dict], on_upload=None) -> int:
+    """Publish `frames` to Supabase Storage and public.frames, uploading only what isn't there
+    already. Returns the number uploaded. Raises — callers decide what's fatal.
+    scripts/backfill_frames.py drives this too, so the publish rules live here alone.
 
-    prune drops the video's existing objects first: a re-extract at a different interval
-    renames every frame, orphaning the old keys."""
+    Reconciled on (video_id, t_s), the frames primary key, rather than dropping the video's
+    objects first: a frame recovered on demand has already been analyzed under its filename,
+    and re-uploading identical bytes buys nothing. A re-extract at a different interval renames
+    everything, and those genuinely orphaned keys are dropped below."""
     from agent import db, storage
     db.load_env()  # `uv run ingest.py <url>` sources no .env of its own
     if not storage.enabled():
         return 0
     storage.ensure_bucket()
-    if prune:
-        storage.remove_video(vid)
-    rows = []
-    for fr in frames:
-        jpg = out / "frames" / fr["file"]
+
+    published = db.frames_rows(vid)
+    wanted = {fr["time"]: fr["file"] for fr in frames}
+
+    rows, stale = [], []
+    for t_s, name in wanted.items():
+        key = storage.object_key(vid, name)
+        if published.get(t_s) == key:
+            continue
+        jpg = out / "frames" / name
         if not jpg.exists():
             continue
-        rows.append((fr["time"], storage.upload_frame(vid, jpg)))
+        if t_s in published:
+            stale.append(published[t_s])
+        rows.append((t_s, storage.upload_frame(vid, jpg)))
         if on_upload:
             on_upload()
+
+    gone = [t_s for t_s in published if t_s not in wanted]
+    storage.remove_objects(stale + [published[t_s] for t_s in gone])
+    db.delete_frames_at(vid, gone)
     db.upsert_frames(vid, rows)
     return len(rows)
 
@@ -213,7 +225,7 @@ def publish_frames(vid: str, out: Path, frames: list[dict]) -> int:
     if os.environ.get("KEDU_FRAME_REMOTE") == "0":
         return 0
     try:
-        return upload_frames(vid, out, frames, prune=True)
+        return upload_frames(vid, out, frames)
     except Exception as e:
         print(f"! frame upload skipped: {e}")
         return 0
