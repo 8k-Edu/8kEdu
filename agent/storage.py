@@ -143,8 +143,4 @@ def remove_video(video_id: str) -> int:
     cold-retest loop drops the local dir — without this both leak a whole video of objects."""
     if not enabled():
         return 0
-    b = _bucket()
-    keys = [f"{video_id}/{o['name']}" for o in b.list(video_id)]
-    if keys:
-        b.remove(keys)
-    return len(keys)
+    return remove_objects([f"{video_id}/{o['name']}" for o in _bucket().list(video_id)])

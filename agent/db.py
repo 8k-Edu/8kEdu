@@ -145,12 +145,6 @@ def frames_rows(video_id):
         return {float(t_s): path for t_s, path in cur.fetchall()}
 
 
-def delete_frames(video_id):
-    with conn() as c, c.cursor() as cur:
-        cur.execute("delete from frames where video_id=%s", (video_id,))
-        c.commit()
-
-
 def delete_frames_at(video_id, t_values):
     if not t_values:
         return 0
