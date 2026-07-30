@@ -1,214 +1,354 @@
 ---
 name: refactor
-description: Behaviour-preserving SOLID refactor of the branch's own changes in 8kEdu, followed by a comment-hygiene pass and a docs refresh. Use this whenever the user asks to refactor, restructure, clean up, tidy, "apply SOLID", split a file that got too big, pull duplication out, separate concerns, or generally improve the shape of code without changing what it does — including phrasings like "clean this up before I open the PR", "this module is doing too much", "sort out the structure of the branch", or "refactor the diff from main". Also use it when someone asks to bring the docs back in line after moving code around. Prefer this skill over ad-hoc editing even for a single file, because it carries the repo's gate commands, its existing seams, and the anti-goals that stop a refactor from turning into a rewrite.
+description: Restructure existing code so its shape matches its responsibilities — SOLID seams, better names, encapsulation, the right mix of objects and plain functions — without changing behavior, then update the docs, prompts, and comments that referenced the old shape. Use this whenever someone says code is spaghetti, messy, tangled, duplicated, hard to follow, or has drifted through too many changes without landing, and whenever they ask to clean up, reorganize, split, rename, simplify, or "make this less awful" — a file, module, class, function, or a whole subsystem. Also use it when reviewing accumulated changes or a PR for design debt, even if nobody says the word "refactor", and whenever someone asks for the minimal, lazy, or shortest solution, invokes YAGNI, or complains about over-engineering, bloat, boilerplate, or unnecessary dependencies.
+argument-hint: "[lite|full|ultra]"
+license: MIT
+compatibility: Reads `CLAUDE.md` and lint config for local rules. `scripts/clean-comments.sh` drives this repo's `.claude/hooks/comment-cleanup.sh`; it degrades to a hand pass where that hook is absent.
+metadata:
+  type: workflow
+  owner: blend-ai
 ---
 
-# Refactor (8kEdu)
+# Refactor
 
-A refactor here is a trade: you spend risk to buy clarity. This skill exists to keep the
-risk small and the clarity real — the code must do exactly what it did before, every gate
-that was green stays green, and the structure afterwards is easier to extend than the
-structure before.
+Refactoring is changing the shape of code without changing what it does. The
+shape is worth changing when the code's structure no longer tells you the truth
+about its responsibilities — when a reader has to hold five things in their head
+to answer "where does X happen?"
 
-Four things must be true when you are done:
+Two failure modes bracket this work. Doing nothing leaves the mess. Doing too
+much produces a different mess with a cleaner vocabulary: interfaces with one
+implementation, factories for two branches, a class where a function was fine.
+The job is to find the seams the code is already straining against and cut
+along those, then stop.
 
-1. **Behaviour is unchanged.** No new features, no fixed bugs, no changed output. If you
-   spot a genuine bug mid-refactor, note it and leave it — mixing a fix into a
-   restructuring hides both.
-2. **The gates are at least as green as the baseline you recorded.**
-3. **Comments were cleaned** with `.claude/hooks/comment-cleanup.sh` over the files you
-   touched.
-4. **`README.md`'s architecture section and repository layout match the code** if module
-   boundaries moved.
+## The ladder
 
-## Step 0 — Compute the scope
+Lazy means efficient, not careless. The best code is the code never written, and
+a refactor's entire product is *less* — so before writing anything, climb until a
+rung holds, then stop:
 
-Refactor what this branch changed, not the whole repo. Untouched code is someone else's
-decision and carries no review context.
+1. **Does this need to exist at all?** Speculative structure, a helper with one
+   caller, a slice nobody asked for — skip it and say so in one line.
+2. **Does it already exist here?** A helper, type, or pattern a few files over.
+   Re-implementing what the codebase already has is the most common slop, and in
+   a refactor it's the exact defect you were called in to remove.
+3. **Does the stdlib do it?** Use it.
+4. **Does a native platform feature cover it?** A DB constraint over app-layer
+   checks, the framework's own hook over a hand-rolled one.
+5. **Does an already-installed dependency solve it?** Use it. Never add a new
+   one for what a few lines can do.
+6. **Can it be one line?** One line.
+7. **Only then:** the minimum code that works.
 
-```bash
-BASE=$(git merge-base main HEAD)
-git diff --name-only "$BASE"...HEAD -- \
-  '*.py' 'agent/**' 'app/src/**' 'app/*.js' 'scripts/**' 'tests/**' \
-  ':!data/**' ':!app/dist/**' ':!**/uv.lock' ':!app/package-lock.json' ':!supabase/migrations/**'
-```
+The ladder shortens the solution, never the reading. It runs *after* you
+understand the problem — Steps 0–3 are not the part you skip, and laziness that
+skips comprehension to ship a small diff is the dangerous kind, because it looks
+like efficiency and lands a confident wrong fix. When two rungs both work, take
+the higher one and move on; the first solution that holds is the right one. The
+smallest change in the wrong place isn't lazy, it's a second bug.
 
-`origin/dev` and `main` are force-pushed in this repo, so a branch can orphan and
-`merge-base` can point somewhere surprising. Sanity-check the file count before trusting
-it: `dev` carries ~200 files against `main`, which is a release-sized diff, not a
-refactorable slice. When the base is wrong or the user means "the work I just did", scope to
-the uncommitted/session changes instead (`git status --porcelain`) and say which you chose.
+## Intensity
 
-If `main` has no shared history with `HEAD`, or the branch *is* `main`, fall back to the
-tracked source tree and say so in your plan — an unbounded scope needs an explicit
-decision, not a silent one.
+`refactor lite|full|ultra` — default **full**, persists until changed.
 
-Then measure before you commit to anything:
+| Level | What changes |
+|-------|--------------|
+| **lite** | Do the slices as asked, and name the lazier alternative in one line. The human picks. |
+| **full** | The ladder enforced. Shortest diff that actually removes the defect. |
+| **ultra** | Deletion before addition. Propose the one-slice version and question the rest of the request in the same breath. |
 
-```bash
-git diff --name-only "$BASE"...HEAD | wc -l
-git ls-files '*.py' 'agent/*.py' 'app/src/*.jsx' | xargs wc -l | sort -rn | head -20
-```
+## Not this skill
 
-**Gate:** more than ~10 files or ~800 lines in play means you write a ranked plan first
-and get it approved before editing. A refactor that touches everything at once cannot be
-reviewed, and an unreviewable refactor is indistinguishable from a rewrite. If the user
-has explicitly pre-authorised an unattended run, still write the plan — into the final
-report — so the choices stay legible.
+- **Adding a feature or fixing a bug.** Do that separately. If the code must be
+  restructured *to* fix the bug, do the restructure first as its own commit,
+  confirm tests still pass, then fix.
+- **Formatting/lint sweeps.** Run the formatter; that's not this.
+- **A rewrite.** If the answer is "delete and start over", say so and stop —
+  that's a design decision the human makes, not a refactor.
 
-## Step 1 — Record the baseline
+## Reviewing, not refactoring
 
-Run the gates *before* touching code. Without a recorded baseline, a red result afterwards
-is uninterpretable — you cannot tell your refactor from a pre-existing failure.
+When the target is someone else's PR or a pile of accumulated changes, you are
+diagnosing, not cutting. Run Steps 0–3 — local rules, the territory, the
+interface line, findings with evidence — and stop. Steps 4–7 assume you own the
+change and don't apply.
 
-Fast gates (run after every slice):
+Sort every finding into one of two buckets and say which it is:
 
-```bash
-PYTHONPATH=. uv run --with pytest pytest tests/ -q
-uv run python -c "import serve, analyze, ingest, agent.api, agent.db, agent.storage"
-cd app && npm run build
-```
+- **Blocking** — a defect in the diff as written: wrong behavior, an `except`
+  clause that can't fire, a test whose mock hides the thing it claims to prove.
+- **Follow-up slice** — real design debt the diff worsens but didn't create:
+  duplication it adds a copy to, a name it makes wronger.
 
-There is **no ruff, mypy, flake8 or ESLint config checked in**, and `pyproject.toml` has no
-`[tool.*]` sections — do not invent a linter gate, and do not add one as part of a
-refactor. The import check above is doing real work: `serve.py` imports `analyze` at module
-scope and `agent/api.py` calls `db.load_env()` at import, so a broken import surfaces as a
-startup failure rather than a test failure.
+Restructuring is never a merge condition on a behavioral change. Demanding it
+produces exactly the mixed, unreviewable diff "Not this skill" warns against,
+and it spends the credibility your blocking findings need. "Extract this before
+a fifth caller arrives" lands; "restructure this PR" doesn't.
 
-Slow gate (baseline once, then again before the final commit) — the app actually answering:
+Do count the duplication a change *adds*, out loud — "this takes the clone
+count from two to four" is concrete, and it's the argument for the follow-up.
 
-```bash
-./run.sh && bash scripts/preflight.sh
-curl -s -X POST http://127.0.0.1:8756/api/widget -H 'Content-Type: application/json' \
-  -d '{"video":"5IgOP7Lpk5g","time":300,"text":"...","ask":"<unique string>"}'
-```
+## The contract: behavior does not move
 
-Two things to know about coverage. `pytest` here is four-plus small unittest files with no
-Supabase and no model — a green run proves the pure logic and the patched seams, nothing
-about the live pipeline. And `preflight.sh` reports two ✗ on a perfectly healthy stack: it
-greps `/v1/models` for `Nemotron` (the vllm-metal path serves `qwen3-vl-4b`) and it wants
-`OPENROUTER_API_KEY`. Treat only the `:8756` / `:8787` / `:5174` / proxied-data lines as
-signal, and say which gates you actually ran — over-claiming coverage is worse than
-admitting the gap.
+Everything below depends on this. A refactor whose test results differ from the
+baseline is not a refactor — it's an undocumented change, and the reviewer has
+no way to tell which parts were intentional.
 
-## Step 2 — SOLID, in this repo's idiom
-
-SOLID is a diagnosis language, not a target architecture. Use it to name what hurts, then
-apply the smallest change that removes the hurt.
-
-**Single responsibility** — the live pressure here. `serve.py` is one file holding the
-FastAPI routes, the two-tier widget cache, prompt hashing, Supabase auth, billing/credit
-flow and the ingest subprocess driver. `analyze.py` holds the prompt, the schema, every
-backend class, the backend factory, a dotenv loader and the batch runner. `app/src/App.jsx`
-is several thousand lines of screen, chart and dashboard. The useful split is by *reason to
-change* — a route changes when the API changes, a cache changes when the storage changes —
-so those belong apart. Prefer moving a coherent group into a module next to its peers
-(`agent/`) over inventing a new layer.
-
-**Open/closed and dependency inversion** — respect the seams that already exist rather than
-adding new ones. `analyze.make_backend()` is the abstraction the pipeline depends on and
-`OpenAIBackend`/`MlxBackend` are the implementations behind it; every caller that names a
-backend goes through `BACKEND_CHOICES`. When something endpoint-specific leaks into a
-caller, move it behind the factory — that is a real DIP fix. Note the known violation:
-`agent/brain.py` builds its own client outside `make_backend`, with its own env namespace
-and no timeout. Folding it in is a legitimate refactor; adding a *second* factory beside it
-is not.
-
-**Interface segregation and Liskov** — `backend.ask(frame, context, max_px, system)` is the
-contract, and `MlxBackend` needs a real filesystem path while `OpenAIBackend` only needs
-bytes. Anything that narrows `ask` to bytes breaks the mlx implementation silently, since
-`analyze.py` swallows per-frame exceptions. Check new backends honour the whole signature.
-
-### Anti-goals
-
-These are the failure modes that make refactors net-negative:
-
-- **No abstraction with a single implementation.** An interface with one implementor is
-  indirection you pay for and never use.
-- **Additive, never replacing.** When touching backends, providers or serving paths, the
-  existing option stays selectable. Do not repoint `KEDU_BACKEND`, collapse the
-  `VLLM_*`/`NEMOTRON_*`/`KEDU_*` namespaces into one, or delete the LM Studio fallback
-  because vllm is the current default.
-- **No new dependencies.** The Python side is deliberately raw `psycopg2` + `urllib`
-  (`agent/db_rest.py` exists specifically so the sandbox needs nothing extra installed),
-  and `deploy/containment/Dockerfile.analyze` copies `analyze.py` alone and pip-installs
-  only `openai` + `pillow`. A module-scope import of anything else in `analyze.py` kills
-  every contained run.
-- **No editing applied migrations.** `supabase/migrations/*.sql` is append-only history,
-  and the remote ledger is already out of sync with the files. Schema changes are a new
-  migration and a new feature — out of scope here.
-- **No file explosion.** Splitting a 125-line module into six files makes it harder to
-  read, not easier. Split when a file has two reasons to change, not when it crosses a line
-  count.
-- **No renaming across the public surface** (route paths, env var names, `BACKEND_CHOICES`
-  values, table or column names, `PROMPT_VERSION`) unless you update every caller and the
-  gates prove it. Renaming a cache key input silently invalidates the shared
-  `inference_cache` for every user.
-- **No behaviour "improvements" smuggled in.** Better error messages, extra validation and
-  performance tweaks are separate commits.
-
-## Step 3 — Execute in slices
-
-One concern per slice: one module split, or one duplication removed, or one dependency
-inverted. After each slice, run the fast gates and commit. Small commits are what make a
-behaviour-preserving claim checkable — a reviewer can read one and believe it.
-
-Prefer mechanical moves over rewrites. Moving a function to a new module with its imports
-adjusted is verifiable by eye; re-expressing its logic on the way is not, and the two
-should never share a commit.
-
-If a slice turns out to need behaviour changes to work, stop that slice and record it as
-follow-up work. The scope of a refactor shrinks; it does not grow.
-
-## Step 4 — Comment hygiene
-
-Refactoring strands comments: they describe code that moved, or narrate steps that no
-longer exist. Run the cleaner over exactly the files you touched:
+Before touching anything, capture a baseline:
 
 ```bash
-.claude/hooks/comment-cleanup.sh $(git diff --name-only "$BASE"...HEAD)
+pytest <scope> -q 2>&1 | tail -5          # record counts AND the failing set
+<linter> <scope>                          # flake8 / ruff / eslint — record output
 ```
 
-It is delete-only — it spawns a subagent that may remove comment text and nothing else —
-and it enforces CLAUDE.md's policy while being biased toward keeping, because this repo's
-comments are unusually good: they explain *why* (why `max_retries=0` on the model client,
-why `VLLM_HOST_IP` is pinned to loopback, why the audio-tower transpose is a no-op, why the
-storage fetch must not inherit `KEDU_TIMEOUT`). Losing those costs more than leaving a stale
-one. Review its diff before committing; it is a tool, not an authority.
+Save the numbers. After each slice, re-run and require **the same tests
+passing** — not "tests pass". A green run with 4 fewer tests collected means you
+deleted coverage. A newly-passing test means behavior moved.
 
-The same script is wired as a `PreToolUse` hook on `git commit` in `.claude/settings.json`,
-where it cleans staged files and re-stages them. Calling it explicitly here means the
-cleanup lands in the refactor's own commits with a visible diff rather than silently.
+If you find a genuine bug mid-refactor, write it down and keep going. Preserve
+it faithfully, mention it in the report, and let the human decide. Silently
+fixing it inside a "no behavior change" diff is how a refactor becomes
+unreviewable.
 
-## Step 5 — Documentation
+## Step 0 — Load the local rules
 
-The doc set: **`README.md`** for what the project is, how to run it, the architecture
-diagram and the repository-layout table; **`AGENTS.md`** and **`CLAUDE.md`** for the
-conventions agents keep breaking (kept in sync with each other); **`docs/hackguide/`** for
-the demo script and experiment notes. Do not add other top-level docs — a doc nobody is
-required to read goes stale and then actively misleads.
+Read `CLAUDE.md` / `AGENTS.md` (repo root and any nested ones on the path to
+your target), plus lint config. Repo conventions outrank anything in this skill
+or in general SOLID advice. Generic refactoring guidance will happily emit
+`Optional[str]`, 120-char lines, or an extracted service class into a codebase
+that forbids all three, and every one of those is a review comment.
 
-README's Mermaid diagram and its `Repository layout` block answer "where does this code live
-and what talks to what", at the level of modules and boundaries — never individual
-functions, which change too often to keep true. Update them when a refactor moves a
-boundary; leave them alone when nothing structural changed.
+Note specifically: line length, typing style, enum/StrEnum rules, import
+placement, comment/docstring rules, and any architectural constraint about
+where logic is allowed to live.
 
-Also check README for claims your refactor invalidated — commands, file paths named in
-prose, the env-var block, the stack list. Known drift to be careful not to propagate: README
-says `localhost:5173` while the `dev` branch binds 5174 with `strictPort`, and it documents
-quoted `.env` values while `agent/db.py`'s loader does not strip quotes.
+## Step 1 — Map the territory before judging it
 
-## Step 6 — Verify and report
+Read the whole surface, not the diff. Then read how it got this way:
 
-Rerun every gate, including the slow one you baselined. Then read your own diff
-(`git diff --stat` plus the interesting hunks) as if reviewing someone else.
+```bash
+git log --oneline -30 -- <paths>
+```
 
-Report:
+The log is the most under-used input in a refactor. Code that has been reworked
+five times is code where each attempt was aiming somewhere, and the mess is
+usually the residue of a *partially completed* migration rather than
+carelessness. Find the direction of travel and finish that trip. A refactor that
+introduces a sixth shape — even a tasteful one — makes the situation worse.
 
-- What changed, grouped by concern, with the SOLID pressure each slice relieved.
-- Gate results, before and after, naming which gates you actually ran.
-- What you deliberately left alone and why — the ranked plan's tail, bugs you found and
-  did not fix, follow-up work the scope rule pushed out.
+Also collect: every caller, every test, and every non-code reference (docs,
+agent prompts, config, dashboards, SQL). You need these to size the blast
+radius before you propose anything.
 
-A refactor report that lists only wins is not a report. The items you skipped are the ones
-the reader needs most.
+## Step 2 — Draw the interface line
+
+Split the surface into two lists and keep them explicit. This is the single
+highest-value five minutes in the whole workflow.
+
+**Frozen** — renaming or re-shaping these changes behavior even when every unit
+test stays green:
+- Serialized/persisted field names, enum *values*, DB columns, API payloads.
+- Anything an LLM reads: agent tool names, tool docstrings, prompt text,
+  structured-output schema field names. These are inputs to a model, so a
+  "clearer" name is a behavior change measurable only by evals.
+- Public exports other repos/services import.
+
+**Free** — invisible outside the module: private helpers, local variable names,
+internal control flow, file organization within a package, duplicated logic,
+class-vs-function choices for internals.
+
+Refactor the free list freely. Frozen-list changes need a separate decision with
+evidence (an eval run, a search of consumers), and belong in their own commit —
+never mixed into a structural slice.
+
+## Step 3 — Diagnose with evidence
+
+Name concrete defects at `file:line`, not vibes. Each finding needs: what it is,
+what it costs (the bug it invites, the change it makes expensive), and the move
+that fixes it. Group findings so the human sees themes, not a list of 40 nits.
+
+Read `references/design-moves.md` for the catalog — it maps each SOLID
+principle to what it actually looks like in a modern codebase, plus naming
+heuristics, encapsulation tells, and how to choose between an object, a
+function, and a data structure. Read it during diagnosis, not after.
+
+The findings that matter most, roughly in order:
+
+1. **The same rule implemented in more than one place.** Especially arithmetic,
+   parsing, and eligibility rules. This is the defect that actually produces
+   incidents; two copies drift. Grep every caller before deciding where the fix
+   belongs — one guard in the shared function is both the smaller diff and the
+   root-cause fix, while patching the one path a ticket names leaves every
+   sibling caller broken.
+2. **A module that changes for unrelated reasons.** Split along the reasons.
+3. **Names that lie or that need a comment to be understood.** A name that
+   requires a comment explaining *what* is a naming bug.
+4. **Leaked internals** — callers reaching into dicts/attributes to re-derive
+   something the owner should expose as one call.
+5. **Branching on type/kind in several places** — the same `if kind == ...`
+   ladder repeated is asking for polymorphism or a dispatch table.
+6. **Functions doing I/O and decisions together** — the reason they're hard to
+   test.
+
+## Step 4 — Propose slices, then get approval
+
+Write the plan out and stop. Never open with a 900-line diff.
+
+Each slice is: one intention, independently shippable, independently
+verifiable, and small enough to review in one sitting. Order them so the risky
+ones ride on top of already-verified ground. Label each `low / medium / high`
+risk and say what verifies it.
+
+Sequence that usually works:
+
+1. Delete dead code (free, shrinks everything downstream).
+2. Unify duplicated logic behind the one implementation that's already correct.
+3. Extract and rename internals; tighten encapsulation.
+4. Re-cut module boundaries.
+5. Frozen-list renames — separately, last, with evidence.
+
+Present the diagnosis and the slice list, then ask which slices to do. The human
+may only want #1 and #2, and that's a complete outcome. Cutting scope is their
+call.
+
+## Step 5 — Apply one slice at a time
+
+Per slice: make the change, re-run the baseline commands, compare against the
+recorded numbers, then move on. Batching slices and verifying once at the end
+means a failure tells you nothing about which change caused it.
+
+Two habits that keep diffs reviewable:
+
+- **Move or edit, not both.** A commit that relocates a function and rewrites it
+  is unreviewable. Move it verbatim, verify, then edit in the next commit.
+- **No drive-bys.** Every hunk in the diff should trace to a stated finding. If
+  you notice something else, add it to the findings list for later.
+
+If a slice turns out bigger than proposed, stop and re-check with the human
+rather than expanding silently.
+
+## Step 6 — Update everything that described the old shape
+
+A refactor isn't done when the code compiles; it's done when nothing still
+points at the shape you deleted. Search by the old symbol names for:
+
+```bash
+git grep -n "<old_name>" -- '*.md' '*.rst' '*.yaml' '*.yml' '*.json' '*.sql'
+git grep -n "<old_name>"                                    # code + prompts
+```
+
+Cover: READMEs and `docs/`, module and class docstrings, agent prompts and tool
+descriptions, config/fixture files, and architecture notes or ADRs describing
+the layout you just changed. Stale docs are worse than none — they send the next
+reader to a file that no longer exists.
+
+Update `CLAUDE.md`/`AGENTS.md` only when the refactor establishes a convention
+future work should follow ("income math lives in X; don't re-derive it"). Don't
+log the refactor itself there — that's the PR description's job.
+
+## Step 7 — Comment hygiene pass
+
+Refactoring strands comments: step banners left over from extracted blocks,
+comments describing code that moved, "this fixes..." notes addressed to a
+long-gone reviewer.
+
+If the repo ships a comment-cleanup hook, run it deliberately via the bundled
+wrapper (it handles the details that make a bare invocation a silent no-op):
+
+```bash
+<skill-dir>/scripts/clean-comments.sh <files you changed>
+```
+
+The wrapper reports whether the cleanup actually modified anything — check that
+output. Cleanup hooks commonly swallow errors and exit 0, so exit status alone
+proves nothing. Expect it to be slow (it may spawn a nested model call); that's
+not a hang.
+
+No hook in the repo? Do the pass by hand against the repo's comment rules, and
+apply the default that survives everywhere: comments explain **why**; delete
+ones that narrate *what* the next line does, and delete or rewrite any comment
+whose subject you just moved.
+
+Then re-run the baseline verification one final time — cleanup passes edit
+files, and edited files deserve a test run.
+
+## Step 8 — Report
+
+Give the human, briefly:
+
+- What changed structurally, by slice.
+- Verification: baseline vs. after (`182 passed` → `182 passed`, lint clean).
+- Findings you deliberately left — bugs spotted, frozen-list renames declined,
+  slices deferred — so nothing quietly disappears.
+- Anything unit tests can't cover (prompt/eval surface, serialization).
+
+This report was asked for, so give it in full. Prose *beyond* it is debt: if the
+paragraph defending a slice runs longer than the slice, delete the paragraph.
+Every argument for a simplification is complexity smuggled back in as prose.
+
+## Restraint
+
+Every move below is a real technique and a common way to make code worse. Reach
+for one when the code is already straining against its current shape — three
+call sites doing the same dance, a conditional ladder that's grown a third
+branch — not because the pattern is recognizable.
+
+- **An interface/ABC with one implementation.** Duck typing and a plain function
+  already give you substitutability; the abstraction is pure indirection until a
+  second implementation exists.
+- **A factory for two options.** A dict or an `if` is clearer.
+- **A class holding no state.** That's a module of functions with extra typing.
+- **A dataclass wrapper around a dict you immediately unwrap.** Types earn their
+  keep at boundaries that are crossed repeatedly, not at every hop.
+- **Splitting a coherent 200-line module into six 30-line files.** Cohesion is
+  the thing you're optimizing; file count isn't.
+- **Renaming for taste on the frozen list.** See Step 2.
+- **Deep inheritance to share a helper.** Compose or import.
+
+The test for any proposed abstraction: can you name the *second* concrete case
+it serves, today, in this repo? If not, leave the duplication and let the third
+occurrence tell you the right shape.
+
+Alongside those, the habits that keep a refactor from growing as it goes:
+
+- **No scaffolding for later.** No boilerplate, no config for a value that never
+  changes, no extension point with nothing to extend. Later can scaffold for
+  itself.
+- **Deletion over addition, boring over clever.** Clever is what the next person
+  decodes at 3am while paged.
+- **Fewest files that hold the shape.** File count isn't the thing being
+  optimized; cohesion is.
+- **Lazy about code, never about correctness.** Two options the same size? Take
+  the one that's right on the edge cases. Writing less code doesn't license the
+  flimsier algorithm.
+- **Mark a deliberate corner.** A simplification with a known ceiling — a global
+  lock, an O(n²) scan over a list you know stays short — gets one `TODO` naming
+  the ceiling and the condition that retires it, following this repo's TODO
+  rule rather than a new comment prefix.
+- **Don't stall on a scope question you can default.** Ship the lazy slice and
+  raise the larger version in the same breath: "did X; Y covers it — say the
+  word if you want the full cut."
+
+### When not to be lazy
+
+Never simplify away input validation at a trust boundary, error handling that
+prevents data loss, a security or authorization check, accessibility basics, or
+anything explicitly requested. A refactor exposes these more than new work does:
+they read like redundant defensive code, and deleting one is a behavior change
+the baseline may not catch. Preserve them as-is, or make removing one its own
+decision with evidence. If the human wants the fuller version after hearing the
+lazy one, build it — no re-arguing.
+
+Slices are verified by the baseline, not by new tests. The exception is a slice
+that introduces genuinely new logic (a dispatch table, a parser, a money path):
+leave behind the one smallest runnable check that fails if it breaks. No
+fixtures, no per-function suite. YAGNI applies to tests too.
+
+## Reference files
+
+- `references/design-moves.md` — the diagnosis and move catalog: SOLID in
+  practice, naming heuristics, encapsulation, choosing between objects,
+  functions, and data. Read during Step 3.
+- `scripts/clean-comments.sh` — invokes a repo's comment-cleanup hook correctly
+  and reports what it actually changed. Used in Step 7.
