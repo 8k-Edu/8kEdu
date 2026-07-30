@@ -61,9 +61,15 @@ VLM reads differently from its neighbours.
 ```
 LEAD = 2   # seconds of section before the target frame
 yt-dlp --download-sections "*{t-LEAD}-{t+5}" --force-keyframes-at-cuts \
-       -f "bv*[height<=720]" -o <tmpdir>/clip.%(ext)s <youtube_url>
+       -f "bv*[height<=480]+ba/b[height<=480]/b" -o <tmpdir>/clip.%(ext)s <youtube_url>
 ffmpeg -ss {LEAD} -i clip.mp4 -frames:v 1 -vf "scale=-2:720" -q:v 3 <frame_file>
 ```
+
+**The format selector must match `ingest.download()`'s `height<=480`, not the 720 the feasibility
+test used.** `extract_frames` then upscales to `-2:720`, so the whole library is 480p stretched to
+720 — a 720p source yields a *sharper* frame than any of its neighbours, and the VLM would be
+reading a recovered moment at a fidelity the rest of the video never gets. Matching the selector
+makes a recovered frame differ from an extracted one only by the re-encode at the cut.
 
 `--force-keyframes-at-cuts` makes the clip start exactly at the section start, so the seek
 offset into the clip is always `LEAD` — not `t`. Clamp the section start at 0 for early frames.
@@ -117,6 +123,42 @@ Guards:
 - **`KEDU_RECOVER_FRAMES=0`** kill switch, and off automatically where `yt-dlp` is absent.
 - Recovery is attempted **before** `spend_credit`, consistent with the frame resolve it extends.
 
+## B′. A reprocess keeps the frames it already has
+
+`(video_id, t_s)` is already the identity of a frame — it is `public.frames`' primary key. Today
+`publish_frames` passes `prune=True`, so a reprocess calls `storage.remove_video` and re-uploads
+every frame, discarding recovered ones and their rows for nothing. Replace that with a
+reconcile against the new manifest:
+
+| new manifest has `t_s` | `public.frames` has `t_s` | action |
+|---|---|---|
+| yes | no | upload the object, insert the row |
+| yes | yes, same `storage_path` | **skip** — already published |
+| yes | yes, different `storage_path` | upload under the new name, update the row, delete the old object |
+| no | yes | true orphan — delete object and row |
+
+This is why `prune=True` existed: a re-extract at a different interval renames every frame and
+orphans the old keys. The reconcile handles that case in its last row without throwing away the
+frames that *did* survive, which is what your point asks for.
+
+`extract_frames` itself can't skip frames — it is one ffmpeg pass over the whole video
+(`fps=1/interval`), and the download dominates the cost regardless — so the saving here is the
+redundant upload of ~120 objects and, more importantly, the preservation of frames that have
+already been analyzed.
+
+**Known consequence.** Skipping the upload leaves the bucket holding the recovered bytes while
+local disk now holds freshly-extracted ones for the same key. Both are the same moment, and
+`_prompt_hash` keys on the *filename* — never on frame content, and nothing in the repo hashes
+frame bytes — so every machine still serves one consistent cached spec. With the 480p selector
+above, the two differ only by a re-encode. Accepted rather than solved: making them identical
+would mean re-downloading the frame we already have.
+
+`t_s` equality is exact float comparison on a `double precision` PK. `round(sec, 1)` is
+deterministic for a given interval, so this holds while the duration reading is stable; if the
+interval shifts, every `t_s` differs and everything is treated as new — which is correct, they
+are different frames. Note the pre-existing hazard: `duration_sec()`'s ffprobe-less fallback
+returns `1200.0`, which would shift the interval and orphan the whole set.
+
 ## B. Fix the reprocess gate
 
 `serve.py:531` becomes "no manifest **or** no jpgs":
@@ -159,6 +201,9 @@ Unit, network patched:
 - filename comes from the manifest: a frame whose `time` and filename disagree recovers under
   its manifest name.
 - gate fix: manifest present + zero jpgs takes the download branch.
+- reconcile: a reprocess whose manifest matches existing `(video_id, t_s)` rows uploads nothing
+  and deletes nothing; one whose interval shifted uploads the new set and deletes exactly the
+  orphaned objects; a recovered frame present in both is left untouched.
 
 Integration: `_yhQg5gFTtQ` at t≈210 through `/api/widget` — a real widget, one new object in the
 bucket, one new `frames` row, and a second identical ask served from local disk.
@@ -171,6 +216,9 @@ bucket, one new `frames` row, and a second identical ask served from local disk.
 - **Each recovery is a real download.** Bounded by single-flight and by never needing to happen
   twice for the same frame, but a user scrubbing across a frameless video will trigger several.
   The kill switch is the release valve.
-- **Recovered frames come from a possibly re-encoded stream.** `-f bv*[height<=720]` and the
-  shared ffmpeg recipe keep them close to their neighbours, but they are not guaranteed
-  byte-identical to what a full `extract_frames` would have produced.
+- **Recovered frames come from a re-encoded cut.** Matching `ingest.download()`'s `height<=480`
+  selector and the shared `scale=-2:720` / `-q:v 3` recipe makes them equivalent to their
+  neighbours in resolution and quality, but not byte-identical. This costs nothing in rework:
+  recovery happens once per frame (it lands on disk, in the bucket and in `public.frames`), and
+  the widget cache keys on the filename, so a recovered frame is never re-recovered and never
+  re-analyzed.
