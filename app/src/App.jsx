@@ -810,6 +810,19 @@ function Lecture({ videoId, role }) {
               {roleCfg.icon} {roleCfg.label}
             </span>
           )}
+          {/* an analyzed video still needs a way to re-fetch its keyframes; the panel below
+              only renders before the first analysis, so this is the only route back */}
+          {analyzed && (proc?.state === 'running' ? (
+            <span style={{ fontSize: 11.5, color: '#58a6ff', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}>
+              <span className="kedu-spin" style={{ width: 11, height: 11, border: '2px solid #58a6ff55', borderTopColor: '#58a6ff', borderRadius: '50%', display: 'inline-block' }} />
+              {proc.step || 'starting'}…
+            </span>
+          ) : (
+            <button onClick={processVideo} title="Re-download this lecture's keyframes and regenerate its widgets"
+              style={{ fontSize: 11.5, color: '#8b949e', background: 'transparent', border: '1px solid #30363d', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+              ⚡ Reprocess
+            </button>
+          ))}
           <span style={{ fontSize: 11.5, color: '#8b949e', border: '1px solid #30363d', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
             {engine
               ? <>{engine.mode === 'local' ? '🖥 local' : '🔑 byok'} · {String(engine.model).replace('mlx-community/', '').slice(0, 34)}</>
