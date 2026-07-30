@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 # host uses `uv run yt-dlp`; the sandbox has yt-dlp on PATH but no uv
 YTDLP = ["uv", "run", "yt-dlp"] if shutil.which("uv") else ["yt-dlp"]
@@ -24,9 +25,9 @@ MAX_FRAMES = 120
 FRAME_HEIGHT = 720  # enough for VLM to read code/equations
 
 
-def run(cmd: list[str], check: bool = True) -> int:
+def run(cmd: list[str], check: bool = True, timeout: int | None = None) -> int:
     print("+", " ".join(cmd))
-    return subprocess.run(cmd, check=check).returncode
+    return subprocess.run(cmd, check=check, timeout=timeout).returncode
 
 
 def download(url: str, out: Path) -> Path:
@@ -118,6 +119,45 @@ def extract_frames(video: Path, out: Path) -> list[dict]:
         raw.rename(final)
         meta.append({"time": round(sec, 1), "file": final.name})
     return meta
+
+
+FRAME_LEAD_S = 2  # section starts this far before the target so the cut lands on a keyframe
+
+
+def fetch_one_frame(vid: str, t_s: float, frame_file: str, frames_dir: Path,
+                    timeout: int | None = 60) -> Path | None:
+    """One keyframe pulled straight from YouTube, for a moment whose jpg exists nowhere.
+
+    Same source selector as download() and same recipe as extract_frames(): the library is
+    480p upscaled to 720, so a higher-resolution source here would hand the VLM a sharper
+    frame than any of its neighbours.
+
+    frame_file comes from the manifest — `time` is round(sec, 1) while the filename is
+    int(sec), so recomputing the name here would miss on about a third of frames."""
+    start = max(0.0, t_s - FRAME_LEAD_S)
+    dest = frames_dir / frame_file
+    try:
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as td:
+            run(YTDLP + [
+                "--download-sections", f"*{start}-{t_s + 5}",
+                "--force-keyframes-at-cuts",
+                "-f", "bv*[height<=480]+ba/b[height<=480]/b",
+                "-o", str(Path(td) / "clip.%(ext)s"),
+                f"https://www.youtube.com/watch?v={vid}",
+            ], timeout=timeout)
+            clips = sorted(Path(td).glob("clip.*"))
+            if not clips:
+                return None
+            # --force-keyframes-at-cuts makes the clip start at `start`, so the seek into it
+            # is the lead-in, never the absolute timestamp.
+            run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t_s - start),
+                 "-i", str(clips[0]), "-frames:v", "1",
+                 "-vf", f"scale=-2:{FRAME_HEIGHT}", "-q:v", "3", str(dest)], timeout=timeout)
+        return dest if dest.exists() and dest.stat().st_size else None
+    except Exception as e:
+        print(f"! frame recovery failed for {vid}@{t_s}: {e}")
+        return None
 
 
 def fetch_chapters(url: str, out: Path) -> list[dict]:
