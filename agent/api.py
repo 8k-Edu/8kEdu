@@ -98,6 +98,14 @@ def perf(limit: int = 50, scope: str = "mine"):
         vlms = sorted([e["t_backend_ask_ms"] for e in events
                        if e.get("t_backend_ask_ms") is not None and not e.get("cache_hit")])
         hit_rate = round(sum(1 for e in events if e.get("cache_hit")) / len(events), 3) if events else 0.0
+        # Only cold requests resolve a frame at all, so rates are over those, not every event.
+        cold = [e for e in events if e.get("frame_source")]
+        fetches = sorted([e["t_frame_fetch_ms"] for e in cold
+                          if e.get("frame_source") == "remote" and e.get("t_frame_fetch_ms") is not None])
+
+        def rate(src):
+            return round(sum(1 for e in cold if e["frame_source"] == src) / len(cold), 3) if cold else 0.0
+
         return {
             "ok": True,
             "handle": handle,
@@ -110,6 +118,9 @@ def perf(limit: int = 50, scope: str = "mine"):
                 "t_total_p99_ms": _pctile(totals, 99),
                 "t_backend_ask_p50_ms": _pctile(vlms, 50),
                 "t_backend_ask_p90_ms": _pctile(vlms, 90),
+                "frame_fetch_p50_ms": _pctile(fetches, 50),
+                "frame_remote_rate": rate("remote"),
+                "frame_miss_rate": rate("miss"),
             },
         }
     except Exception as e:

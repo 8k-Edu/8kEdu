@@ -271,6 +271,61 @@ def _jpeg_bytes(frame: Path, max_px: int | None) -> bytes:
     return buf.getvalue()
 
 
+def _materialize(frame: Path, data: bytes) -> Path:
+    """Write `data` where `frame` says, atomically. The temp file shares the destination
+    directory so the rename can't cross filesystems, and concurrent fetchers each write
+    their own temp — a reader never sees a partial jpg, which would raise OSError from PIL
+    and escape the FileNotFoundError handling that keeps /api/widget off a 500."""
+    import tempfile
+    for parent in (frame.parent, _fallback_dir(frame)):
+        try:
+            parent.mkdir(parents=True, exist_ok=True)
+            fd, name = tempfile.mkstemp(dir=parent, suffix=".part")
+            os.close(fd)
+            tmp = Path(name)
+            tmp.write_bytes(data)
+            dest = parent / frame.name
+            os.replace(tmp, dest)
+            return dest
+        except OSError:
+            continue
+    return frame
+
+
+def _fallback_dir(frame: Path) -> Path:
+    """Read-only rootfs (containers, k8s) can't take the canonical path. Mirrors the
+    <videoId>/frames/ layout so the cache reads like the tree it stands in for."""
+    import tempfile
+    root = os.environ.get("KEDU_FRAME_CACHE_DIR") or str(Path(tempfile.gettempdir()) / "kedu-frames")
+    return Path(root) / frame.parent.parent.name / frame.parent.name
+
+
+def resolve_frame(frame: Path, video_id: str) -> tuple[Path, str, int]:
+    """(path, source, elapsed_ms) with source in local|remote|miss|off. Never raises: on any
+    failure it returns `frame` untouched, so callers keep their existing not-on-disk paths.
+
+    The agent.storage import is deliberately lazy — deploy/containment/Dockerfile.analyze
+    copies analyze.py alone and installs only openai + pillow, so a module-scope import
+    would kill every contained run."""
+    if frame.exists():
+        return frame, "local", 0
+    try:
+        from agent import storage
+        if not storage.enabled():
+            return frame, "off", 0
+    except Exception:
+        return frame, "off", 0
+    t0 = time.perf_counter()
+    try:
+        data = storage.fetch_frame(video_id, frame.name)
+    except Exception:
+        data = None
+    ms = int((time.perf_counter() - t0) * 1000)
+    if not data:
+        return frame, "miss", ms
+    return _materialize(frame, data), "remote", ms
+
+
 class MlxBackend:
     def __init__(self):
         from mlx_vlm import load, generate  # lazy: heavy import
@@ -505,7 +560,8 @@ def main() -> None:
                     spec["time"] = fr["time"]
                     spec["frame"] = fr["file"]
                     return ("reuse", i, plan, spec)
-            raw = backend.ask(data / "frames" / fr["file"], plan["context"], max_px=sweep_max_px)
+            src, _source, _ms = resolve_frame(data / "frames" / fr["file"], data.name)
+            raw = backend.ask(src, plan["context"], max_px=sweep_max_px)
         except Exception as e:  # one bad frame must not kill the run — surfaced in the summary
             return ("error", i, plan, str(e))
         spec = extract_json(raw)

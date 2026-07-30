@@ -1,0 +1,158 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "First-Time Home Buyer Calculator",
+  "explanation": "This calculator helps you determine if your budget allows for a mortgage payment under 25% of take-home pay, while factoring in 20% down payment and other key financials.",
+  "params": {
+   "cells": [
+    "import numpy as np\n\n# Sliders for user inputs\nprice = float('200000')  # Default home price\npercent_down = 20  # 20% down\nincome = 50000  # Monthly take-home income\ninterest_rate = 4.5  # Annual interest rate\nyears = 30  # Loan term in years\n\n# Calculate monthly payment\nmonthly_payment = (price * (percent_down / 100)) / 12 * (interest_rate / 100 / 12) / (1 - (1 + interest_rate / 100 / 12)**(-12 * years))\n\n# Check if payment is under 25% of take-home income\nmax_payment = income * 0.25\n\n# Display results\nprint(f\"Monthly Payment: ${monthly_payment:.2f}\")\nprint(f\"Max Allowed Payment (25% of income): ${max_payment:.2f}\")\nprint(f\"Payment is within budget: {monthly_payment <= max_payment}\")"
+   ],
+   "sliders": [
+    {
+     "name": "price",
+     "min": 100000,
+     "max": 500000,
+     "value": 200000
+    },
+    {
+     "name": "percent_down",
+     "min": 0,
+     "max": 100,
+     "value": 20
+    },
+    {
+     "name": "income",
+     "min": 20000,
+     "max": 100000,
+     "value": 50000
+    },
+    {
+     "name": "interest_rate",
+     "min": 2,
+     "max": 10,
+     "value": 4.5
+    },
+    {
+     "name": "years",
+     "min": 5,
+     "max": 40,
+     "value": 30
+    }
+   ]
+  },
+  "time": 0,
+  "frame": "f_000000.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "First-Time Home Buyer Checklist",
+  "explanation": "The speaker emphasizes critical due diligence steps for real estate purchases to avoid costly surprises.",
+  "params": {
+   "cells": [
+    "def calculate_mortgage_payment(principal, rate, years):",
+    "    return principal * (rate/12) / (1 - (1 + rate/12)**(-years*12))",
+    "print(f\"Mortgage Payment: \")",
+    "print(calculate_mortgage_payment(300000, 0.04, 30))",
+    "print(\"\\n\")",
+    "print(\"Recommended: Get a home inspection, title insurance, and survey for any non-traditional property.\")"
+   ],
+   "sliders": [
+    {
+     "name": "principal",
+     "min": 100000,
+     "max": 500000,
+     "value": 300000
+    },
+    {
+     "name": "rate",
+     "min": 0.02,
+     "max": 0.12,
+     "value": 0.04
+    },
+    {
+     "name": "years",
+     "min": 5,
+     "max": 30,
+     "value": 30
+    }
+   ]
+  },
+  "time": 90,
+  "frame": "f_000090.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "First-Time Home Buyer Calculator",
+  "explanation": "This video advises against buying poorly designed or poorly maintained homes, emphasizing the importance of avoiding 'ugly' or poorly planned properties to prevent future financial loss.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Sliders for user input\nprice = float('slider')  # Initial home price\ndown_payment_pct = float('slider')  # Down payment percentage\ninterest_rate = float('slider')  # Annual interest rate\nyears = float('slider')  # Loan term in years\n\n# Calculate mortgage payment\nmonthly_payment = (price * (interest_rate / 100 / 12) * (1 + interest_rate / 100 / 12) ** (years * 12)) / ((1 + interest_rate / 100 / 12) ** (years * 12) - 1)\n\n# Calculate total cost\ntotal_cost = monthly_payment * years * 12\n\n# Plot\nplt.figure(figsize=(10, 6))\nplt.plot([1, 2, 3, 4, 5], [price, price * 1.05, price * 1.1, price * 1.15, price * 1.2], label='Appreciation')\nplt.plot([1, 2, 3, 4, 5], [total_cost, total_cost * 1.05, total_cost * 1.1, total_cost * 1.15, total_cost * 1.2], label='Total Cost')\nplt.title('Mortgage Payment vs Appreciation')\nplt.xlabel('Years')\nplt.ylabel('Amount')\nplt.legend()\nplt.show()\n\nprint(f'Monthly Payment: ${monthly_payment:.2f}')\nprint(f'Total Cost: ${total_cost:.2f}')"
+   ],
+   "sliders": [
+    {
+     "name": "price",
+     "min": 100000,
+     "max": 500000,
+     "value": 300000
+    },
+    {
+     "name": "down_payment_pct",
+     "min": 0,
+     "max": 50,
+     "value": 10
+    },
+    {
+     "name": "interest_rate",
+     "min": 3,
+     "max": 10,
+     "value": 5
+    },
+    {
+     "name": "years",
+     "min": 1,
+     "max": 30,
+     "value": 30
+    }
+   ]
+  },
+  "time": 190,
+  "frame": "f_000190.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "First-Time Home Buyer: Corner Lot Analysis",
+  "explanation": "Corner lots offer street appeal but often sacrifice backyard space, requiring careful evaluation before purchase.",
+  "params": {
+   "cells": [
+    "def calculate_corner_lot_value(front_value, back_space_value, price_adjustment):\n    return front_value + back_space_value * price_adjustment\n\n# Sliders for user input\nfront_value = 100000  # Front-facing value\nback_space_value = 5000  # Backyard value\nprice_adjustment = 0.8  # Adjust for corner lot\n\n# Calculate\nvalue = calculate_corner_lot_value(front_value, back_space_value, price_adjustment)\nprint(f'Estimated Value: ${value}')",
+    "import matplotlib.pyplot as plt\n\n# Plotting\nx = [1, 2, 3, 4, 5]\ny = [100000, 105000, 110000, 115000, 120000]\nplt.plot(x, y, marker='o')\nplt.title('Corner Lot Value vs. Lot Number')\nplt.xlabel('Lot Number')\nplt.ylabel('Value')\nplt.grid(True)\nplt.show()"
+   ],
+   "sliders": [
+    {
+     "name": "front_value",
+     "min": 80000,
+     "max": 120000,
+     "value": 100000
+    },
+    {
+     "name": "back_space_value",
+     "min": 2000,
+     "max": 10000,
+     "value": 5000
+    },
+    {
+     "name": "price_adjustment",
+     "min": 0.5,
+     "max": 1.5,
+     "value": 0.8
+    }
+   ]
+  },
+  "time": 290,
+  "frame": "f_000290.jpg"
+ }
+]

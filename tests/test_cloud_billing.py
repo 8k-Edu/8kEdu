@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import serve
@@ -56,7 +57,8 @@ class CreditReservationTests(unittest.TestCase):
         with patch.object(serve, "_db", MeteredDB()), \
                 patch.object(serve, "_authenticated_handle", return_value="auth-guest"), \
                 patch.object(serve, "_cloud_ctx", return_value=(CloudBackend(), True, "cloud-model")), \
-                patch.object(serve, "nearest_frame", return_value={"file": "frame.jpg"}), \
+                patch.object(serve, "nearest_frame", return_value={"file": "frame.jpg", "time": 1.0}), \
+                patch.object(serve, "resolve_frame", return_value=(Path("frame.jpg"), "off", 0)), \
                 patch.object(serve, "_genre_for", return_value="general"), \
                 patch.object(serve, "_cache_get_first", return_value=None), \
                 patch.object(serve, "_cache_put"), \

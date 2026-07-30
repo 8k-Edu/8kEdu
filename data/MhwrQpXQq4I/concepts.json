@@ -1,0 +1,30 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Arbitrage Profit Calculator",
+  "explanation": "Calculate the risk-free profit from arbitrage trading between two markets with differing prices.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Define arbitrage parameters\nprice_a = 30  # price at Market A\nprice_b = 40  # price at Market B\nprofit_per_kg = 10  # arbitrage profit per kilogram\nkg_traded = 100  # kilograms traded\n\n# Calculate total profit\ntotal_profit = profit_per_kg * kg_traded\n\n# Plot the profit per kilogram and total\nplt.figure(figsize=(8, 5))\nplt.plot([1, 2, 3, 4, 5], [profit_per_kg] * 5, marker='o', linestyle='-', label='Profit per kg')\nplt.plot([1, 2, 3, 4, 5], [total_profit] * 5, marker='s', linestyle='--', label='Total Profit')\nplt.title('Arbitrage Profit Calculation')\nplt.xlabel('Time Step')\nplt.ylabel('Profit ($)')\nplt.legend()\nplt.grid(True)\nplt.show()",
+    "print(f\"Total arbitrage profit: ${total_profit}\")"
+   ],
+   "sliders": [
+    {
+     "name": "kg_traded",
+     "min": 1,
+     "max": 1000,
+     "value": 100
+    },
+    {
+     "name": "profit_per_kg",
+     "min": 1,
+     "max": 50,
+     "value": 10
+    }
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ }
+]

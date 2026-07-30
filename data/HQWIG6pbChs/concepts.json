@@ -1,0 +1,33 @@
+[
+ {
+  "has_concept": true,
+  "widget": "spreadsheet",
+  "title": "Setting Alignment in Microsoft Excel",
+  "explanation": "The video demonstrates how to adjust text alignment in Excel to customize how data is positioned within cells.",
+  "params": {
+   "cells": [
+    [
+     "NAME",
+     "CLASS",
+     "ROLL NO.",
+     "GRA"
+    ],
+    [
+     "",
+     "",
+     "",
+     ""
+    ]
+   ],
+   "features": [
+    "alignment"
+   ],
+   "highlight": {
+    "row": 1,
+    "col": 4
+   }
+  },
+  "time": 20,
+  "frame": "f_000020.jpg"
+ }
+]

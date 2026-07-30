@@ -1,0 +1,209 @@
+[
+ {
+  "has_concept": true,
+  "widget": "spreadsheet",
+  "title": "Centering Titles Across Cells in Excel",
+  "explanation": "Learn how to center text within cells and repeat column titles across pages for professional formatting.",
+  "params": {
+   "cells": [
+    [
+     "EXPENSE REPORT",
+     "B1",
+     "B1"
+    ],
+    [
+     "CONTOSO.LTD",
+     "B2",
+     "B2"
+    ],
+    [
+     "123 South Main Street, North Buffalo, NY 12345",
+     "B3",
+     "B3"
+    ],
+    [
+     "PHONE",
+     "B4",
+     "B4"
+    ],
+    [
+     "FAX",
+     "B5",
+     "B5"
+    ],
+    [
+     "EMAIL",
+     "B6",
+     "B6"
+    ],
+    [
+     "WEB",
+     "B7",
+     "B7"
+    ],
+    [
+     "NAME",
+     "B8",
+     "B8"
+    ],
+    [
+     "DEPARTMENT",
+     "B9",
+     "B9"
+    ],
+    [
+     "POSITION",
+     "B10",
+     "B10"
+    ],
+    [
+     "MANAGER",
+     "B11",
+     "B11"
+    ],
+    [
+     "DATE",
+     "C1",
+     "C1"
+    ],
+    [
+     "ACCOUNT",
+     "D1",
+     "D1"
+    ],
+    [
+     "DESCRIPTION",
+     "E1",
+     "E1"
+    ],
+    [
+     "HOTEL",
+     "F1",
+     "F1"
+    ],
+    [
+     "TRANSPORT",
+     "G1",
+     "G1"
+    ],
+    [
+     "MEALS",
+     "H1",
+     "H1"
+    ],
+    [
+     "PHONE",
+     "I1",
+     "I1"
+    ],
+    [
+     "MISC",
+     "J1",
+     "J1"
+    ],
+    [
+     "ODOMETER START",
+     "K1",
+     "K1"
+    ],
+    [
+     "ODOMETER END",
+     "L1",
+     "L1"
+    ],
+    [
+     "MILEAGE TOTAL",
+     "M1",
+     "M1"
+    ],
+    [
+     "TOTAL",
+     "N1",
+     "N1"
+    ]
+   ],
+   "features": [
+    "center",
+    "repeat"
+   ],
+   "highlight": {
+    "row": 1,
+    "col": 1
+   }
+  },
+  "time": 10,
+  "frame": "f_000010.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "spreadsheet",
+  "title": "Centering and Repeating Headers in Excel",
+  "explanation": "Centering text across multiple columns and repeating headers on print pages ensures professional formatting and readability.",
+  "params": {
+   "cells": [
+    [
+     "EXPENSE REPORT"
+    ],
+    [
+     "CONTOSO",
+     "123 South",
+     "Buffalo, NY 12345"
+    ],
+    [
+     "PHONE",
+     "555-0122",
+     "FAX",
+     "555-0122",
+     "EMAIL",
+     "info@contoso.com",
+     "WEB",
+     "www.contoso.com"
+    ],
+    [
+     "NAME",
+     "Kim Abercrombie",
+     "DEPARTMENT",
+     "Sales",
+     "POSITION",
+     "Managing Director",
+     "MANAGER",
+     "Michael Tucker"
+    ],
+    [
+     "PURPOSE",
+     "Annual Sales Seminar",
+     "BEGINNING",
+     "1/3/2018",
+     "ENDING",
+     "2/7/2018",
+     "PREPARED BY",
+     "Kim Abercrombie",
+     "APPROVED BY",
+     "Michael Tucker"
+    ],
+    [
+     "MILEAGE RATE",
+     "$0.50/mile",
+     "MEAL RATE",
+     "$10.00/day",
+     "HOTEL RATE",
+     "$200.00/night",
+     "PHONE RATE",
+     "$10.00/day",
+     "MISC RATE",
+     "$50.00/day"
+    ]
+   ],
+   "features": [
+    "Merge & Center",
+    "Repeat Headers"
+   ],
+   "highlight": {
+    "row": 1,
+    "col": 1
+   }
+  },
+  "time": 100,
+  "frame": "f_000100.jpg"
+ }
+]

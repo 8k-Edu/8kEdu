@@ -1,0 +1,32 @@
+[
+ {
+  "start": 0,
+  "end": 20,
+  "title": "Intro"
+ },
+ {
+  "start": 20,
+  "end": 237,
+  "title": "Blackjack Rules / How To Play"
+ },
+ {
+  "start": 237,
+  "end": 349,
+  "title": "Example Rounds of Play"
+ },
+ {
+  "start": 349,
+  "end": 597,
+  "title": "When to Hit / Stand / Double / Split"
+ },
+ {
+  "start": 597,
+  "end": 719,
+  "title": "What is Insurance? or Surrendering?"
+ },
+ {
+  "start": 719,
+  "end": 881,
+  "title": "What Else Do I Need To Know to Win?"
+ }
+]

@@ -64,15 +64,17 @@ flowchart LR
   V["YouTube lecture"] --> A["8kEdu agent"]
   A --> I["Transcript + keyframes"]
   I --> N["Nemotron analysis"]
+  I --> F[("Supabase keyframe storage")]
   N --> M[("Supabase concept memory")]
   M --> W["React widget dashboard"]
   W --> L["Learner activity"]
   L -. "next heartbeat" .-> A
   M -. "retrieve before analyzing" .-> N
+  F -. "pull on local miss" .-> N
   O["OpenShell containment"] -. "policy boundary" .-> A
 ```
 
-`ingest.py` extracts transcripts, chapters, and keyframes. `analyze.py` converts them into structured concept specs. `app/` renders the video, timeline, widgets, agent activity, and recursive graph.
+`ingest.py` extracts transcripts, chapters, and keyframes, and publishes the keyframes to a private Supabase Storage bucket so they outlive the machine that ran it. `analyze.py` converts frames into structured concept specs, pulling a frame from that bucket when it isn't on local disk. `app/` renders the video, timeline, widgets, agent activity, and recursive graph.
 
 ## Quick start
 
@@ -167,7 +169,7 @@ bash claw-agent/contained_agent_demo.sh
 ## Data provenance
 
 - Demo inputs are public YouTube lectures processed with `yt-dlp`.
-- `data/<videoId>/` stores derived transcripts, keyframes, chapters, and concept specs—not source videos.
+- `data/<videoId>/` stores derived transcripts, keyframes, chapters, and concept specs—not source videos. Keyframe jpgs are gitignored; the durable copy is a private Supabase Storage bucket, indexed by `public.frames`, and `scripts/backfill_frames.py` uploads any that predate that.
 - Concept specs are generated from keyframes and transcript windows by the configured vision-language model.
 - Community seed profiles and vote counts are synthetic; they contain no real user data.
 - Curator results come from public videos discovered at runtime and are cached for reuse.
@@ -191,7 +193,7 @@ Known-concept recall and retrieval precision are both 100%; overall cold-concept
 ingest.py                 video, transcript, chapter, and frame extraction
 analyze.py                concept analysis and recursive-memory updates
 serve.py                  live widget API
-agent/                    heartbeat, curator, API, and persistence
+agent/                    heartbeat, curator, API, persistence, and keyframe storage
 app/src/                  React dashboard and widget kit
 claw-agent/               OpenShell policy and containment demos
 data/<videoId>/           derived demo artifacts

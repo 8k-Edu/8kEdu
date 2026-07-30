@@ -1,0 +1,42 @@
+[
+ {
+  "start": 0,
+  "end": 25,
+  "title": "Intro"
+ },
+ {
+  "start": 25,
+  "end": 47,
+  "title": "The Lockbox Method"
+ },
+ {
+  "start": 47,
+  "end": 84,
+  "title": "The AA Method"
+ },
+ {
+  "start": 84,
+  "end": 115,
+  "title": "Come up with the idea"
+ },
+ {
+  "start": 115,
+  "end": 150,
+  "title": "Start coding"
+ },
+ {
+  "start": 150,
+  "end": 190,
+  "title": "Dont miss the deadline"
+ },
+ {
+  "start": 190,
+  "end": 230,
+  "title": "Its not about perfection"
+ },
+ {
+  "start": 230,
+  "end": 259,
+  "title": "Outro"
+ }
+]

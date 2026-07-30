@@ -23,13 +23,14 @@ from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from analyze import BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend, openrouter_backend, valid
+from analyze import (BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend,
+                     openrouter_backend, resolve_frame, valid)
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 DATA = Path("data")
-DEFAULT_VIDEO = "42L1q1Z4Ojc"  # has keyframes on disk → live-ask never 404s on the fallback
+DEFAULT_VIDEO = "42L1q1Z4Ojc"  # metadata only — its keyframes are neither on disk nor backfilled
 PROMPT_VERSION = "v1"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
 WIDGET_MAX_PX = int(os.environ.get("KEDU_MAX_PX", "768"))
 _frames_cache: dict[str, list] = {}
@@ -182,13 +183,44 @@ class Ask(BaseModel):
 
 
 def frames_for(video: str) -> list[dict]:
-    if video not in _frames_cache:
-        _frames_cache[video] = json.loads((DATA / video / "frames.json").read_text())
-    return _frames_cache[video]
+    """frames.json when it's local, else the frames table — the manifest is only git-tracked
+    for some videos, and a bare read_text() here 500s before any frame handling runs."""
+    if video in _frames_cache:
+        return _frames_cache[video]
+    try:
+        manifest = json.loads((DATA / video / "frames.json").read_text())
+    except OSError:
+        try:
+            manifest = _db.frames_manifest(video) if _db else []
+        except Exception:
+            manifest = []
+    if manifest:  # an empty result may just be a DB blip — don't pin it for the process
+        _frames_cache[video] = manifest
+    return manifest
 
 
-def nearest_frame(video: str, t: float) -> dict:
-    return min(frames_for(video), key=lambda f: abs(f["time"] - t))
+def nearest_frame(video: str, t: float) -> dict | None:
+    """None when the video has no manifest anywhere — callers turn that into the same
+    keyframes-missing answer a frameless video already gets, not a 500 out of min()."""
+    frames = frames_for(video)
+    return min(frames, key=lambda f: abs(f["time"] - t)) if frames else None
+
+
+def _no_manifest() -> dict:
+    return {"error": "this video hasn't been processed yet — no keyframe manifest on disk or in Supabase"}
+
+
+def _no_keyframes(kind: str) -> dict:
+    return {"error": f"this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable {kind} asks"}
+
+
+def _frame_path(ev: dict, video: str, fr: dict) -> Path:
+    """Local jpg if it's there, else pulled from Supabase Storage. Records where it came
+    from on the event; a miss returns the absent path so the caller's own not-on-disk
+    handling fires unchanged."""
+    src, frame_source, t_fetch = resolve_frame(DATA / video / "frames" / fr["file"], video)
+    ev.update(frame_source=frame_source, t_frame_fetch_ms=t_fetch)
+    return src
 
 
 SS_MAX_ROWS, SS_MAX_COLS = 5, 4
@@ -247,6 +279,8 @@ def _with_billing(obj: dict, cloud: bool, model: str, credits_left):
 def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
+    if fr is None:
+        return _no_manifest()
     context = (
         f'Teacher is saying: "{req.text[:1200]}"\n\n'
         f'The student selected that passage and asked for an interactive widget'
@@ -283,6 +317,10 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
         bal = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
         return _with_billing({**cached, "cached": True}, req.cloud, model_name, bal)
 
+    # Before spend_credit: a pull from Supabase Storage can fail, and a credit spent on a
+    # request that never reaches the model is a credit lost.
+    src = _frame_path(ev, req.video, fr)
+
     credits_left = None
     if req.cloud and metered and _db:
         credits_left = _db.spend_credit(handle, model_name, 1)
@@ -292,8 +330,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
 
     t0 = time.perf_counter()
     try:
-        raw = use.ask(DATA / req.video / "frames" / fr["file"], context,
-                      max_px=WIDGET_MAX_PX, system=compose_system(genre))
+        raw = use.ask(src, context, max_px=WIDGET_MAX_PX, system=compose_system(genre))
     except FileNotFoundError:
         # frame jpgs pruned from disk (concepts stay cached) — degrade, don't 500
         if req.cloud and metered and _db and credits_left is not None:
@@ -301,7 +338,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
         ev.update(cache_hit=False, spec_valid=False, error="frames missing on disk",
                   t_backend_ask_ms=_ms(t0), t_total_ms=_ms(t_start))
         _fire_event(ev)
-        return {"error": "this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable live asks"}
+        return _no_keyframes("live")
     except Exception as e:
         if req.cloud and metered and _db and credits_left is not None:
             _db.refund_credit(handle, model_name, 1)
@@ -359,6 +396,8 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
 
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
+    if fr is None:
+        return _no_manifest()
     handle = _handle()
     use, metered, model_name = backend, False, info.get("model")
     if req.cloud:
@@ -386,9 +425,11 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
         return _with_billing({**cached, "cached": True}, req.cloud, model_name, balance)
     ev["cache_hit"] = False
 
-    src = DATA / req.video / "frames" / fr["file"]
+    src = _frame_path(ev, req.video, fr)
     if not src.exists():
-        return {"error": "this video's keyframes aren't on disk — reprocess it (⚡ Process this video) to enable region asks"}
+        ev.update(spec_valid=False, error="frames missing on disk", t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return _no_keyframes("region")
     img = Image.open(src)
     W, H = img.size
     pad = 0.12  # a little context around the selection

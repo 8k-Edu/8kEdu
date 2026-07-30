@@ -1,0 +1,492 @@
+[
+ {
+  "start": 0.0,
+  "end": 3.35,
+  "text": "what is an arbitrage arbitrage is the"
+ },
+ {
+  "start": 3.36,
+  "end": 5.87,
+  "text": "process of simultaneously buying and"
+ },
+ {
+  "start": 5.88,
+  "end": 8.27,
+  "text": "selling an asset to profit from the"
+ },
+ {
+  "start": 8.28,
+  "end": 10.36,
+  "text": "differences in the price of the asset"
+ },
+ {
+  "start": 10.37,
+  "end": 13.01,
+  "text": "let's take a look at how arbitrage works"
+ },
+ {
+  "start": 13.02,
+  "end": 16.01,
+  "text": "in a simplified example imagine we are"
+ },
+ {
+  "start": 16.02,
+  "end": 19.82,
+  "text": "living in city a city a has two markets"
+ },
+ {
+  "start": 19.83,
+  "end": 24.56,
+  "text": "Market a and B in market a the shops are"
+ },
+ {
+  "start": 24.57,
+  "end": 26.75,
+  "text": "selling berries at thirty dollars per"
+ },
+ {
+  "start": 26.76,
+  "end": 29.03,
+  "text": "kilogram and just down the street and"
+ },
+ {
+  "start": 29.04,
+  "end": 31.55,
+  "text": "market B the shops are selling berries"
+ },
+ {
+  "start": 31.56,
+  "end": 34.82,
+  "text": "at forty dollars per kilogram however"
+ },
+ {
+  "start": 34.83,
+  "end": 37.28,
+  "text": "most people buying berries in market B"
+ },
+ {
+  "start": 37.29,
+  "end": 39.59,
+  "text": "don't know that they could buy berries"
+ },
+ {
+  "start": 39.6,
+  "end": 42.41,
+  "text": "at a much cheaper price at market a and"
+ },
+ {
+  "start": 42.42,
+  "end": 45.47,
+  "text": "if they knew they will probably walk to"
+ },
+ {
+  "start": 45.48,
+  "end": 48.62,
+  "text": "market a to buy the cheaper berries the"
+ },
+ {
+  "start": 48.63,
+  "end": 50.57,
+  "text": "difference in prices is because of"
+ },
+ {
+  "start": 50.58,
+  "end": 53.21,
+  "text": "imperfect information as a smart"
+ },
+ {
+  "start": 53.22,
+  "end": 55.91,
+  "text": "businessman you decide to take advantage"
+ },
+ {
+  "start": 55.92,
+  "end": 59.06,
+  "text": "of this so every morning you go to"
+ },
+ {
+  "start": 59.07,
+  "end": 61.49,
+  "text": "market a to buy the berries at a cheaper"
+ },
+ {
+  "start": 61.5,
+  "end": 64.4,
+  "text": "price and go to market B to sell the"
+ },
+ {
+  "start": 64.41,
+  "end": 66.8,
+  "text": "berries at a higher price for every"
+ },
+ {
+  "start": 66.81,
+  "end": 69.44,
+  "text": "kilogram of berries you sell you earn a"
+ },
+ {
+  "start": 69.45,
+  "end": 72.38,
+  "text": "risk-free profit of ten dollars from the"
+ },
+ {
+  "start": 72.39,
+  "end": 74.87,
+  "text": "price difference in the markets in fact"
+ },
+ {
+  "start": 74.88,
+  "end": 77.72,
+  "text": "in the next few months you became so"
+ },
+ {
+  "start": 77.73,
+  "end": 80.06,
+  "text": "successful that you start buying large"
+ },
+ {
+  "start": 80.07,
+  "end": 82.19,
+  "text": "quantities of berries in market a and"
+ },
+ {
+  "start": 82.2,
+  "end": 85.73,
+  "text": "selling them in market B this affects"
+ },
+ {
+  "start": 85.74,
+  "end": 88.04,
+  "text": "the demand and supply of berries in"
+ },
+ {
+  "start": 88.05,
+  "end": 91.28,
+  "text": "market a and B respectively"
+ },
+ {
+  "start": 91.29,
+  "end": 93.29,
+  "text": "the demand of berries in market a"
+ },
+ {
+  "start": 93.3,
+  "end": 96.02,
+  "text": "increases so their price increases in"
+ },
+ {
+  "start": 96.03,
+  "end": 98.36,
+  "text": "market a and the supply of berries in"
+ },
+ {
+  "start": 98.37,
+  "end": 100.91,
+  "text": "market B increase so their price"
+ },
+ {
+  "start": 100.92,
+  "end": 104.72,
+  "text": "decreases in market B eventually the"
+ },
+ {
+  "start": 104.73,
+  "end": 106.43,
+  "text": "price of the berries in the two markets"
+ },
+ {
+  "start": 106.44,
+  "end": 109.1,
+  "text": "will become so close together that you"
+ },
+ {
+  "start": 109.11,
+  "end": 110.81,
+  "text": "can't make a profit from their price"
+ },
+ {
+  "start": 110.82,
+  "end": 113.45,
+  "text": "differences something similar happens in"
+ },
+ {
+  "start": 113.46,
+  "end": 116.08,
+  "text": "the financial marketplace as well a"
+ },
+ {
+  "start": 116.09,
+  "end": 118.91,
+  "text": "company stock could be trading on the"
+ },
+ {
+  "start": 118.92,
+  "end": 121.34,
+  "text": "New York Stock Exchange for $1 per share"
+ },
+ {
+  "start": 121.35,
+  "end": 123.62,
+  "text": "and trading on the London Stock Exchange"
+ },
+ {
+  "start": 123.63,
+  "end": 126.95,
+  "text": "for a dollar and five cents per share an"
+ },
+ {
+  "start": 126.96,
+  "end": 129.14,
+  "text": "arbitrage or could pocket the difference"
+ },
+ {
+  "start": 129.15,
+  "end": 132.17,
+  "text": "of five cents per share by buying the"
+ },
+ {
+  "start": 132.18,
+  "end": 133.94,
+  "text": "stock for $1 on the"
+ },
+ {
+  "start": 133.95,
+  "end": 136.34,
+  "text": "New York Stock Exchange and selling it"
+ },
+ {
+  "start": 136.35,
+  "end": 138.47,
+  "text": "on the London Stock Exchange such"
+ },
+ {
+  "start": 138.48,
+  "end": 141.32,
+  "text": "arbitrage opportunities arise usually"
+ },
+ {
+  "start": 141.33,
+  "end": 143.56,
+  "text": "because of imperfect information"
+ },
+ {
+  "start": 143.57,
+  "end": 146.39,
+  "text": "arbitrage is often called riskless"
+ },
+ {
+  "start": 146.4,
+  "end": 148.73,
+  "text": "profit because it's theoretically a"
+ },
+ {
+  "start": 148.74,
+  "end": 151.88,
+  "text": "riskless activity traders are buying and"
+ },
+ {
+  "start": 151.89,
+  "end": 154.46,
+  "text": "selling the same asset simultaneously"
+ },
+ {
+  "start": 154.47,
+  "end": 156.59,
+  "text": "and pocketing the price difference as"
+ },
+ {
+  "start": 156.6,
+  "end": 160.3,
+  "text": "profit however the modern technology has"
+ },
+ {
+  "start": 160.31,
+  "end": 162.38,
+  "text": "significantly reduced arbitrage"
+ },
+ {
+  "start": 162.39,
+  "end": 164.54,
+  "text": "opportunities the advancement of"
+ },
+ {
+  "start": 164.55,
+  "end": 167.18,
+  "text": "technology has led to the advent of"
+ },
+ {
+  "start": 167.19,
+  "end": 170.03,
+  "text": "automated trading systems programs to"
+ },
+ {
+  "start": 170.04,
+  "end": 171.86,
+  "text": "monitor fluctuations or price"
+ },
+ {
+  "start": 171.87,
+  "end": 173.75,
+  "text": "differences in similar financial"
+ },
+ {
+  "start": 173.76,
+  "end": 176.57,
+  "text": "instruments these systems are able to"
+ },
+ {
+  "start": 176.58,
+  "end": 179.3,
+  "text": "detect and act on the inefficient"
+ },
+ {
+  "start": 179.31,
+  "end": 182.09,
+  "text": "pricing setups so rapidly that the price"
+ },
+ {
+  "start": 182.1,
+  "end": 183.62,
+  "text": "difference of similar financial"
+ },
+ {
+  "start": 183.63,
+  "end": 186.32,
+  "text": "instruments and arbitrage opportunity is"
+ },
+ {
+  "start": 186.33,
+  "end": 189.77,
+  "text": "quickly eliminated there is also another"
+ },
+ {
+  "start": 189.78,
+  "end": 193.4,
+  "text": "type of arbitrage risk arbitrage risk"
+ },
+ {
+  "start": 193.41,
+  "end": 195.44,
+  "text": "arbitrage is aren't arbitrage in the"
+ },
+ {
+  "start": 195.45,
+  "end": 197.6,
+  "text": "truest sense because it's not risk free"
+ },
+ {
+  "start": 197.61,
+  "end": 200.99,
+  "text": "and speculative in nature a risk"
+ },
+ {
+  "start": 201.0,
+  "end": 203.0,
+  "text": "arbitrage is usually created by"
+ },
+ {
+  "start": 203.01,
+  "end": 206.21,
+  "text": "speculation of merger and acquisition"
+ },
+ {
+  "start": 206.22,
+  "end": 209.48,
+  "text": "here's how it may work tom hears news"
+ },
+ {
+  "start": 209.49,
+  "end": 212.36,
+  "text": "that company X may be acquired by"
+ },
+ {
+  "start": 212.37,
+  "end": 215.3,
+  "text": "company y tom thinks that the trading"
+ },
+ {
+  "start": 215.31,
+  "end": 218.24,
+  "text": "price of company X will increase after"
+ },
+ {
+  "start": 218.25,
+  "end": 221.15,
+  "text": "the acquisition so he purchases the"
+ },
+ {
+  "start": 221.16,
+  "end": 223.34,
+  "text": "shares of company X in the hope that he"
+ },
+ {
+  "start": 223.35,
+  "end": 225.35,
+  "text": "can generate a profit from the price"
+ },
+ {
+  "start": 225.36,
+  "end": 226.94,
+  "text": "difference between the current trading"
+ },
+ {
+  "start": 226.95,
+  "end": 229.91,
+  "text": "price and the trading price of company X"
+ },
+ {
+  "start": 229.92,
+  "end": 233.0,
+  "text": "after the takeover deal however such a"
+ },
+ {
+  "start": 233.01,
+  "end": 236.0,
+  "text": "strategy is not risk-free because the"
+ },
+ {
+  "start": 236.01,
+  "end": 239.18,
+  "text": "takeover deal could always break if this"
+ },
+ {
+  "start": 239.19,
+  "end": 241.7,
+  "text": "was the case Tom might make a loss as"
+ },
+ {
+  "start": 241.71,
+  "end": 243.86,
+  "text": "the trading price of company X will"
+ },
+ {
+  "start": 243.87,
+  "end": 246.65,
+  "text": "likely fall after the bad news we hope"
+ },
+ {
+  "start": 246.66,
+  "end": 248.72,
+  "text": "you learn more about arbitrage from this"
+ },
+ {
+  "start": 248.73,
+  "end": 251.6,
+  "text": "video if you liked this video give us a"
+ },
+ {
+  "start": 251.61,
+  "end": 253.37,
+  "text": "thumbs up and subscribe for more"
+ },
+ {
+  "start": 253.38,
+  "end": 255.41,
+  "text": "educational videos that's coming your"
+ },
+ {
+  "start": 255.42,
+  "end": 257.45,
+  "text": "way"
+ }
+]

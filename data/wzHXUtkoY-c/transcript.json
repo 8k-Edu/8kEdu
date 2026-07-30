@@ -1,0 +1,1847 @@
+[
+ {
+  "start": 0.0,
+  "end": 2.27,
+  "text": "Over the past 6 months, NVIDIA has been"
+ },
+ {
+  "start": 2.28,
+  "end": 4.99,
+  "text": "releasing NeMo Tron 3 in three variants,"
+ },
+ {
+  "start": 5.0,
+  "end": 8.11,
+  "text": "but why exactly three? What criteria did"
+ },
+ {
+  "start": 8.12,
+  "end": 10.15,
+  "text": "NVIDIA use for sizing these models?"
+ },
+ {
+  "start": 10.16,
+  "end": 12.07,
+  "text": "&gt;&gt; We try and size them based on the most"
+ },
+ {
+  "start": 12.08,
+  "end": 14.03,
+  "text": "common compute footprint available from"
+ },
+ {
+  "start": 14.04,
+  "end": 16.03,
+  "text": "NVIDIA's install base. And we do that so"
+ },
+ {
+  "start": 16.04,
+  "end": 18.39,
+  "text": "there's a variety of both accuracy and"
+ },
+ {
+  "start": 18.4,
+  "end": 20.15,
+  "text": "cost latency throughput trade-off"
+ },
+ {
+  "start": 20.16,
+  "end": 20.79,
+  "text": "essentially."
+ },
+ {
+  "start": 20.8,
+  "end": 22.79,
+  "text": "&gt;&gt; This, by the way, is Joey from NVIDIA"
+ },
+ {
+  "start": 22.8,
+  "end": 24.63,
+  "text": "during our interview. So, the size of"
+ },
+ {
+  "start": 24.64,
+  "end": 27.15,
+  "text": "nano and super variants target the chip"
+ },
+ {
+  "start": 27.16,
+  "end": 28.95,
+  "text": "layer and the ultra targets the"
+ },
+ {
+  "start": 28.96,
+  "end": 31.31,
+  "text": "infrastructure. For example, NeMo Tron 3"
+ },
+ {
+  "start": 31.32,
+  "end": 33.71,
+  "text": "nano is a 30 billion parameter model"
+ },
+ {
+  "start": 33.72,
+  "end": 35.95,
+  "text": "meant to run on consumer hardware that"
+ },
+ {
+  "start": 35.96,
+  "end": 37.07,
+  "text": "we could get at home."
+ },
+ {
+  "start": 37.08,
+  "end": 39.47,
+  "text": "&gt;&gt; The nano from December is a 30 billion"
+ },
+ {
+  "start": 39.48,
+  "end": 41.55,
+  "text": "total parameter active 3 billion. The"
+ },
+ {
+  "start": 41.56,
+  "end": 44.11,
+  "text": "NVFP4 allows us to run that model at"
+ },
+ {
+  "start": 44.12,
+  "end": 46.39,
+  "text": "essentially half FP8 memory capacity."
+ },
+ {
+  "start": 46.4,
+  "end": 48.31,
+  "text": "So, instead of 30 billion total, say"
+ },
+ {
+  "start": 48.32,
+  "end": 50.47,
+  "text": "gigabytes, we can now run around 15."
+ },
+ {
+  "start": 50.48,
+  "end": 53.39,
+  "text": "&gt;&gt; Now, the super variant is 120 billion in"
+ },
+ {
+  "start": 53.4,
+  "end": 56.83,
+  "text": "size, similar to Open AI's GPT-3 120B."
+ },
+ {
+  "start": 56.84,
+  "end": 59.39,
+  "text": "Now, you could run this on Mac Studio or"
+ },
+ {
+  "start": 59.4,
+  "end": 61.91,
+  "text": "DGX Spark, but the compute profile"
+ },
+ {
+  "start": 61.92,
+  "end": 64.39,
+  "text": "mirrors closer to the server-grade GPUs"
+ },
+ {
+  "start": 64.4,
+  "end": 66.47,
+  "text": "like the H100 and A100."
+ },
+ {
+  "start": 66.48,
+  "end": 69.15,
+  "text": "&gt;&gt; In super, it's 120 billion active 10"
+ },
+ {
+  "start": 69.16,
+  "end": 70.91,
+  "text": "billion. And inside of there, say like"
+ },
+ {
+  "start": 70.92,
+  "end": 73.35,
+  "text": "on one one H100 80 gig, we can run an"
+ },
+ {
+  "start": 73.36,
+  "end": 76.43,
+  "text": "FP8. The NVFP4 runs great on the"
+ },
+ {
+  "start": 76.44,
+  "end": 78.91,
+  "text": "Blackwell architecture. And so, say like"
+ },
+ {
+  "start": 78.92,
+  "end": 81.83,
+  "text": "B200, B300, there's not just a memory"
+ },
+ {
+  "start": 81.84,
+  "end": 83.35,
+  "text": "reduction, but a compute acceleration"
+ },
+ {
+  "start": 83.36,
+  "end": 85.63,
+  "text": "there. That's also what is in DGX Spark"
+ },
+ {
+  "start": 85.64,
+  "end": 87.55,
+  "text": "and allows the super model to run on on"
+ },
+ {
+  "start": 87.56,
+  "end": 89.47,
+  "text": "a smaller footprint in DGX Spark. And"
+ },
+ {
+  "start": 89.48,
+  "end": 90.75,
+  "text": "we'll see more of that going forward"
+ },
+ {
+  "start": 90.76,
+  "end": 92.75,
+  "text": "with things like DGX Station as well."
+ },
+ {
+  "start": 92.76,
+  "end": 94.79,
+  "text": "&gt;&gt; Finally, we have the ultra, which is"
+ },
+ {
+  "start": 94.8,
+  "end": 97.63,
+  "text": "massive, 550 billion parameter model"
+ },
+ {
+  "start": 97.64,
+  "end": 100.07,
+  "text": "with 50B active, similar sizing to"
+ },
+ {
+  "start": 100.08,
+  "end": 102.63,
+  "text": "models like Deep Seek V3. At this scale,"
+ },
+ {
+  "start": 102.64,
+  "end": 104.87,
+  "text": "you're going to need more than one GPU"
+ },
+ {
+  "start": 104.88,
+  "end": 107.07,
+  "text": "to run models like this, which is why"
+ },
+ {
+  "start": 107.08,
+  "end": 109.99,
+  "text": "the ultra is fitted for AI factory level"
+ },
+ {
+  "start": 110.0,
+  "end": 111.51,
+  "text": "at the infrastructure layer."
+ },
+ {
+  "start": 111.52,
+  "end": 113.67,
+  "text": "&gt;&gt; On the ultra side, we're looking at"
+ },
+ {
+  "start": 113.68,
+  "end": 116.67,
+  "text": "around 550 billion total. And as we went"
+ },
+ {
+  "start": 116.68,
+  "end": 118.15,
+  "text": "through and looked at some of the base"
+ },
+ {
+  "start": 118.16,
+  "end": 120.43,
+  "text": "model accuracy evaluations, and so these"
+ },
+ {
+  "start": 120.44,
+  "end": 121.83,
+  "text": "are essentially kind of next token"
+ },
+ {
+  "start": 121.84,
+  "end": 123.31,
+  "text": "prediction, so it's not it's not"
+ },
+ {
+  "start": 123.32,
+  "end": 124.63,
+  "text": "reasoning and it's not instruction"
+ },
+ {
+  "start": 124.64,
+  "end": 126.83,
+  "text": "following, but even looking at previous"
+ },
+ {
+  "start": 126.84,
+  "end": 128.55,
+  "text": "base models out in the community, we"
+ },
+ {
+  "start": 128.56,
+  "end": 130.43,
+  "text": "were able to see the best accuracy"
+ },
+ {
+  "start": 130.44,
+  "end": 132.11,
+  "text": "scores we've ever seen of any base model"
+ },
+ {
+  "start": 132.12,
+  "end": 132.75,
+  "text": "published."
+ },
+ {
+  "start": 132.76,
+  "end": 135.39,
+  "text": "&gt;&gt; As you can see, Nvidia is slowly moving"
+ },
+ {
+  "start": 135.4,
+  "end": 137.83,
+  "text": "up the AI five-layer cake and pushing"
+ },
+ {
+  "start": 137.84,
+  "end": 140.07,
+  "text": "out models like NeMo Triton 3, and"
+ },
+ {
+  "start": 140.08,
+  "end": 142.67,
+  "text": "because Nvidia practically dominates in"
+ },
+ {
+  "start": 142.68,
+  "end": 145.03,
+  "text": "the lower layers, they have an advantage"
+ },
+ {
+  "start": 145.04,
+  "end": 147.35,
+  "text": "in fitting their model architecture to"
+ },
+ {
+  "start": 147.36,
+  "end": 149.67,
+  "text": "be fully optimized at the model layer."
+ },
+ {
+  "start": 149.68,
+  "end": 151.51,
+  "text": "In other words, Nvidia can leverage"
+ },
+ {
+  "start": 151.52,
+  "end": 153.59,
+  "text": "their hardware to make the best fit for"
+ },
+ {
+  "start": 153.6,
+  "end": 155.43,
+  "text": "the model given various hardware"
+ },
+ {
+  "start": 155.44,
+  "end": 157.63,
+  "text": "profiles. So, the natural question here"
+ },
+ {
+  "start": 157.64,
+  "end": 160.63,
+  "text": "is how exactly does NeMo Triton 3 stand"
+ },
+ {
+  "start": 160.64,
+  "end": 162.59,
+  "text": "out against other models in the model"
+ },
+ {
+  "start": 162.6,
+  "end": 164.79,
+  "text": "layer? What architectural decision did"
+ },
+ {
+  "start": 164.8,
+  "end": 167.43,
+  "text": "Nvidia make at the model layer to fully"
+ },
+ {
+  "start": 167.44,
+  "end": 169.35,
+  "text": "optimize the hardware underneath? When"
+ },
+ {
+  "start": 169.36,
+  "end": 171.11,
+  "text": "it comes to the model architecture,"
+ },
+ {
+  "start": 171.12,
+  "end": 172.59,
+  "text": "there are three things worth noting"
+ },
+ {
+  "start": 172.6,
+  "end": 174.51,
+  "text": "about NeMo Triton 3: Hybrid Mamba"
+ },
+ {
+  "start": 174.52,
+  "end": 177.59,
+  "text": "Transformer, Latent MoE, and MTP. Now,"
+ },
+ {
+  "start": 177.6,
+  "end": 179.31,
+  "text": "most of you might have never heard of"
+ },
+ {
+  "start": 179.32,
+  "end": 181.79,
+  "text": "these terms before, so at first glance,"
+ },
+ {
+  "start": 181.8,
+  "end": 183.43,
+  "text": "it can be really difficult to"
+ },
+ {
+  "start": 183.44,
+  "end": 185.83,
+  "text": "contextualize the significance of these,"
+ },
+ {
+  "start": 185.84,
+  "end": 187.39,
+  "text": "but I'll walk through them one by one."
+ },
+ {
+  "start": 187.4,
+  "end": 188.87,
+  "text": "Let's start with the Hybrid Mamba"
+ },
+ {
+  "start": 188.88,
+  "end": 190.91,
+  "text": "Transformer architecture, which directly"
+ },
+ {
+  "start": 190.92,
+  "end": 192.91,
+  "text": "targets the biggest challenge when it"
+ },
+ {
+  "start": 192.92,
+  "end": 195.15,
+  "text": "comes to scaling large language models,"
+ },
+ {
+  "start": 195.16,
+  "end": 197.23,
+  "text": "which is attention. Yep, we've all heard"
+ },
+ {
+  "start": 197.24,
+  "end": 199.43,
+  "text": "it before, attention is expensive and"
+ },
+ {
+  "start": 199.44,
+  "end": 201.59,
+  "text": "this and that, and we also hear things"
+ },
+ {
+  "start": 201.6,
+  "end": 203.63,
+  "text": "like attention makes compute scale"
+ },
+ {
+  "start": 203.64,
+  "end": 205.87,
+  "text": "quadratically as the context window"
+ },
+ {
+  "start": 205.88,
+  "end": 208.23,
+  "text": "grows. All of these are definitely true,"
+ },
+ {
+  "start": 208.24,
+  "end": 210.27,
+  "text": "and we certainly are in need of a good"
+ },
+ {
+  "start": 210.28,
+  "end": 211.99,
+  "text": "solution for it, especially if you're"
+ },
+ {
+  "start": 212.0,
+  "end": 213.79,
+  "text": "going to offer a context window in the"
+ },
+ {
+  "start": 213.8,
+  "end": 216.19,
+  "text": "size of 1 million. Nobody in their right"
+ },
+ {
+  "start": 216.2,
+  "end": 218.31,
+  "text": "mind would release a model with 1"
+ },
+ {
+  "start": 218.32,
+  "end": 220.07,
+  "text": "million context window without doing"
+ },
+ {
+  "start": 220.08,
+  "end": 222.39,
+  "text": "something about this quadratic scaling"
+ },
+ {
+  "start": 222.4,
+  "end": 224.59,
+  "text": "in attention. And for Nvidia's case,"
+ },
+ {
+  "start": 224.6,
+  "end": 226.63,
+  "text": "they decided to take a shot at this by"
+ },
+ {
+  "start": 226.64,
+  "end": 229.27,
+  "text": "changing the model's architecture itself"
+ },
+ {
+  "start": 229.28,
+  "end": 231.79,
+  "text": "to use what's called Mamba 2, and then"
+ },
+ {
+  "start": 231.8,
+  "end": 233.79,
+  "text": "interleaving them with full attention"
+ },
+ {
+  "start": 233.8,
+  "end": 234.27,
+  "text": "layer."
+ },
+ {
+  "start": 234.28,
+  "end": 235.75,
+  "text": "&gt;&gt; Some of the more traditional attention"
+ },
+ {
+  "start": 235.76,
+  "end": 238.23,
+  "text": "mechanisms can be a bit more quadratic,"
+ },
+ {
+  "start": 238.24,
+  "end": 240.51,
+  "text": "and they grow significantly the longer"
+ },
+ {
+  "start": 240.52,
+  "end": 242.39,
+  "text": "the input. Our concern with that is that"
+ },
+ {
+  "start": 242.4,
+  "end": 244.07,
+  "text": "often in an enterprise setting, you'll"
+ },
+ {
+  "start": 244.08,
+  "end": 245.87,
+  "text": "have existing knowledge bases or"
+ },
+ {
+  "start": 245.88,
+  "end": 247.71,
+  "text": "experts, and there's a lot of context to"
+ },
+ {
+  "start": 247.72,
+  "end": 249.75,
+  "text": "feed a model, and it can give a much"
+ },
+ {
+  "start": 249.76,
+  "end": 251.75,
+  "text": "more accurate answer if it has a"
+ },
+ {
+  "start": 251.76,
+  "end": 252.91,
+  "text": "thorough understanding of what the"
+ },
+ {
+  "start": 252.92,
+  "end": 254.51,
+  "text": "question's about. Even something simple"
+ },
+ {
+  "start": 254.52,
+  "end": 255.55,
+  "text": "like, you know, what's the tire"
+ },
+ {
+  "start": 255.56,
+  "end": 257.67,
+  "text": "pressure, you know, in a car, being able"
+ },
+ {
+  "start": 257.68,
+  "end": 258.95,
+  "text": "to go through the owner's manual and"
+ },
+ {
+  "start": 258.96,
+  "end": 261.15,
+  "text": "pull out the sections relevant to how to"
+ },
+ {
+  "start": 261.16,
+  "end": 262.51,
+  "text": "measure the tire pressure and what the"
+ },
+ {
+  "start": 262.52,
+  "end": 263.87,
+  "text": "recommended number is. Being able to"
+ },
+ {
+  "start": 263.88,
+  "end": 265.47,
+  "text": "feed those into context, our concern is"
+ },
+ {
+  "start": 265.48,
+  "end": 266.71,
+  "text": "that it would grow the memory"
+ },
+ {
+  "start": 266.72,
+  "end": 268.55,
+  "text": "significantly, which then reduces the"
+ },
+ {
+  "start": 268.56,
+  "end": 270.27,
+  "text": "memory we have for concurrent queries."
+ },
+ {
+  "start": 270.28,
+  "end": 271.95,
+  "text": "And so, in thinking about things as as"
+ },
+ {
+  "start": 271.96,
+  "end": 274.03,
+  "text": "an AI factory, where a model should be"
+ },
+ {
+  "start": 274.04,
+  "end": 275.19,
+  "text": "able to handle many queries"
+ },
+ {
+  "start": 275.2,
+  "end": 277.03,
+  "text": "concurrently, we were getting frustrated"
+ },
+ {
+  "start": 277.04,
+  "end": 278.35,
+  "text": "by the amount of memory used."
+ },
+ {
+  "start": 278.36,
+  "end": 280.15,
+  "text": "&gt;&gt; So, given the scaling problem when it"
+ },
+ {
+  "start": 280.16,
+  "end": 282.47,
+  "text": "comes to attention, commonly labs would"
+ },
+ {
+  "start": 282.48,
+  "end": 284.87,
+  "text": "target this problem by swapping out the"
+ },
+ {
+  "start": 284.88,
+  "end": 287.07,
+  "text": "attention head from multi-head attention"
+ },
+ {
+  "start": 287.08,
+  "end": 289.51,
+  "text": "to different ways like GQA and MLA to"
+ },
+ {
+  "start": 289.52,
+  "end": 291.79,
+  "text": "essentially minimize the KV cache. There"
+ },
+ {
+  "start": 291.8,
+  "end": 293.43,
+  "text": "are, of course, other ways like Turbo"
+ },
+ {
+  "start": 293.44,
+  "end": 295.51,
+  "text": "Quant, where you quantize a KV cache"
+ },
+ {
+  "start": 295.52,
+  "end": 298.55,
+  "text": "itself to lower precision, but Mamba 2"
+ },
+ {
+  "start": 298.56,
+  "end": 300.63,
+  "text": "works completely different than any"
+ },
+ {
+  "start": 300.64,
+  "end": 301.55,
+  "text": "other ways above."
+ },
+ {
+  "start": 301.56,
+  "end": 303.07,
+  "text": "&gt;&gt; And so, one of the exciting things about"
+ },
+ {
+  "start": 303.08,
+  "end": 304.87,
+  "text": "Mamba, and kind of the state space"
+ },
+ {
+  "start": 304.88,
+  "end": 306.95,
+  "text": "mechanism there, is that it's more"
+ },
+ {
+  "start": 306.96,
+  "end": 308.87,
+  "text": "linear than it is quadratic. And in that"
+ },
+ {
+  "start": 308.88,
+  "end": 311.03,
+  "text": "sense, we can be able to take these"
+ },
+ {
+  "start": 311.04,
+  "end": 312.91,
+  "text": "longer input sequences and use less"
+ },
+ {
+  "start": 312.92,
+  "end": 313.43,
+  "text": "memory."
+ },
+ {
+  "start": 313.44,
+  "end": 316.27,
+  "text": "&gt;&gt; The actual mechanics of Mamba 2 is quite"
+ },
+ {
+  "start": 316.28,
+  "end": 317.99,
+  "text": "technical, but unlike traditional"
+ },
+ {
+  "start": 318.0,
+  "end": 320.59,
+  "text": "transformer architecture, Mamba or state"
+ },
+ {
+  "start": 320.6,
+  "end": 323.27,
+  "text": "space models don't actually use KV cache"
+ },
+ {
+  "start": 323.28,
+  "end": 325.55,
+  "text": "at all. Instead, memory requirement is"
+ },
+ {
+  "start": 325.56,
+  "end": 327.99,
+  "text": "constant since the representations are"
+ },
+ {
+  "start": 328.0,
+  "end": 330.47,
+  "text": "stored in a fixed-size matrix that"
+ },
+ {
+  "start": 330.48,
+  "end": 332.71,
+  "text": "updates as tokens are processed. And"
+ },
+ {
+  "start": 332.72,
+  "end": 334.79,
+  "text": "this might sound really familiar because"
+ },
+ {
+  "start": 334.8,
+  "end": 336.67,
+  "text": "it sounds a lot like how recurrent"
+ },
+ {
+  "start": 336.68,
+  "end": 338.39,
+  "text": "neural networks actually work, given"
+ },
+ {
+  "start": 338.4,
+  "end": 340.51,
+  "text": "their hidden state that updates as"
+ },
+ {
+  "start": 340.52,
+  "end": 342.79,
+  "text": "tokens are processed. And Mamba 2"
+ },
+ {
+  "start": 342.8,
+  "end": 345.27,
+  "text": "essentially compresses the past into a"
+ },
+ {
+  "start": 345.28,
+  "end": 347.75,
+  "text": "state, then uses a hardware-friendly"
+ },
+ {
+  "start": 347.76,
+  "end": 349.91,
+  "text": "algorithm, so those state updates can be"
+ },
+ {
+  "start": 349.92,
+  "end": 352.63,
+  "text": "done as a big matrix multiplication and"
+ },
+ {
+  "start": 352.64,
+  "end": 354.59,
+  "text": "parallelize efficiently. And we couldn't"
+ },
+ {
+  "start": 354.6,
+  "end": 357.03,
+  "text": "really do this with RNNs. And since we"
+ },
+ {
+  "start": 357.04,
+  "end": 359.07,
+  "text": "risk losing broader dependencies when"
+ },
+ {
+  "start": 359.08,
+  "end": 361.11,
+  "text": "using mechanism like this, interleaving"
+ },
+ {
+  "start": 361.12,
+  "end": 363.43,
+  "text": "Mamba 2 layers with full attention is"
+ },
+ {
+  "start": 363.44,
+  "end": 365.43,
+  "text": "how NeMo-Megatron was able to keep their"
+ },
+ {
+  "start": 365.44,
+  "end": 368.19,
+  "text": "inference so tight and offer up to 1"
+ },
+ {
+  "start": 368.2,
+  "end": 370.15,
+  "text": "million context window without too much"
+ },
+ {
+  "start": 370.16,
+  "end": 372.15,
+  "text": "sweat. Now, let's go to second point in"
+ },
+ {
+  "start": 372.16,
+  "end": 374.55,
+  "text": "the architecture, latent MoE. And this"
+ },
+ {
+  "start": 374.56,
+  "end": 376.51,
+  "text": "is a really interesting concept, and"
+ },
+ {
+  "start": 376.52,
+  "end": 377.99,
+  "text": "here's why. Quick shout-out to Code"
+ },
+ {
+  "start": 378.0,
+  "end": 379.91,
+  "text": "Rabbit sponsoring this video. Ever since"
+ },
+ {
+  "start": 379.92,
+  "end": 381.83,
+  "text": "I started relying on Codex and Claude"
+ },
+ {
+  "start": 381.84,
+  "end": 383.87,
+  "text": "Code to write code for my projects, not"
+ },
+ {
+  "start": 383.88,
+  "end": 385.51,
+  "text": "only did I start making more pull"
+ },
+ {
+  "start": 385.52,
+  "end": 387.67,
+  "text": "requests, I find that my focus tends to"
+ },
+ {
+  "start": 387.68,
+  "end": 389.67,
+  "text": "be more on the flow state to develop"
+ },
+ {
+  "start": 389.68,
+  "end": 391.23,
+  "text": "things than actually reading the code"
+ },
+ {
+  "start": 391.24,
+  "end": 392.99,
+  "text": "that was generated with coding agents."
+ },
+ {
+  "start": 393.0,
+  "end": 394.63,
+  "text": "Code Rabbit works besides me that"
+ },
+ {
+  "start": 394.64,
+  "end": 396.59,
+  "text": "reviews my pull requests automatically"
+ },
+ {
+  "start": 396.6,
+  "end": 398.71,
+  "text": "with the entire repository in mind. And"
+ },
+ {
+  "start": 398.72,
+  "end": 400.35,
+  "text": "part of its review includes fixing"
+ },
+ {
+  "start": 400.36,
+  "end": 402.59,
+  "text": "changes, security and quality checks,"
+ },
+ {
+  "start": 402.6,
+  "end": 404.47,
+  "text": "and most importantly, gives actionable"
+ },
+ {
+  "start": 404.48,
+  "end": 406.11,
+  "text": "changes that's ready to be merged right"
+ },
+ {
+  "start": 406.12,
+  "end": 408.07,
+  "text": "away. You can also use Code Rabbit agent"
+ },
+ {
+  "start": 408.08,
+  "end": 409.95,
+  "text": "in Slack, so you and your team don't"
+ },
+ {
+  "start": 409.96,
+  "end": 411.75,
+  "text": "have to leave your usual environment to"
+ },
+ {
+  "start": 411.76,
+  "end": 413.27,
+  "text": "talk with your agent and bring the"
+ },
+ {
+  "start": 413.28,
+  "end": 415.47,
+  "text": "context of your repository directly into"
+ },
+ {
+  "start": 415.48,
+  "end": 417.23,
+  "text": "your workflow. My favorite feature is"
+ },
+ {
+  "start": 417.24,
+  "end": 419.11,
+  "text": "that Code Rabbit will remember you and"
+ },
+ {
+  "start": 419.12,
+  "end": 420.91,
+  "text": "your team's preferences, so as you"
+ },
+ {
+  "start": 420.92,
+  "end": 422.51,
+  "text": "continue to work with Code Rabbit, it"
+ },
+ {
+  "start": 422.52,
+  "end": 423.99,
+  "text": "will get better over time. Check out"
+ },
+ {
+  "start": 424.0,
+  "end": 425.27,
+  "text": "Code Rabbit using the link in the"
+ },
+ {
+  "start": 425.28,
+  "end": 427.19,
+  "text": "description below. Now, we all know how"
+ },
+ {
+  "start": 427.2,
+  "end": 429.51,
+  "text": "mixture of experts or MoE works, where"
+ },
+ {
+  "start": 429.52,
+  "end": 431.67,
+  "text": "instead of activating the entire model's"
+ },
+ {
+  "start": 431.68,
+  "end": 434.11,
+  "text": "weights, you sparsely activate the"
+ },
+ {
+  "start": 434.12,
+  "end": 436.15,
+  "text": "model. Let's say 10% of the model's"
+ },
+ {
+  "start": 436.16,
+  "end": 438.55,
+  "text": "weights are activated instead of 100%."
+ },
+ {
+  "start": 438.56,
+  "end": 440.51,
+  "text": "Now, on the hardware side, you see a"
+ },
+ {
+  "start": 440.52,
+  "end": 443.27,
+  "text": "huge improvement here since only 10% of"
+ },
+ {
+  "start": 443.28,
+  "end": 445.71,
+  "text": "the model's weights needs to travel from"
+ },
+ {
+  "start": 445.72,
+  "end": 448.19,
+  "text": "HBM to SRAM for compute to happen. Now,"
+ },
+ {
+  "start": 448.2,
+  "end": 451.03,
+  "text": "imagine we disperse these experts across"
+ },
+ {
+  "start": 451.04,
+  "end": 453.43,
+  "text": "a node of GPUs through what's called"
+ },
+ {
+  "start": 453.44,
+  "end": 455.35,
+  "text": "expert parallelism. Spreading the"
+ },
+ {
+  "start": 455.36,
+  "end": 457.47,
+  "text": "experts like this actually speeds things"
+ },
+ {
+  "start": 457.48,
+  "end": 460.03,
+  "text": "up because you now have multiple funnels"
+ },
+ {
+  "start": 460.04,
+  "end": 462.35,
+  "text": "that carry the model's weights from HBM"
+ },
+ {
+  "start": 462.36,
+  "end": 464.83,
+  "text": "to SRAM. And since the funnel, which is"
+ },
+ {
+  "start": 464.84,
+  "end": 467.11,
+  "text": "the bandwidth that typically gives you 3"
+ },
+ {
+  "start": 467.12,
+  "end": 469.19,
+  "text": "to 8 terabytes per second, you can have"
+ },
+ {
+  "start": 469.2,
+  "end": 472.11,
+  "text": "models like NeMo-3 Ultra, which is a 500"
+ },
+ {
+  "start": 472.12,
+  "end": 475.43,
+  "text": "billion model, which is roughly 275 GB"
+ },
+ {
+  "start": 475.44,
+  "end": 477.71,
+  "text": "in VRAM in 4-bit precision, takes"
+ },
+ {
+  "start": 477.72,
+  "end": 480.75,
+  "text": "anywhere between 91 milliseconds to 34"
+ },
+ {
+  "start": 480.76,
+  "end": 483.15,
+  "text": "milliseconds using just one funnel. But"
+ },
+ {
+  "start": 483.16,
+  "end": 485.91,
+  "text": "having eight funnels that each have 3 to"
+ },
+ {
+  "start": 485.92,
+  "end": 487.91,
+  "text": "8 terabytes per second essentially"
+ },
+ {
+  "start": 487.92,
+  "end": 490.35,
+  "text": "speeds up the read rate theoretically"
+ },
+ {
+  "start": 490.36,
+  "end": 493.95,
+  "text": "since GPU should only have roughly 35 GB"
+ },
+ {
+  "start": 493.96,
+  "end": 496.71,
+  "text": "to stream from HBM to SRAM. And because"
+ },
+ {
+  "start": 496.72,
+  "end": 499.11,
+  "text": "we're only activating 10% of the model"
+ },
+ {
+  "start": 499.12,
+  "end": 501.35,
+  "text": "on top through mixture of experts, we"
+ },
+ {
+  "start": 501.36,
+  "end": 503.67,
+  "text": "can go ahead and slash that number down"
+ },
+ {
+  "start": 503.68,
+  "end": 505.71,
+  "text": "even that much more. Now, of course,"
+ },
+ {
+  "start": 505.72,
+  "end": 507.67,
+  "text": "this is only looking at the hardware"
+ },
+ {
+  "start": 507.68,
+  "end": 510.15,
+  "text": "side, which means the model architecture"
+ },
+ {
+  "start": 510.16,
+  "end": 512.31,
+  "text": "also needs to make sure that the quality"
+ },
+ {
+  "start": 512.32,
+  "end": 514.27,
+  "text": "and accuracy isn't dropped from this"
+ },
+ {
+  "start": 514.28,
+  "end": 515.99,
+  "text": "kind of setup because clearly it's a"
+ },
+ {
+  "start": 516.0,
+  "end": 517.63,
+  "text": "benefit on the hardware side. The"
+ },
+ {
+  "start": 517.64,
+  "end": 519.39,
+  "text": "company that really took mixture of"
+ },
+ {
+  "start": 519.4,
+  "end": 522.03,
+  "text": "experts to another level was none other"
+ },
+ {
+  "start": 522.04,
+  "end": 523.91,
+  "text": "than DeepSeek. DeepSeek essentially"
+ },
+ {
+  "start": 523.92,
+  "end": 526.11,
+  "text": "proved to the world that we can add load"
+ },
+ {
+  "start": 526.12,
+  "end": 527.91,
+  "text": "balancing to make sure that you don't"
+ },
+ {
+  "start": 527.92,
+  "end": 530.75,
+  "text": "underutilize or overutilize experts, and"
+ },
+ {
+  "start": 530.76,
+  "end": 532.55,
+  "text": "they also find a way to really"
+ },
+ {
+  "start": 532.56,
+  "end": 535.55,
+  "text": "specialize each expert to make this kind"
+ },
+ {
+  "start": 535.56,
+  "end": 537.43,
+  "text": "of parallelism work in quality while"
+ },
+ {
+  "start": 537.44,
+  "end": 539.35,
+  "text": "having one shared expert for general"
+ },
+ {
+  "start": 539.36,
+  "end": 541.31,
+  "text": "knowledge. So, what about NeMo-3? What"
+ },
+ {
+  "start": 541.32,
+  "end": 542.95,
+  "text": "does this really look like in NeMo-3?"
+ },
+ {
+  "start": 542.96,
+  "end": 545.23,
+  "text": "Turns out beyond DeepSeek's breakthrough"
+ },
+ {
+  "start": 545.24,
+  "end": 547.07,
+  "text": "when it comes to making mixture of"
+ },
+ {
+  "start": 547.08,
+  "end": 548.95,
+  "text": "experts actually work, there's still a"
+ },
+ {
+  "start": 548.96,
+  "end": 550.91,
+  "text": "lot of room left on the table when it"
+ },
+ {
+  "start": 550.92,
+  "end": 553.03,
+  "text": "comes to hardware optimization. And"
+ },
+ {
+  "start": 553.04,
+  "end": 555.11,
+  "text": "NVIDIA introduced what's called latent"
+ },
+ {
+  "start": 555.12,
+  "end": 557.35,
+  "text": "MoE, targeting this very gap. And the"
+ },
+ {
+  "start": 557.36,
+  "end": 560.19,
+  "text": "core idea behind it is this. What if we"
+ },
+ {
+  "start": 560.2,
+  "end": 563.15,
+  "text": "have a down projection on the dimension"
+ },
+ {
+  "start": 563.16,
+  "end": 565.71,
+  "text": "so that each token being processed is"
+ },
+ {
+  "start": 565.72,
+  "end": 567.99,
+  "text": "reduced in footprint. This way, we can"
+ },
+ {
+  "start": 568.0,
+  "end": 570.19,
+  "text": "get away with activating our experts on"
+ },
+ {
+  "start": 570.2,
+  "end": 572.67,
+  "text": "a much smaller latent representation,"
+ },
+ {
+  "start": 572.68,
+  "end": 574.79,
+  "text": "which cuts down memory bandwidth, and"
+ },
+ {
+  "start": 574.8,
+  "end": 576.75,
+  "text": "also cuts down on compute that's"
+ },
+ {
+  "start": 576.76,
+  "end": 579.07,
+  "text": "typically needed to route and process"
+ },
+ {
+  "start": 579.08,
+  "end": 580.59,
+  "text": "each token as it comes."
+ },
+ {
+  "start": 580.6,
+  "end": 582.31,
+  "text": "&gt;&gt; For specifically for the latent MoE,"
+ },
+ {
+  "start": 582.32,
+  "end": 583.75,
+  "text": "every query goes through the router and"
+ },
+ {
+  "start": 583.76,
+  "end": 585.07,
+  "text": "we wanted to think, how do we make that"
+ },
+ {
+  "start": 585.08,
+  "end": 586.79,
+  "text": "router more efficient? How do we think"
+ },
+ {
+  "start": 586.8,
+  "end": 589.23,
+  "text": "about getting more experts exposed to"
+ },
+ {
+  "start": 589.24,
+  "end": 591.15,
+  "text": "pick the right one? And so, you know, in"
+ },
+ {
+  "start": 591.16,
+  "end": 592.75,
+  "text": "that scenario, what we thought about was"
+ },
+ {
+  "start": 592.76,
+  "end": 594.71,
+  "text": "for the latent MoE, we wanted to be able"
+ },
+ {
+  "start": 594.72,
+  "end": 596.71,
+  "text": "to essentially kind of reduce the"
+ },
+ {
+  "start": 596.72,
+  "end": 598.07,
+  "text": "footprint, the compute, and the memory"
+ },
+ {
+  "start": 598.08,
+  "end": 600.71,
+  "text": "it takes and be able to get more experts"
+ },
+ {
+  "start": 600.72,
+  "end": 602.39,
+  "text": "to weigh in on a query to make sure"
+ },
+ {
+  "start": 602.4,
+  "end": 603.99,
+  "text": "we're always picking the best one."
+ },
+ {
+  "start": 604.0,
+  "end": 606.27,
+  "text": "&gt;&gt; So, what you find is that this kind of"
+ },
+ {
+  "start": 606.28,
+  "end": 608.99,
+  "text": "architecture actually creates more room"
+ },
+ {
+  "start": 609.0,
+  "end": 610.95,
+  "text": "since you're doing math on latent"
+ },
+ {
+  "start": 610.96,
+  "end": 613.31,
+  "text": "representation. And Nvidia made a design"
+ },
+ {
+  "start": 613.32,
+  "end": 615.75,
+  "text": "choice here to use the surplus that we"
+ },
+ {
+  "start": 615.76,
+  "end": 618.27,
+  "text": "have gained to pack in more experts,"
+ },
+ {
+  "start": 618.28,
+  "end": 620.51,
+  "text": "which gives each token ability to see"
+ },
+ {
+  "start": 620.52,
+  "end": 622.43,
+  "text": "more experts than it would have"
+ },
+ {
+  "start": 622.44,
+  "end": 624.63,
+  "text": "otherwise. Pretty clever, right? Now, we"
+ },
+ {
+  "start": 624.64,
+  "end": 627.31,
+  "text": "finally get to MTP or multi-token"
+ },
+ {
+  "start": 627.32,
+  "end": 629.71,
+  "text": "prediction. And this has to do with how"
+ },
+ {
+  "start": 629.72,
+  "end": 631.67,
+  "text": "output tokens are generated by the"
+ },
+ {
+  "start": 631.68,
+  "end": 633.51,
+  "text": "model. And these are the tokens that"
+ },
+ {
+  "start": 633.52,
+  "end": 635.87,
+  "text": "we'd typically see on screen as models"
+ },
+ {
+  "start": 635.88,
+  "end": 638.15,
+  "text": "generates tokens. Traditionally, tokens"
+ },
+ {
+  "start": 638.16,
+  "end": 640.27,
+  "text": "are generated auto-regressively, which"
+ },
+ {
+  "start": 640.28,
+  "end": 642.27,
+  "text": "means the model will generate the next"
+ },
+ {
+  "start": 642.28,
+  "end": 644.55,
+  "text": "token and takes that into account to"
+ },
+ {
+  "start": 644.56,
+  "end": 647.03,
+  "text": "generate the next one one at a time. And"
+ },
+ {
+  "start": 647.04,
+  "end": 649.31,
+  "text": "MTP is meant to address this very"
+ },
+ {
+  "start": 649.32,
+  "end": 651.87,
+  "text": "specific region of the model by changing"
+ },
+ {
+  "start": 651.88,
+  "end": 653.79,
+  "text": "up what the model can see during"
+ },
+ {
+  "start": 653.8,
+  "end": 655.79,
+  "text": "auto-regression. Now, I wish I could cut"
+ },
+ {
+  "start": 655.8,
+  "end": 658.11,
+  "text": "here to Joey talking about MTP, but I"
+ },
+ {
+  "start": 658.12,
+  "end": 659.99,
+  "text": "totally forgot to ask Joey about"
+ },
+ {
+  "start": 660.0,
+  "end": 662.59,
+  "text": "Nematron's incorporation of MTP. So, I"
+ },
+ {
+  "start": 662.6,
+  "end": 664.15,
+  "text": "guess you're stuck with me trying to"
+ },
+ {
+  "start": 664.16,
+  "end": 665.71,
+  "text": "explain it, but I'll do my best."
+ },
+ {
+  "start": 665.72,
+  "end": 667.59,
+  "text": "Multi-token prediction lets the model"
+ },
+ {
+  "start": 667.6,
+  "end": 670.11,
+  "text": "predict not just the next token, but the"
+ },
+ {
+  "start": 670.12,
+  "end": 672.63,
+  "text": "tokens after that. We can have the model"
+ },
+ {
+  "start": 672.64,
+  "end": 675.19,
+  "text": "produce, let's say, next five tokens,"
+ },
+ {
+  "start": 675.2,
+  "end": 676.95,
+  "text": "which theoretically gives the model"
+ },
+ {
+  "start": 676.96,
+  "end": 679.51,
+  "text": "deeper intuition on how the next five"
+ },
+ {
+  "start": 679.52,
+  "end": 681.39,
+  "text": "tokens would look like if the model"
+ },
+ {
+  "start": 681.4,
+  "end": 683.51,
+  "text": "could generate them. Now, MTP is"
+ },
+ {
+  "start": 683.52,
+  "end": 685.95,
+  "text": "typically used for training to make the"
+ },
+ {
+  "start": 685.96,
+  "end": 688.19,
+  "text": "model more expressive and theoretically"
+ },
+ {
+  "start": 688.2,
+  "end": 690.59,
+  "text": "have a better forward-thinking ability"
+ },
+ {
+  "start": 690.6,
+  "end": 693.31,
+  "text": "as it generates token after token. But,"
+ },
+ {
+  "start": 693.32,
+  "end": 695.87,
+  "text": "it can also be used during inference as"
+ },
+ {
+  "start": 695.88,
+  "end": 698.51,
+  "text": "well in the form of speculative decoding"
+ },
+ {
+  "start": 698.52,
+  "end": 700.95,
+  "text": "where the model drafts few tokens ahead,"
+ },
+ {
+  "start": 700.96,
+  "end": 703.51,
+  "text": "then checks them in one pass, and keeps"
+ },
+ {
+  "start": 703.52,
+  "end": 705.47,
+  "text": "ones that match what it would have"
+ },
+ {
+  "start": 705.48,
+  "end": 708.07,
+  "text": "generated anyway. And NeMo Tron 3 allows"
+ },
+ {
+  "start": 708.08,
+  "end": 710.11,
+  "text": "speculative decoding to be done using"
+ },
+ {
+  "start": 710.12,
+  "end": 712.67,
+  "text": "MTP, which theoretically should speed up"
+ },
+ {
+  "start": 712.68,
+  "end": 714.87,
+  "text": "your token production side since it"
+ },
+ {
+  "start": 714.88,
+  "end": 717.35,
+  "text": "could skip over multiple tokens as it"
+ },
+ {
+  "start": 717.36,
+  "end": 719.63,
+  "text": "predicts and accepts tokens beyond the"
+ },
+ {
+  "start": 719.64,
+  "end": 721.67,
+  "text": "next coming token. Now that we covered"
+ },
+ {
+  "start": 721.68,
+  "end": 723.43,
+  "text": "with a broad stroke what NeMo Tron"
+ },
+ {
+  "start": 723.44,
+  "end": 725.23,
+  "text": "architecture looks like, let's briefly"
+ },
+ {
+  "start": 725.24,
+  "end": 727.35,
+  "text": "talk about licensing. We all know that"
+ },
+ {
+  "start": 727.36,
+  "end": 729.99,
+  "text": "labs tend to flip-flop between how open"
+ },
+ {
+  "start": 730.0,
+  "end": 731.83,
+  "text": "they really are when it comes to their"
+ },
+ {
+  "start": 731.84,
+  "end": 733.91,
+  "text": "model releases. And what's even more"
+ },
+ {
+  "start": 733.92,
+  "end": 736.75,
+  "text": "confusing is licenses like Apache 2,"
+ },
+ {
+  "start": 736.76,
+  "end": 738.39,
+  "text": "which can be confusing when it comes to"
+ },
+ {
+  "start": 738.4,
+  "end": 740.55,
+  "text": "scope. And that's largely because Apache"
+ },
+ {
+  "start": 740.56,
+  "end": 743.71,
+  "text": "2.0 is meant to be used for software,"
+ },
+ {
+  "start": 743.72,
+  "end": 746.19,
+  "text": "not for AI models. For example, we know"
+ },
+ {
+  "start": 746.2,
+  "end": 748.47,
+  "text": "that many open labs release the model's"
+ },
+ {
+  "start": 748.48,
+  "end": 750.59,
+  "text": "weights, but they also release code"
+ },
+ {
+  "start": 750.6,
+  "end": 752.83,
+  "text": "that's used to run them for inference,"
+ },
+ {
+  "start": 752.84,
+  "end": 754.83,
+  "text": "as well as few other artifacts like"
+ },
+ {
+  "start": 754.84,
+  "end": 757.31,
+  "text": "documents, RL environment, and training"
+ },
+ {
+  "start": 757.32,
+  "end": 759.39,
+  "text": "recipe. So, the question really becomes,"
+ },
+ {
+  "start": 759.4,
+  "end": 761.95,
+  "text": "when a lab says their model is open,"
+ },
+ {
+  "start": 761.96,
+  "end": 763.79,
+  "text": "what exactly does that mean? Recently,"
+ },
+ {
+  "start": 763.8,
+  "end": 766.19,
+  "text": "Linux Foundation revised their Open MMW"
+ },
+ {
+  "start": 766.2,
+  "end": 769.31,
+  "text": "license from 1 to 1.1 to help reform the"
+ },
+ {
+  "start": 769.32,
+  "end": 771.55,
+  "text": "language around AI model licensing, and"
+ },
+ {
+  "start": 771.56,
+  "end": 774.15,
+  "text": "NVIDIA adopted this very license to"
+ },
+ {
+  "start": 774.16,
+  "end": 776.79,
+  "text": "clarify their stance on NeMo Tron model"
+ },
+ {
+  "start": 776.8,
+  "end": 778.11,
+  "text": "along with some of the other things"
+ },
+ {
+  "start": 778.12,
+  "end": 779.99,
+  "text": "they're working on like Cosmos, I say"
+ },
+ {
+  "start": 780.0,
+  "end": 782.96,
+  "text": "boots, and more."
+ }
+]

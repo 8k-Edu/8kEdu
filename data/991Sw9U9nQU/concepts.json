@@ -1,0 +1,82 @@
+[
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Affordability Calculator for First-Time Homebuyers",
+  "explanation": "Calculate your mortgage payment and cash flow based on your income, down payment, and loan terms to ensure you're not overextending yourself.",
+  "params": {
+   "cells": [
+    "def calculate_mortgage_payment(principal, rate, years, down_payment_percent):\n    monthly_rate = rate / 12\n    n_payments = years * 12\n    monthly_payment = principal * (monthly_rate * (1 + monthly_rate)**n_payments) / ((1 + monthly_rate)**n_payments - 1)\n    return monthly_payment\n\n# Example: $300K home, 5% interest, 30 years, 20% down\nprincipal = 300000 * (1 - down_payment_percent/100)\nrate = 0.05\nyears = 30\ndown_payment_percent = 20\n\nmonthly_payment = calculate_mortgage_payment(principal, rate, years, down_payment_percent)\nprint(f\"Monthly Mortgage Payment: ${monthly_payment:.2f}\")",
+    "def calculate_cash_flow(income, expenses, mortgage_payment):\n    return income - expenses - mortgage_payment\n\n# Example: $5000/month income, $2000/month expenses\nincome = 5000\nexpenses = 2000\n\ncash_flow = calculate_cash_flow(income, expenses, monthly_payment)\nprint(f\"Monthly Cash Flow: ${cash_flow:.2f}\")"
+   ],
+   "sliders": [
+    {
+     "name": "principal",
+     "min": 100000,
+     "max": 500000,
+     "value": 300000
+    },
+    {
+     "name": "interest_rate",
+     "min": 3,
+     "max": 10,
+     "value": 5
+    },
+    {
+     "name": "years",
+     "min": 10,
+     "max": 30,
+     "value": 30
+    },
+    {
+     "name": "down_payment_percent",
+     "min": 0,
+     "max": 100,
+     "value": 20
+    },
+    {
+     "name": "income",
+     "min": 3000,
+     "max": 10000,
+     "value": 5000
+    },
+    {
+     "name": "expenses",
+     "min": 1000,
+     "max": 5000,
+     "value": 2000
+    }
+   ]
+  },
+  "time": 40,
+  "frame": "f_000040.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Mortgage Pre-Approval Calculator",
+  "explanation": "Compare mortgage rates and fees from three lenders to find the best deal without impacting your credit.",
+  "params": {
+   "cells": [
+    "import numpy as np\nimport matplotlib.pyplot as plt\n\n# Sliders for user input\nhome_price = float(input('Enter home price: '))\n down_payment_pct = float(input('Enter down payment percentage: '))\n interest_rate = float(input('Enter interest rate (as decimal): '))\n loan_term_years = int(input('Enter loan term (years): '))\n\n# Calculate monthly payment\nmonthly_rate = interest_rate / 12\nnum_payments = loan_term_years * 12\n\n# Mortgage payment formula\nmonthly_payment = (home_price * (1 - (1 + monthly_rate)**(-num_payments)) / monthly_rate) / 12\n\n# Display results\nprint(f'Estimated monthly payment: ${monthly_payment:.2f}')\nprint(f'Loan term: {loan_term_years} years')\nprint(f'Interest rate: {interest_rate * 100:.2f}%')",
+    "sliders"
+   ]
+  },
+  "time": 330,
+  "frame": "f_000330.jpg"
+ },
+ {
+  "has_concept": true,
+  "widget": "notebook",
+  "title": "Mortgage Underwriting & Loan Approval Calculator",
+  "explanation": "This video explains how lenders verify your financials and property value during underwriting, and why pre-approval denial risks exist.",
+  "params": {
+   "cells": [
+    "def calculate_underwriting_check(down_payment_pct, loan_to_value_ratio, interest_rate, property_value, income, debt_to_income_ratio):\n    # Lender will verify employment, income, and bank balance\n    # Loan amount capped by property value\n    loan_amount = property_value * (1 - down_payment_pct)\n    max_loan_to_value = 0.85  # Lender's max LTV\n    if loan_to_value_ratio > max_loan_to_value:\n        return \"Loan denied - LTV too high\"\n    if debt_to_income_ratio > 0.45:\n        return \"Loan denied - DTI too high\"\n    return f\"Approved loan: ${loan_amount:.2f} at {interest_rate}%\"\n\n# Example calculation\nprint(calculate_underwriting_check(20, 0.8, 4.5, 300000, 60000, 0.35))",
+    "sliders"
+   ]
+  },
+  "time": 620,
+  "frame": "f_000620.jpg"
+ }
+]

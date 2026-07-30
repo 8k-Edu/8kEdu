@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'node:child_process'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
+import path from 'node:path'
 
 // Branch-aware host: dev branch → http://dev.localhost:5174 , everything else → http://localhost:5173
 // (*.localhost resolves to loopback in modern browsers — no /etc/hosts edit needed)
@@ -23,10 +25,43 @@ const banner = () => ({
   },
 })
 
+// Keyframes live in a private Supabase bucket and serve.py caches fetched ones back into
+// data/<videoId>/frames/. publicDir is that same data/ tree, so without this the dev server
+// would republish them unauthenticated and `vite build` would bake whatever happened to be
+// cached into dist/. Path-based, so it holds under either base.
+const PRIVATE_DATA = /\/(frames|crops)\//
+const hideCachedFrames = () => {
+  let outDir
+  return {
+    name: 'hide-cached-frames',
+    configResolved(c) { outDir = path.resolve(c.root, c.build.outDir) },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (PRIVATE_DATA.test((req.url || '').split('?')[0])) {
+          res.statusCode = 404
+          res.end()
+          return
+        }
+        next()
+      })
+    },
+    // publicDir is copied at the very end of the build, so buildEnd is too early.
+    closeBundle() {
+      if (!outDir || !existsSync(outDir)) return
+      for (const entry of readdirSync(outDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue
+        for (const dir of ['frames', 'crops']) {
+          rmSync(path.join(outDir, entry.name, dir), { recursive: true, force: true })
+        }
+      }
+    },
+  }
+}
+
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/8kedu/' : '/', // prod: served under dev.perspectivity.co/8kedu
-  plugins: [react(), banner()],
-  publicDir: '../data', // serves concepts.json + frames/ straight from the pipeline
+  plugins: [react(), banner(), hideCachedFrames()],
+  publicDir: '../data', // serves concepts.json + the vendored pyodide straight from the pipeline
   server: {
     host: true,                                    // bind loopback; browser reaches via *.localhost
     port: PORT,

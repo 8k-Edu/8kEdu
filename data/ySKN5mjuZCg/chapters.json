@@ -1,0 +1,27 @@
+[
+ {
+  "start": 0,
+  "end": 71,
+  "title": "Intro"
+ },
+ {
+  "start": 71,
+  "end": 100,
+  "title": "Center Text Across Multiple Columns"
+ },
+ {
+  "start": 100,
+  "end": 127,
+  "title": "Merge and Center"
+ },
+ {
+  "start": 127,
+  "end": 215,
+  "title": "Repeat Column Titles"
+ },
+ {
+  "start": 215,
+  "end": 307,
+  "title": "Result"
+ }
+]

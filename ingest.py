@@ -137,6 +137,48 @@ def fetch_chapters(url: str, out: Path) -> list[dict]:
     return chapters
 
 
+def upload_frames(vid: str, out: Path, frames: list[dict], prune: bool = False,
+                  on_upload=None) -> int:
+    """Push the keyframes in `frames` to Supabase Storage and record them in public.frames.
+    Raises — callers decide whether a failure is fatal. scripts/backfill_frames.py drives
+    this over frames already on disk, so this is the one place the publish rules live.
+
+    prune drops the video's existing objects first: a re-extract at a different interval
+    renames every frame, orphaning the old keys."""
+    from agent import db, storage
+    db.load_env()  # `uv run ingest.py <url>` sources no .env of its own
+    if not storage.enabled():
+        return 0
+    storage.ensure_bucket()
+    if prune:
+        storage.remove_video(vid)
+    rows = []
+    for fr in frames:
+        jpg = out / "frames" / fr["file"]
+        if not jpg.exists():
+            continue
+        rows.append((fr["time"], storage.upload_frame(vid, jpg)))
+        if on_upload:
+            on_upload()
+    db.upsert_frames(vid, rows)
+    return len(rows)
+
+
+def publish_frames(vid: str, out: Path, frames: list[dict]) -> int:
+    """Best-effort upload_frames for the ingest path: a failed publish must not fail an
+    ingest whose local analyze step works fine either way.
+
+    Not folded into extract_frames() — that one takes an arbitrary --out and never learns
+    the video id."""
+    if os.environ.get("KEDU_FRAME_REMOTE") == "0":
+        return 0
+    try:
+        return upload_frames(vid, out, frames, prune=True)
+    except Exception as e:
+        print(f"! frame upload skipped: {e}")
+        return 0
+
+
 def video_id(url: str) -> str:
     m = re.search(r"(?:v=|youtu\.be/|embed/)([\w-]{11})", url) or re.match(r"^([\w-]{11})$", url)
     if not m:
@@ -159,7 +201,9 @@ def main() -> None:
 
     (out / "transcript.json").write_text(json.dumps(cues, indent=1))
     (out / "frames.json").write_text(json.dumps(frames, indent=1))
-    print(f"done: {len(cues)} cues, {len(frames)} frames, {len(chapters)} chapters → {out}/")
+    published = publish_frames(video_id(args.url), out, frames)
+    print(f"done: {len(cues)} cues, {len(frames)} frames, {len(chapters)} chapters, "
+          f"{published} frames published → {out}/")
 
 
 if __name__ == "__main__":
