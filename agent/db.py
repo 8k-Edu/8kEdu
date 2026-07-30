@@ -103,8 +103,10 @@ def curriculum(goal_id):
 def ensure_video(video_id, title="", channel_name=""):
     """Curriculum.video_id has an FK to videos — make sure the row exists first."""
     with conn() as c, c.cursor() as cur:
+        # nullif on insert too, not just on conflict: readers fall back with
+        # coalesce(v.title, ...), which '' defeats — an untitled row would render blank.
         cur.execute(
-            "insert into videos(video_id,title,channel_name) values (%s,%s,%s) "
+            "insert into videos(video_id,title,channel_name) values (%s,nullif(%s,''),%s) "
             "on conflict (video_id) do update set title=coalesce(nullif(excluded.title,''), videos.title)",
             (video_id, title, channel_name))
         c.commit()

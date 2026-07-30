@@ -77,7 +77,8 @@ those are the most valuable prose in the repo. Your job is to remove the noise a
 not to thin them out. When a comment is even arguably load-bearing, leave it.
 
 Delete:
-- Step-banner narration ("# Step 1: ...", "// ===== SECTION =====" dividers).
+- Step-banner narration ("# Step 1: ...", "// ===== SECTION =====" dividers) — but NOT the
+  `# ---------- named section ----------` markers described under Keep.
 - Changelog and reviewer-addressed comments: "Previously...", "Updated to...",
   "This fixes...", "Per the plan...", "As requested...", "Renamed from...".
 - Commented-out code (any commented line that would parse as code).
@@ -88,6 +89,10 @@ Delete:
   part of the docstring alone.
 
 Keep:
+- `# ---------- named section ----------` markers. These are this repo's deliberate
+  navigation idiom in its 600-line modules (agent/db.py, analyze.py, serve.py, agent/api.py)
+  and they name a region rather than restating a line. Never delete one, even when the file
+  you are editing only changed elsewhere.
 - Anything explaining WHY: constraints, workarounds, third-party quirks (vllm/mlx/PIL/
   Supabase/Vite behaviour), ordering assumptions, perf tradeoffs, deliberate deviations
   from the obvious approach, rationale for a surprising default.
