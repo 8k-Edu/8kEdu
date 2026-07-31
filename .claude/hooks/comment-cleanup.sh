@@ -89,10 +89,11 @@ Delete:
   part of the docstring alone.
 
 Keep:
-- `# ---------- named section ----------` markers. These are this repo's deliberate
-  navigation idiom in its 600-line modules (agent/db.py, analyze.py, serve.py, agent/api.py)
-  and they name a region rather than restating a line. Never delete one, even when the file
-  you are editing only changed elsewhere.
+- Section markers that name a region rather than restating a line. Two forms, both this
+  repo's deliberate navigation idiom in files that run to hundreds or thousands of lines:
+  `# ---------- named section ----------` in Python (agent/db.py, analyze.py, serve.py,
+  agent/api.py) and short JSX markers like `{/* stat tiles */}` or `{/* HERO */}` in
+  app/src/App.jsx. Never delete either, even when the file you are editing changed elsewhere.
 - Anything explaining WHY: constraints, workarounds, third-party quirks (vllm/mlx/PIL/
   Supabase/Vite behaviour), ordering assumptions, perf tradeoffs, deliberate deviations
   from the obvious approach, rationale for a surprising default.

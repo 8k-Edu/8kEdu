@@ -589,6 +589,7 @@ function Lecture({ videoId, role }) {
   const [checked, setChecked] = useState(new Set())
   const [touchMode, setTouchMode] = useState(false)
   const liveParams = useRef(null)
+  const published = useRef(null)
   const { holder, time, seek } = useYouTube(videoId)
   // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
@@ -656,7 +657,24 @@ function Lecture({ videoId, role }) {
   const share = () => {
     if (!selected) return
     const spec = { ...selected, params: liveParams.current ?? selected.params }
-    setShareUrl(`${location.origin}${location.pathname}#s=${b64enc(spec)}`)
+    const encoded = b64enc(spec)
+    setShareUrl(`${location.origin}${location.pathname}#s=${encoded}`)
+    // Best-effort: the link already carries the spec, so this only adds it to the community
+    // feed. Guarded on the encoded spec so a second click doesn't duplicate the row.
+    if (published.current === encoded) return
+    published.current = encoded
+    fetch(P + '/pub/artifact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        video_id: videoId,
+        t_s: spec.time ?? 0,
+        widget: spec.widget ?? '',
+        title: spec.title ?? '',
+        spec,
+        ...(identity?.handle ? { owner: identity.handle } : {}),
+      }),
+    }).catch(() => {})
   }
 
   const askRegion = async (rect, done) => {

@@ -126,14 +126,11 @@ FRAME_LEAD_S = 2  # section starts this far before the target so the cut lands o
 
 def fetch_one_frame(vid: str, t_s: float, frame_file: str, frames_dir: Path,
                     timeout: int | None = 60) -> Path | None:
-    """One keyframe pulled straight from YouTube, for a moment whose jpg exists nowhere.
+    """One keyframe from YouTube, for a moment whose jpg exists nowhere.
 
-    Same source selector as download() and same recipe as extract_frames(): the library is
-    480p upscaled to 720, so a higher-resolution source here would hand the VLM a sharper
-    frame than any of its neighbours.
-
-    frame_file comes from the manifest — `time` is round(sec, 1) while the filename is
-    int(sec), so recomputing the name here would miss on about a third of frames."""
+    Mirrors download()'s 480p selector and extract_frames()' recipe: the library is 480p
+    upscaled to 720, so a sharper source would read differently to the VLM. frame_file must
+    come from the manifest — `time` is round(sec, 1) while the filename is int(sec)."""
     start = max(0.0, t_s - FRAME_LEAD_S)
     dest = frames_dir / frame_file
     try:
@@ -177,51 +174,51 @@ def fetch_chapters(url: str, out: Path) -> list[dict]:
     return chapters
 
 
-def upload_frames(vid: str, out: Path, frames: list[dict], on_upload=None) -> int:
-    """Publish `frames` to Supabase Storage and public.frames, uploading only what isn't there
-    already. Returns the number uploaded. Raises — callers decide what's fatal.
-    scripts/backfill_frames.py drives this too, so the publish rules live here alone.
+def _publish_plan(published: dict, wanted: dict, on_disk: set) -> tuple[list, list, list]:
+    """(to_upload, to_remove, gone), keyed on t_s — the frames primary key. Pure, so the
+    reconcile reads without a bucket in the way. Reconciling beats pruning: a frame recovered
+    on demand is already analyzed under its filename, so only keys the new manifest has truly
+    orphaned land in to_remove."""
+    to_upload, stale = [], []
+    for t_s, name in wanted.items():
+        previous = published.get(t_s)
+        if name not in on_disk or (previous and previous.rsplit("/", 1)[-1] == name):
+            continue
+        if previous:
+            stale.append(previous)
+        to_upload.append((t_s, name))
+    gone = [t_s for t_s in published if t_s not in wanted]
+    return to_upload, stale + [published[t_s] for t_s in gone], gone
 
-    Reconciled on (video_id, t_s), the frames primary key, rather than dropping the video's
-    objects first: a frame recovered on demand has already been analyzed under its filename,
-    and re-uploading identical bytes buys nothing. A re-extract at a different interval renames
-    everything, and those genuinely orphaned keys are dropped below."""
+
+def upload_frames(vid: str, out: Path, frames: list[dict], on_upload=None) -> int:
+    """Publish `frames`, uploading only what isn't there already. Raises — callers decide
+    what's fatal. scripts/backfill_frames.py drives this too."""
     from agent import db, storage
     db.load_env()  # `uv run ingest.py <url>` sources no .env of its own
     if not storage.enabled():
         return 0
     storage.ensure_bucket()
 
-    published = db.frames_rows(vid)
-    wanted = {fr["time"]: fr["file"] for fr in frames}
+    frames_dir = out / "frames"
+    to_upload, to_remove, gone = _publish_plan(
+        db.frames_rows(vid), {fr["time"]: fr["file"] for fr in frames},
+        {p.name for p in frames_dir.glob("*.jpg")})
 
-    rows, stale = [], []
-    for t_s, name in wanted.items():
-        key = storage.object_key(vid, name)
-        if published.get(t_s) == key:
-            continue
-        jpg = out / "frames" / name
-        if not jpg.exists():
-            continue
-        if t_s in published:
-            stale.append(published[t_s])
-        rows.append((t_s, storage.upload_frame(vid, jpg)))
+    rows = []
+    for t_s, name in to_upload:
+        rows.append((t_s, storage.upload_frame(vid, frames_dir / name)))
         if on_upload:
             on_upload()
-
-    gone = [t_s for t_s in published if t_s not in wanted]
-    storage.remove_objects(stale + [published[t_s] for t_s in gone])
+    storage.remove_objects(to_remove)
     db.delete_frames_at(vid, gone)
     db.upsert_frames(vid, rows)
     return len(rows)
 
 
 def publish_frames(vid: str, out: Path, frames: list[dict]) -> int:
-    """Best-effort upload_frames for the ingest path: a failed publish must not fail an
-    ingest whose local analyze step works fine either way.
-
-    Not folded into extract_frames() — that one takes an arbitrary --out and never learns
-    the video id."""
+    """Best-effort upload_frames: a failed publish must not fail an ingest whose local analyze
+    works either way. Not in extract_frames(), which never learns the video id."""
     if os.environ.get("KEDU_FRAME_REMOTE") == "0":
         return 0
     try:

@@ -128,10 +128,9 @@ def upsert_frames(video_id, rows, title=""):
 
 
 def frames_manifest(video_id):
-    """[{"time","file"}] in frames.json's shape, for machines with no local manifest.
-    Both fields come straight from their stored column: ingest.py derives `time` and the
-    filename from the same float differently, so reconstructing either from the other
-    silently mismatches roughly a third of frames."""
+    """frames.json's shape, for machines with no local manifest. Each field comes from its own
+    stored column — ingest derives `time` and the filename from the same float differently, so
+    reconstructing either from the other mismatches about a third of frames."""
     with conn() as c, c.cursor() as cur:
         cur.execute("select t_s, storage_path from frames where video_id=%s order by t_s", (video_id,))
         return [{"time": float(t_s), "file": path.rsplit("/", 1)[-1]} for t_s, path in cur.fetchall()]

@@ -238,11 +238,9 @@ def _publish_recovered(video: str, t_s: float, path: Path) -> None:
 
 
 def _recover_frame(video: str, fr: dict, src: Path) -> tuple[Path, str, int]:
-    """Last resort for a frame on no disk and in no bucket: pull that one moment straight from
-    YouTube. Never raises — on any failure it returns `src` untouched, so the caller's existing
-    not-on-disk handling fires and the learner sees the same message as before.
-
-    Single-flighted per (video, frame): scrubbing one moment must not spawn a yt-dlp per click."""
+    """Last resort for a frame on no disk and in no bucket: pull that one moment from YouTube.
+    Never raises — on failure it returns `src` untouched, so the caller's not-on-disk handling
+    fires. Single-flighted per (video, frame): scrubbing must not spawn a yt-dlp per click."""
     if os.environ.get("KEDU_RECOVER_FRAMES", "1") == "0":
         return src, "off", 0
     with _recovering_lock:
