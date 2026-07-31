@@ -36,9 +36,8 @@ def enabled() -> bool:
 
 
 def object_key(video_id: str, frame_file: str) -> str:
-    """Built from the filename, never from t_s. ingest.py writes `time` as round(sec, 1) but
-    the filename as int(sec), so the two disagree on roughly a third of frames — a
-    t_s-derived key 404s on exactly those."""
+    """From the filename, never t_s: ingest writes `time` as round(sec, 1) and the filename as
+    int(sec), so a t_s-derived key 404s on about a third of frames."""
     return f"{video_id}/{frame_file}"
 
 
@@ -48,9 +47,8 @@ def _sb():
         with _client_lock:
             if _client is None:
                 from supabase import ClientOptions, create_client
-                # Deliberately not KEDU_TIMEOUT (240s per the README): /api/* handlers are sync
-                # defs on a 40-slot threadpool, so hung storage sockets cascade the way
-                # analyze.py's max_retries=0 comment describes.
+                # Not KEDU_TIMEOUT (240s): /api/* are sync defs on a 40-slot threadpool, so
+                # hung sockets cascade — see analyze.py's max_retries=0 note.
                 timeout = float(os.environ.get("KEDU_FRAME_FETCH_TIMEOUT", "5"))
                 _client = create_client(
                     os.environ["SUPABASE_URL"], os.environ["SUPABASE_SECRET_KEY"],
@@ -127,13 +125,20 @@ def ensure_bucket() -> None:
             raise
 
 
+def remove_objects(keys: list[str]) -> int:
+    if not keys or not enabled():
+        return 0
+    _bucket().remove(keys)
+    with _neg_lock:
+        for k in keys:
+            vid, _, name = k.partition("/")
+            _neg.pop((vid, name), None)
+    return len(keys)
+
+
 def remove_video(video_id: str) -> int:
     """Re-extracting at a different interval renames every frame, and scrub_video.py's
     cold-retest loop drops the local dir — without this both leak a whole video of objects."""
     if not enabled():
         return 0
-    b = _bucket()
-    keys = [f"{video_id}/{o['name']}" for o in b.list(video_id)]
-    if keys:
-        b.remove(keys)
-    return len(keys)
+    return remove_objects([f"{video_id}/{o['name']}" for o in _bucket().list(video_id)])

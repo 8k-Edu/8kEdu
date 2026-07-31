@@ -309,12 +309,9 @@ def _fallback_dir(frame: Path) -> Path:
 
 
 def resolve_frame(frame: Path, video_id: str) -> tuple[Path, str, int]:
-    """(path, source, elapsed_ms) with source in local|remote|miss|off. Never raises: on any
-    failure it returns `frame` untouched, so callers keep their existing not-on-disk paths.
-
-    The agent.storage import is deliberately lazy — deploy/containment/Dockerfile.analyze
-    copies analyze.py alone and installs only openai + pillow, so a module-scope import
-    would kill every contained run."""
+    """(path, source, elapsed_ms), source in local|remote|miss|off. Never raises: on failure it
+    returns `frame` untouched so callers keep their existing not-on-disk paths. The
+    agent.storage import is lazy because Dockerfile.analyze copies analyze.py alone."""
     if frame.exists():
         return frame, "local", 0
     try:

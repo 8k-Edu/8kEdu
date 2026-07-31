@@ -589,6 +589,7 @@ function Lecture({ videoId, role }) {
   const [checked, setChecked] = useState(new Set())
   const [touchMode, setTouchMode] = useState(false)
   const liveParams = useRef(null)
+  const published = useRef(null)
   const { holder, time, seek } = useYouTube(videoId)
   // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
@@ -656,7 +657,24 @@ function Lecture({ videoId, role }) {
   const share = () => {
     if (!selected) return
     const spec = { ...selected, params: liveParams.current ?? selected.params }
-    setShareUrl(`${location.origin}${location.pathname}#s=${b64enc(spec)}`)
+    const encoded = b64enc(spec)
+    setShareUrl(`${location.origin}${location.pathname}#s=${encoded}`)
+    // Best-effort: the link already carries the spec, so this only adds it to the community
+    // feed. Guarded on the encoded spec so a second click doesn't duplicate the row.
+    if (published.current === encoded) return
+    published.current = encoded
+    fetch(P + '/pub/artifact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        video_id: videoId,
+        t_s: spec.time ?? 0,
+        widget: spec.widget ?? '',
+        title: spec.title ?? '',
+        spec,
+        ...(identity?.handle ? { owner: identity.handle } : {}),
+      }),
+    }).catch(() => {})
   }
 
   const askRegion = async (rect, done) => {
@@ -810,6 +828,19 @@ function Lecture({ videoId, role }) {
               {roleCfg.icon} {roleCfg.label}
             </span>
           )}
+          {/* an analyzed video still needs a way to re-fetch its keyframes; the panel below
+              only renders before the first analysis, so this is the only route back */}
+          {analyzed && (proc?.state === 'running' ? (
+            <span style={{ fontSize: 11.5, color: '#58a6ff', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}>
+              <span className="kedu-spin" style={{ width: 11, height: 11, border: '2px solid #58a6ff55', borderTopColor: '#58a6ff', borderRadius: '50%', display: 'inline-block' }} />
+              {proc.step || 'starting'}…
+            </span>
+          ) : (
+            <button onClick={processVideo} title="Re-download this lecture's keyframes and regenerate its widgets"
+              style={{ fontSize: 11.5, color: '#8b949e', background: 'transparent', border: '1px solid #30363d', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+              ⚡ Reprocess
+            </button>
+          ))}
           <span style={{ fontSize: 11.5, color: '#8b949e', border: '1px solid #30363d', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
             {engine
               ? <>{engine.mode === 'local' ? '🖥 local' : '🔑 byok'} · {String(engine.model).replace('mlx-community/', '').slice(0, 34)}</>

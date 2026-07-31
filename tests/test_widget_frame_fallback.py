@@ -28,12 +28,15 @@ class MissingBackend(FakeBackend):
         return SPEC
 
 
-def _patches(backend, resolved):
+def _patches(backend, resolved, recovered=None):
+    """`recovered` stands in for the YouTube tier. It must always be patched — a "miss" from
+    resolve_frame now escalates into a real yt-dlp download, which a unit test must never do."""
     return (
         patch.object(serve, "backend", backend),
         patch.object(serve, "_db", None),
         patch.object(serve, "nearest_frame", return_value={"file": "f_000300.jpg", "time": 300.0}),
         patch.object(serve, "resolve_frame", return_value=resolved),
+        patch.object(serve, "_recover_frame", return_value=recovered or resolved),
         patch.object(serve, "_genre_for", return_value="general"),
         patch.object(serve, "_cache_get_first", return_value=None),
         patch.object(serve, "_cache_put"),
@@ -48,23 +51,36 @@ class WidgetFrameFallbackTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def _call(self, backend, resolved):
+    def _call(self, backend, resolved, recovered=None):
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch.object(serve, "_fire_event", self.events.append))
-            for p in _patches(backend, resolved):
+            for p in _patches(backend, resolved, recovered):
                 stack.enter_context(p)
             return serve.make_widget(serve.Ask(text="logits", time=300, video="vid"))
 
-    def test_both_missing_keeps_the_existing_answer_and_records_the_miss(self):
+    def test_every_tier_missing_keeps_the_existing_answer_and_records_the_miss(self):
         absent = Path(self.tmp.name) / "f_000300.jpg"
-        result = self._call(MissingBackend(), (absent, "miss", 42))
+        result = self._call(MissingBackend(), (absent, "miss", 42), (absent, "miss", 8))
 
         self.assertIn("keyframes aren't on disk", result["error"])
         ev = self.events[-1]
         self.assertEqual(ev["frame_source"], "miss")
-        self.assertEqual(ev["t_frame_fetch_ms"], 42)
+        self.assertEqual(ev["t_frame_fetch_ms"], 50)   # storage miss + recovery attempt
         self.assertEqual(ev["error"], "frames missing on disk")
         self.assertFalse(ev["cache_hit"])
+
+    def test_a_recovered_frame_produces_a_real_widget(self):
+        fetched = Path(self.tmp.name) / "f_000300.jpg"
+        fetched.write_bytes(b"\xff\xd8jpeg")
+        absent = Path(self.tmp.name) / "gone.jpg"
+        backend = FakeBackend()
+        result = self._call(backend, (absent, "miss", 40), (fetched, "recovered", 7000))
+
+        self.assertEqual(result["widget"], "softmax")
+        self.assertEqual(backend.asked, [fetched])
+        ev = self.events[-1]
+        self.assertEqual(ev["frame_source"], "recovered")
+        self.assertEqual(ev["t_frame_fetch_ms"], 7040)
 
     def test_a_remote_frame_produces_a_real_widget(self):
         fetched = Path(self.tmp.name) / "f_000300.jpg"

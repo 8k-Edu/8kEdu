@@ -128,19 +128,30 @@ def upsert_frames(video_id, rows, title=""):
 
 
 def frames_manifest(video_id):
-    """[{"time","file"}] in frames.json's shape, for machines with no local manifest.
-    Both fields come straight from their stored column: ingest.py derives `time` and the
-    filename from the same float differently, so reconstructing either from the other
-    silently mismatches roughly a third of frames."""
+    """frames.json's shape, for machines with no local manifest. Each field comes from its own
+    stored column — ingest derives `time` and the filename from the same float differently, so
+    reconstructing either from the other mismatches about a third of frames."""
     with conn() as c, c.cursor() as cur:
         cur.execute("select t_s, storage_path from frames where video_id=%s order by t_s", (video_id,))
         return [{"time": float(t_s), "file": path.rsplit("/", 1)[-1]} for t_s, path in cur.fetchall()]
 
 
-def delete_frames(video_id):
+def frames_rows(video_id):
+    """t_s → storage_path for everything already published, so a reprocess can skip what it
+    already has instead of dropping and re-uploading the lot."""
     with conn() as c, c.cursor() as cur:
-        cur.execute("delete from frames where video_id=%s", (video_id,))
+        cur.execute("select t_s, storage_path from frames where video_id=%s", (video_id,))
+        return {float(t_s): path for t_s, path in cur.fetchall()}
+
+
+def delete_frames_at(video_id, t_values):
+    if not t_values:
+        return 0
+    with conn() as c, c.cursor() as cur:
+        cur.execute("delete from frames where video_id=%s and t_s = any(%s)",
+                    (video_id, list(t_values)))
         c.commit()
+        return cur.rowcount
 
 
 def add_to_curriculum(goal_id, video_id, rationale, title="", channel_name=""):

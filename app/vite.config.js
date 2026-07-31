@@ -25,11 +25,10 @@ const banner = () => ({
   },
 })
 
-// Keyframes live in a private Supabase bucket and serve.py caches fetched ones back into
-// data/<videoId>/frames/. publicDir is that same data/ tree, so without this the dev server
-// would republish them unauthenticated and `vite build` would bake whatever happened to be
-// cached into dist/. Anchored to `<something>/(frames|crops)/…` so an unrelated future
-// route named /frames/… would not silently 404.
+// publicDir is data/, where serve.py caches frames fetched from a private bucket — serving
+// that tree wholesale would republish them and bake them into dist/. Anchored to
+// `<videoId>/(frames|crops)/…` so a future top-level route named /frames/… would not
+// silently 404.
 const PRIVATE_DATA = /^\/[^/]+\/(frames|crops)\//
 const hideCachedFrames = () => {
   let outDir

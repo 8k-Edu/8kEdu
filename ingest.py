@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 # host uses `uv run yt-dlp`; the sandbox has yt-dlp on PATH but no uv
 YTDLP = ["uv", "run", "yt-dlp"] if shutil.which("uv") else ["yt-dlp"]
@@ -24,9 +25,9 @@ MAX_FRAMES = 120
 FRAME_HEIGHT = 720  # enough for VLM to read code/equations
 
 
-def run(cmd: list[str], check: bool = True) -> int:
+def run(cmd: list[str], check: bool = True, timeout: int | None = None) -> int:
     print("+", " ".join(cmd))
-    return subprocess.run(cmd, check=check).returncode
+    return subprocess.run(cmd, check=check, timeout=timeout).returncode
 
 
 def download(url: str, out: Path) -> Path:
@@ -120,6 +121,42 @@ def extract_frames(video: Path, out: Path) -> list[dict]:
     return meta
 
 
+FRAME_LEAD_S = 2  # section starts this far before the target so the cut lands on a keyframe
+
+
+def fetch_one_frame(vid: str, t_s: float, frame_file: str, frames_dir: Path,
+                    timeout: int | None = 60) -> Path | None:
+    """One keyframe from YouTube, for a moment whose jpg exists nowhere.
+
+    Mirrors download()'s 480p selector and extract_frames()' recipe: the library is 480p
+    upscaled to 720, so a sharper source would read differently to the VLM. frame_file must
+    come from the manifest — `time` is round(sec, 1) while the filename is int(sec)."""
+    start = max(0.0, t_s - FRAME_LEAD_S)
+    dest = frames_dir / frame_file
+    try:
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as td:
+            run(YTDLP + [
+                "--download-sections", f"*{start}-{t_s + 5}",
+                "--force-keyframes-at-cuts",
+                "-f", "bv*[height<=480]+ba/b[height<=480]/b",
+                "-o", str(Path(td) / "clip.%(ext)s"),
+                f"https://www.youtube.com/watch?v={vid}",
+            ], timeout=timeout)
+            clips = sorted(Path(td).glob("clip.*"))
+            if not clips:
+                return None
+            # --force-keyframes-at-cuts makes the clip start at `start`, so the seek into it
+            # is the lead-in, never the absolute timestamp.
+            run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t_s - start),
+                 "-i", str(clips[0]), "-frames:v", "1",
+                 "-vf", f"scale=-2:{FRAME_HEIGHT}", "-q:v", "3", str(dest)], timeout=timeout)
+        return dest if dest.exists() and dest.stat().st_size else None
+    except Exception as e:
+        print(f"! frame recovery failed for {vid}@{t_s}: {e}")
+        return None
+
+
 def fetch_chapters(url: str, out: Path) -> list[dict]:
     p = subprocess.run(
         YTDLP + ["--skip-download", "--print", "%(chapters)j", url],
@@ -137,43 +174,55 @@ def fetch_chapters(url: str, out: Path) -> list[dict]:
     return chapters
 
 
-def upload_frames(vid: str, out: Path, frames: list[dict], prune: bool = False,
-                  on_upload=None) -> int:
-    """Push the keyframes in `frames` to Supabase Storage and record them in public.frames.
-    Raises — callers decide whether a failure is fatal. scripts/backfill_frames.py drives
-    this over frames already on disk, so this is the one place the publish rules live.
+def _publish_plan(published: dict, wanted: dict, on_disk: set) -> tuple[list, list, list]:
+    """(to_upload, to_remove, gone), keyed on t_s — the frames primary key. Pure, so the
+    reconcile reads without a bucket in the way. Reconciling beats pruning: a frame recovered
+    on demand is already analyzed under its filename, so only keys the new manifest has truly
+    orphaned land in to_remove."""
+    to_upload, stale = [], []
+    for t_s, name in wanted.items():
+        previous = published.get(t_s)
+        if name not in on_disk or (previous and previous.rsplit("/", 1)[-1] == name):
+            continue
+        if previous:
+            stale.append(previous)
+        to_upload.append((t_s, name))
+    gone = [t_s for t_s in published if t_s not in wanted]
+    return to_upload, stale + [published[t_s] for t_s in gone], gone
 
-    prune drops the video's existing objects first: a re-extract at a different interval
-    renames every frame, orphaning the old keys."""
+
+def upload_frames(vid: str, out: Path, frames: list[dict], on_upload=None) -> int:
+    """Publish `frames`, uploading only what isn't there already. Raises — callers decide
+    what's fatal. scripts/backfill_frames.py drives this too."""
     from agent import db, storage
     db.load_env()  # `uv run ingest.py <url>` sources no .env of its own
     if not storage.enabled():
         return 0
     storage.ensure_bucket()
-    if prune:
-        storage.remove_video(vid)
+
+    frames_dir = out / "frames"
+    to_upload, to_remove, gone = _publish_plan(
+        db.frames_rows(vid), {fr["time"]: fr["file"] for fr in frames},
+        {p.name for p in frames_dir.glob("*.jpg")})
+
     rows = []
-    for fr in frames:
-        jpg = out / "frames" / fr["file"]
-        if not jpg.exists():
-            continue
-        rows.append((fr["time"], storage.upload_frame(vid, jpg)))
+    for t_s, name in to_upload:
+        rows.append((t_s, storage.upload_frame(vid, frames_dir / name)))
         if on_upload:
             on_upload()
+    storage.remove_objects(to_remove)
+    db.delete_frames_at(vid, gone)
     db.upsert_frames(vid, rows)
     return len(rows)
 
 
 def publish_frames(vid: str, out: Path, frames: list[dict]) -> int:
-    """Best-effort upload_frames for the ingest path: a failed publish must not fail an
-    ingest whose local analyze step works fine either way.
-
-    Not folded into extract_frames() — that one takes an arbitrary --out and never learns
-    the video id."""
+    """Best-effort upload_frames: a failed publish must not fail an ingest whose local analyze
+    works either way. Not in extract_frames(), which never learns the video id."""
     if os.environ.get("KEDU_FRAME_REMOTE") == "0":
         return 0
     try:
-        return upload_frames(vid, out, frames, prune=True)
+        return upload_frames(vid, out, frames)
     except Exception as e:
         print(f"! frame upload skipped: {e}")
         return 0
