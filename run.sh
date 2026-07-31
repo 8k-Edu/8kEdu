@@ -33,6 +33,14 @@ uv run serve.py --backend "${KEDU_BACKEND:-lmstudio}" --port 8756 > "$LOGDIR/ser
 echo "→ agent dashboard API on :8787"
 uv run python -m agent.api --port 8787 > "$LOGDIR/agent_api.log" 2>&1 &
 
+# npm writes node_modules/.package-lock.json after install; if the tracked
+# lockfile is newer (fresh clone, git reset, pulled deps), refresh before vite
+# boots — otherwise dep-scanner fails on the first missing import.
+if [ app/package-lock.json -nt app/node_modules/.package-lock.json ]; then
+  echo "→ npm install (lockfile changed)"
+  ( cd app && npm install > "$LOGDIR/npm-install.log" 2>&1 )
+fi
+
 echo "→ frontend (vite) — dev.localhost:5174 on dev branch, localhost:5173 on main"
 ( cd app && npm run dev > "$LOGDIR/vite.log" 2>&1 & )
 
