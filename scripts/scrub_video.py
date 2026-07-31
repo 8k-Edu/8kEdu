@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from agent import db
+from agent import db, storage
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -53,6 +53,11 @@ def main() -> None:
     counts = scrub(vid)
     for table, n in counts.items():
         print(f"  db  {table:<22} {n}")
+
+    try:  # objects outlive their rows otherwise — nothing else references them
+        print(f"  obj removed {storage.remove_video(vid)} from bucket {storage.bucket_name()!r}")
+    except Exception as e:
+        print(f"  obj skipped ({e})")
 
     if local.exists():
         shutil.rmtree(local)

@@ -1,5 +1,7 @@
 data/*/video.*
 data/*/frames/
+# per-request region crops, regenerated on demand
+data/*/crops/
 data/pyodide-dist/
 data/pyodide
 .env
@@ -10,9 +12,12 @@ node_modules/
 __pycache__/
 dist/
 
-# claude-code plugin skill machinery (per-user, not source)
+# claude-code plugin skill machinery (per-user, not source). The entries under
+# .claude/skills/ are symlinks into .agents/; a skill written by hand is source, so it
+# gets negated back in below.
 .agents/
-.claude/skills/
+.claude/skills/*
+!.claude/skills/refactor/
 skills-lock.json
 
 # never commit env backups

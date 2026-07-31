@@ -1,0 +1,427 @@
+[
+ {
+  "start": 3.44,
+  "end": 12.16,
+  "text": "[Music]"
+ },
+ {
+  "start": 12.17,
+  "end": 15.5,
+  "text": "hey there it's Amelia in this video I'll"
+ },
+ {
+  "start": 15.51,
+  "end": 17.75,
+  "text": "show you how to work with column titles"
+ },
+ {
+  "start": 17.76,
+  "end": 20.39,
+  "text": "including centering titles across cells"
+ },
+ {
+  "start": 20.4,
+  "end": 22.64,
+  "text": "and repeating column titles across"
+ },
+ {
+  "start": 22.65,
+  "end": 25.28,
+  "text": "different pages let's get started"
+ },
+ {
+  "start": 25.29,
+  "end": 28.43,
+  "text": "so before I focus on the title I just"
+ },
+ {
+  "start": 28.44,
+  "end": 30.32,
+  "text": "want to mention about centering within a"
+ },
+ {
+  "start": 30.33,
+  "end": 33.2,
+  "text": "cell if you want to Center text within a"
+ },
+ {
+  "start": 33.21,
+  "end": 35.51,
+  "text": "cell just click on the cell or cells and"
+ },
+ {
+  "start": 35.52,
+  "end": 38.54,
+  "text": "then just go to the Home tab and click"
+ },
+ {
+  "start": 38.55,
+  "end": 41.57,
+  "text": "on the center icon in the alignment"
+ },
+ {
+  "start": 41.58,
+  "end": 44.36,
+  "text": "group now if you have a whole entire"
+ },
+ {
+  "start": 44.37,
+  "end": 46.55,
+  "text": "column that where you want to Center"
+ },
+ {
+  "start": 46.56,
+  "end": 48.59,
+  "text": "you can click see although in this case"
+ },
+ {
+  "start": 48.6,
+  "end": 50.39,
+  "text": "since I have some other information at"
+ },
+ {
+  "start": 50.4,
+  "end": 53.83,
+  "text": "the top I'm gonna go ahead and use the"
+ },
+ {
+  "start": 53.84,
+  "end": 56.9,
+  "text": "mouse you could also use your keyboard"
+ },
+ {
+  "start": 56.91,
+  "end": 60.14,
+  "text": "by using shift down arrow and scroll all"
+ },
+ {
+  "start": 60.15,
+  "end": 62.39,
+  "text": "the way to the bottom and let's say I"
+ },
+ {
+  "start": 62.4,
+  "end": 64.13,
+  "text": "want to Center that particular range"
+ },
+ {
+  "start": 64.14,
+  "end": 67.43,
+  "text": "then I would click on the center and the"
+ },
+ {
+  "start": 67.44,
+  "end": 69.35,
+  "text": "text is now centered in that whole range"
+ },
+ {
+  "start": 69.36,
+  "end": 71.96,
+  "text": "of cells so now let's talk about"
+ },
+ {
+  "start": 71.97,
+  "end": 75.62,
+  "text": "centering text across multiple columns"
+ },
+ {
+  "start": 75.63,
+  "end": 79.13,
+  "text": "so you might have a wide worksheet where"
+ },
+ {
+  "start": 79.14,
+  "end": 81.5,
+  "text": "you have a title at the top and you want"
+ },
+ {
+  "start": 81.51,
+  "end": 84.14,
+  "text": "to Center it in the center of the entire"
+ },
+ {
+  "start": 84.15,
+  "end": 86.66,
+  "text": "worksheet so to Center text across"
+ },
+ {
+  "start": 86.67,
+  "end": 90.26,
+  "text": "multiple columns select the text along"
+ },
+ {
+  "start": 90.27,
+  "end": 92.81,
+  "text": "with the additional cells across over"
+ },
+ {
+  "start": 92.82,
+  "end": 95.12,
+  "text": "which you would like to Center the title"
+ },
+ {
+  "start": 95.13,
+  "end": 97.88,
+  "text": "so I'm going to go up to column M here"
+ },
+ {
+  "start": 97.89,
+  "end": 100.16,
+  "text": "and then just select merge and center"
+ },
+ {
+  "start": 100.17,
+  "end": 101.84,
+  "text": "it's that easy"
+ },
+ {
+  "start": 101.85,
+  "end": 104.18,
+  "text": "and now all your title is centered"
+ },
+ {
+  "start": 104.19,
+  "end": 109.06,
+  "text": "across so let's click print preview and"
+ },
+ {
+  "start": 109.07,
+  "end": 112.85,
+  "text": "see how that looks now that looks fine"
+ },
+ {
+  "start": 112.86,
+  "end": 116.17,
+  "text": "but if I scroll to the second page"
+ },
+ {
+  "start": 116.18,
+  "end": 119.53,
+  "text": "you'll notice that the title is missing"
+ },
+ {
+  "start": 119.54,
+  "end": 122.84,
+  "text": "on the second and subsequent pages so"
+ },
+ {
+  "start": 122.85,
+  "end": 125.72,
+  "text": "now what I'd like to do is show you how"
+ },
+ {
+  "start": 125.73,
+  "end": 129.5,
+  "text": "to repeat column titles on other pages"
+ },
+ {
+  "start": 129.51,
+  "end": 131.93,
+  "text": "here's how you would do that so you"
+ },
+ {
+  "start": 131.94,
+  "end": 133.94,
+  "text": "would click on the page layout"
+ },
+ {
+  "start": 133.95,
+  "end": 137.72,
+  "text": "tab in the ribbon and next click on the"
+ },
+ {
+  "start": 137.73,
+  "end": 140.36,
+  "text": "little diagonal arrow on the lower right"
+ },
+ {
+  "start": 140.37,
+  "end": 144.8,
+  "text": "of the page setup group next in the page"
+ },
+ {
+  "start": 144.81,
+  "end": 149.63,
+  "text": "setup dialog box click sheet and then"
+ },
+ {
+  "start": 149.64,
+  "end": 152.27,
+  "text": "what you want to focus on is on the two"
+ },
+ {
+  "start": 152.28,
+  "end": 154.82,
+  "text": "fields here rows to repeat at top and"
+ },
+ {
+  "start": 154.83,
+  "end": 158.36,
+  "text": "columns to repeat at left so you can"
+ },
+ {
+  "start": 158.37,
+  "end": 162.5,
+  "text": "repeat titles at the top by selecting"
+ },
+ {
+  "start": 162.51,
+  "end": 164.57,
+  "text": "the rows and those rows all the"
+ },
+ {
+  "start": 164.58,
+  "end": 166.34,
+  "text": "information on those rows will repeat on"
+ },
+ {
+  "start": 166.35,
+  "end": 169.42,
+  "text": "the other pages now if you also have"
+ },
+ {
+  "start": 169.43,
+  "end": 173.72,
+  "text": "columns containing titles on the left"
+ },
+ {
+  "start": 173.73,
+  "end": 175.49,
+  "text": "there you could repeat those as well"
+ },
+ {
+  "start": 175.5,
+  "end": 180.35,
+  "text": "what I'd like to do is repeat the titles"
+ },
+ {
+  "start": 180.36,
+  "end": 184.22,
+  "text": "in the first several rows including the"
+ },
+ {
+  "start": 184.23,
+  "end": 187.46,
+  "text": "headings here that you see in row 10 so"
+ },
+ {
+  "start": 187.47,
+  "end": 189.17,
+  "text": "I'm going to click on this up arrow"
+ },
+ {
+  "start": 189.18,
+  "end": 191.42,
+  "text": "which will collapse the dialog box so"
+ },
+ {
+  "start": 191.43,
+  "end": 192.95,
+  "text": "that I could see more of the worksheet"
+ },
+ {
+  "start": 192.96,
+  "end": 195.02,
+  "text": "and then I'm going to go ahead using the"
+ },
+ {
+  "start": 195.03,
+  "end": 197.48,
+  "text": "row numbers and select all the rows that"
+ },
+ {
+  "start": 197.49,
+  "end": 199.58,
+  "text": "I want to repeat up to and including Row"
+ },
+ {
+  "start": 199.59,
+  "end": 202.46,
+  "text": "10 next I'm going to click on the down"
+ },
+ {
+  "start": 202.47,
+  "end": 205.85,
+  "text": "arrow to bring this dialog box back and"
+ },
+ {
+  "start": 205.86,
+  "end": 208.22,
+  "text": "as you can see it has formatted the row"
+ },
+ {
+  "start": 208.23,
+  "end": 209.63,
+  "text": "numbers for me you don't have to worry"
+ },
+ {
+  "start": 209.64,
+  "end": 211.61,
+  "text": "about changing anything in the"
+ },
+ {
+  "start": 211.62,
+  "end": 213.17,
+  "text": "formatting it does that automatically"
+ },
+ {
+  "start": 213.18,
+  "end": 217.25,
+  "text": "and click OK and now if I click file"
+ },
+ {
+  "start": 217.26,
+  "end": 219.23,
+  "text": "print we can see what it's what it looks"
+ },
+ {
+  "start": 219.24,
+  "end": 225.89,
+  "text": "like on the second page great so as you"
+ },
+ {
+  "start": 225.9,
+  "end": 229.37,
+  "text": "can see this whole range up to row 10"
+ },
+ {
+  "start": 229.38,
+  "end": 233.12,
+  "text": "will now repeat on every page well"
+ },
+ {
+  "start": 233.13,
+  "end": 235.07,
+  "text": "that's it for today's video if you found"
+ },
+ {
+  "start": 235.08,
+  "end": 236.57,
+  "text": "this video helpful please leave a"
+ },
+ {
+  "start": 236.58,
+  "end": 238.61,
+  "text": "comment below if you like this video"
+ },
+ {
+  "start": 238.62,
+  "end": 240.86,
+  "text": "please click like if you like my channel"
+ },
+ {
+  "start": 240.87,
+  "end": 243.08,
+  "text": "please click subscribe I'll see you in"
+ },
+ {
+  "start": 243.09,
+  "end": 248.63,
+  "text": "the next video"
+ },
+ {
+  "start": 248.64,
+  "end": 256.22,
+  "text": "[Music]"
+ }
+]

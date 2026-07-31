@@ -1,0 +1,1262 @@
+[
+ {
+  "start": 0.27,
+  "end": 2.01,
+  "text": "Hey, I'm Colin from Blackjack Apprentice."
+ },
+ {
+  "start": 2.01,
+  "end": 3.78,
+  "text": "In this video,"
+ },
+ {
+  "start": 3.78,
+  "end": 6.09,
+  "text": "I'll teach you everything you need to know about how to play Blackjack"
+ },
+ {
+  "start": 6.09,
+  "end": 8.75,
+  "text": "and how to beat it."
+ },
+ {
+  "start": 12.48,
+  "end": 13.71,
+  "text": "Hey, I'm Colin, and with me"
+ },
+ {
+  "start": 13.71,
+  "end": 17.25,
+  "text": "is my good friend David, aka Loudon Often."
+ },
+ {
+  "start": 17.25,
+  "end": 18.57,
+  "text": "We'll teach you"
+ },
+ {
+  "start": 18.57,
+  "end": 19.98,
+  "text": "how to play Blackjack."
+ },
+ {
+  "start": 19.98,
+  "end": 22.23,
+  "text": "We've been professional Blackjack players for"
+ },
+ {
+  "start": 22.23,
+  "end": 23.67,
+  "text": "about 15 years."
+ },
+ {
+  "start": 23.67,
+  "end": 26.04,
+  "text": "We've played solo, and we've been"
+ },
+ {
+  "start": 26.04,
+  "end": 27.54,
+  "text": "part of teams that"
+ },
+ {
+  "start": 27.54,
+  "end": 29.79,
+  "text": "beat casinos for about $4 million."
+ },
+ {
+  "start": 29.79,
+  "end": 31.95,
+  "text": "Now we're teaching others"
+ },
+ {
+  "start": 31.95,
+  "end": 33.99,
+  "text": "how to win at Blackjack through Blackjack Apprentice."
+ },
+ {
+  "start": 33.99,
+  "end": 34.82,
+  "text": "In this video,"
+ },
+ {
+  "start": 34.82,
+  "end": 36.29,
+  "text": "we'll show you how to play Blackjack"
+ },
+ {
+  "start": 36.29,
+  "end": 38.4,
+  "text": "and how to win."
+ },
+ {
+  "start": 38.4,
+  "end": 41.49,
+  "text": "Before we talk about how to play Blackjack,"
+ },
+ {
+  "start": 41.49,
+  "end": 43.05,
+  "text": "we first need to talk about the goal or purpose of the game."
+ },
+ {
+  "start": 46.02,
+  "end": 48.75,
+  "text": "Simply put, it's to beat the dealer."
+ },
+ {
+  "start": 48.75,
+  "end": 50.78,
+  "text": "Unlike poker where you play against other players, Blackjack is"
+ },
+ {
+  "start": 50.78,
+  "end": 55.53,
+  "text": "entirely a game between you and the dealer."
+ },
+ {
+  "start": 55.53,
+  "end": 56.7,
+  "text": "How do you beat the dealer?"
+ },
+ {
+  "start": 56.7,
+  "end": 58.98,
+  "text": "Basically, it's about getting"
+ },
+ {
+  "start": 58.98,
+  "end": 61.2,
+  "text": "closer to 21 than the dealer without exceeding 21."
+ },
+ {
+  "start": 61.2,
+  "end": 63.18,
+  "text": "That's why they call the game Blackjack."
+ },
+ {
+  "start": 63.18,
+  "end": 64.35,
+  "text": "So, how do you lose?"
+ },
+ {
+  "start": 64.35,
+  "end": 65.91,
+  "text": "There are several ways you can lose."
+ },
+ {
+  "start": 65.91,
+  "end": 68.85,
+  "text": "If the dealer is closer to 21 than you, then you lose."
+ },
+ {
+  "start": 68.85,
+  "end": 73.05,
+  "text": "Or if you go over 21, you lose immediately."
+ },
+ {
+  "start": 73.05,
+  "end": 76.98,
+  "text": "So now we have a quarter of a deck of cards."
+ },
+ {
+  "start": 76.98,
+  "end": 80.75,
+  "text": "These are the cards from 2 to Ace. In blackjack,"
+ },
+ {
+  "start": 80.75,
+  "end": 85.75,
+  "text": "2 to 10 are just their point values. So"
+ },
+ {
+  "start": 86.07,
+  "end": 88.89,
+  "text": "2 counts as 2 points,"
+ },
+ {
+  "start": 88.89,
+  "end": 91.02,
+  "text": "10 counts as 10 points,"
+ },
+ {
+  "start": 91.02,
+  "end": 92.61,
+  "text": "and then Jack, Queen,"
+ },
+ {
+  "start": 92.61,
+  "end": 95.91,
+  "text": "and King count as 10 points."
+ },
+ {
+  "start": 95.91,
+  "end": 98.38,
+  "text": "So 10, Jack, Queen, and King are all cards that count as 10 points."
+ },
+ {
+  "start": 98.38,
+  "end": 103.36,
+  "text": "Then Ace is different because it can count as 1 or 11,"
+ },
+ {
+  "start": 103.36,
+  "end": 107.07,
+  "text": "depending on which is better for the hand."
+ },
+ {
+  "start": 107.07,
+  "end": 111.78,
+  "text": "Ace and 2 together can count as 3 or 13 points,"
+ },
+ {
+  "start": 111.78,
+  "end": 114.27,
+  "text": "depending on which is better for the hand."
+ },
+ {
+  "start": 114.27,
+  "end": 116.52,
+  "text": "Now let's talk about the card-dealing process."
+ },
+ {
+  "start": 116.52,
+  "end": 119.88,
+  "text": "The player and the dealer each receive two cards,"
+ },
+ {
+  "start": 119.88,
+  "end": 122.46,
+  "text": "but the dealer only shows one card"
+ },
+ {
+  "start": 122.46,
+  "end": 124.56,
+  "text": "while the other card is face down. At"
+ },
+ {
+  "start": 124.56,
+  "end": 127.19,
+  "text": "this point, the player always goes first."
+ },
+ {
+  "start": 127.19,
+  "end": 131.01,
+  "text": "They can choose to take more cards or not."
+ },
+ {
+  "start": 131.01,
+  "end": 132.84,
+  "text": "They actually have a few other options, which"
+ },
+ {
+  "start": 132.84,
+  "end": 133.92,
+  "text": "we'll talk about later,"
+ },
+ {
+  "start": 133.92,
+  "end": 135.6,
+  "text": "but they always decide first."
+ },
+ {
+  "start": 135.6,
+  "end": 138.3,
+  "text": "Do you want more cards"
+ },
+ {
+  "start": 138.3,
+  "end": 141.18,
+  "text": "or to stay closer to 21 than the dealer without busting?"
+ },
+ {
+  "start": 141.18,
+  "end": 146.02,
+  "text": "The player has 18 points, and the dealer has 16 points. The dealer can't draw more cards"
+ },
+ {
+  "start": 146.02,
+  "end": 148.38,
+  "text": "because they must keep drawing until their total is at least 17."
+ },
+ {
+  "start": 148.38,
+  "end": 150.54,
+  "text": "They have no choice but to draw."
+ },
+ {
+  "start": 150.54,
+  "end": 153.51,
+  "text": "Now they have 17 points, and even if their hand is worse than the player's, they"
+ },
+ {
+  "start": 153.51,
+  "end": 156.75,
+  "text": "must stop at 17."
+ },
+ {
+  "start": 156.75,
+  "end": 159.36,
+  "text": "So the player wins."
+ },
+ {
+  "start": 159.36,
+  "end": 160.35,
+  "text": "After a round,"
+ },
+ {
+  "start": 160.35,
+  "end": 162.3,
+  "text": "there are three payouts:"
+ },
+ {
+  "start": 162.3,
+  "end": 165.66,
+  "text": "If the player wins, they receive the"
+ },
+ {
+  "start": 165.66,
+  "end": 167.1,
+  "text": "same amount they just bet."
+ },
+ {
+  "start": 167.1,
+  "end": 169.95,
+  "text": "If they lose, they lose their entire bet."
+ },
+ {
+  "start": 169.95,
+  "end": 170.78,
+  "text": "If it's a tie,"
+ },
+ {
+  "start": 170.78,
+  "end": 173.16,
+  "text": "meaning the player and dealer have the same total,"
+ },
+ {
+  "start": 173.16,
+  "end": 177.09,
+  "text": "they neither win nor lose, and the next round begins."
+ },
+ {
+  "start": 177.09,
+  "end": 178.86,
+  "text": "But wait, there's another way to"
+ },
+ {
+  "start": 178.86,
+  "end": 181.08,
+  "text": "automatically win in blackjack:"
+ },
+ {
+  "start": 181.08,
+  "end": 183.03,
+  "text": "your first two cards add up to 21,"
+ },
+ {
+  "start": 183.03,
+  "end": 184.11,
+  "text": "or what we call natural blackjack."
+ },
+ {
+  "start": 184.11,
+  "end": 185.16,
+  "text": "So it looks like this:"
+ },
+ {
+  "start": 185.16,
+  "end": 188.88,
+  "text": "If you have an Ace and a 10"
+ },
+ {
+  "start": 188.88,
+  "end": 191.55,
+  "text": "as your first two cards, we call it Blackjack."
+ },
+ {
+  "start": 191.55,
+  "end": 193.83,
+  "text": "As long as the dealer doesn't have Blackjack,"
+ },
+ {
+  "start": 193.83,
+  "end": 195.06,
+  "text": "you automatically win."
+ },
+ {
+  "start": 195.06,
+  "end": 197.41,
+  "text": "Therefore, if you get Blackjack, you win immediately."
+ },
+ {
+  "start": 197.41,
+  "end": 200.91,
+  "text": "As the felt says, the odds for blackjack are 3 to 2."
+ },
+ {
+  "start": 200.91,
+  "end": 205.8,
+  "text": "So if David bets 400 here, he'll get 600, which"
+ },
+ {
+  "start": 205.8,
+  "end": 208.1,
+  "text": "is 3 to 2, or 150%."
+ },
+ {
+  "start": 208.1,
+  "end": 210.78,
+  "text": "But be careful, because some greedy casinos"
+ },
+ {
+  "start": 210.78,
+  "end": 213.75,
+  "text": "have started offering a"
+ },
+ {
+  "start": 213.75,
+  "end": 215.88,
+  "text": "lower form of blackjack with odds that aren't 3 to 2"
+ },
+ {
+  "start": 215.88,
+  "end": 219.42,
+  "text": "but 6 to 5, or even the"
+ },
+ {
+  "start": 219.42,
+  "end": 221.7,
+  "text": "same odds as a regular hand."
+ },
+ {
+  "start": 221.7,
+  "end": 224.34,
+  "text": "You should never play these games"
+ },
+ {
+  "start": 224.34,
+  "end": 226.08,
+  "text": "because the"
+ },
+ {
+  "start": 226.08,
+  "end": 229.2,
+  "text": "casino will put you at a huge disadvantage."
+ },
+ {
+  "start": 229.2,
+  "end": 231.69,
+  "text": "Or, if you learn to be a card counter like us"
+ },
+ {
+  "start": 231.69,
+  "end": 232.89,
+  "text": "and want to win,"
+ },
+ {
+  "start": 232.89,
+  "end": 235.02,
+  "text": "you need blackjack with odds of 3 to 2"
+ },
+ {
+  "start": 235.02,
+  "end": 236.67,
+  "text": "to have a chance of beating them."
+ },
+ {
+  "start": 236.67,
+  "end": 238.38,
+  "text": "So let's do some example rounds"
+ },
+ {
+  "start": 238.38,
+  "end": 239.94,
+  "text": "to show you how this works."
+ },
+ {
+  "start": 246.87,
+  "end": 249.14,
+  "text": "In this example, the first player will fold. The second player will also fold. The"
+ },
+ {
+  "start": 251.88,
+  "end": 254.43,
+  "text": "third player will take their cards."
+ },
+ {
+  "start": 254.43,
+  "end": 256.56,
+  "text": "Now they will fold. In this case, the dealer has 18 points. The"
+ },
+ {
+  "start": 259.17,
+  "end": 261.57,
+  "text": "first player has 17 points, so he loses. The second player has 19 points, which exceeds the dealer's 18 points, so he wins. Then the"
+ },
+ {
+  "start": 261.57,
+  "end": 264.45,
+  "text": "third player has... 18 points."
+ },
+ {
+  "start": 268.05,
+  "end": 269.61,
+  "text": "This is the same as the dealer's hand, so it's"
+ },
+ {
+  "start": 269.61,
+  "end": 272.58,
+  "text": "a tie; they neither win nor lose."
+ },
+ {
+  "start": 272.58,
+  "end": 274.02,
+  "text": "So in the second example, the"
+ },
+ {
+  "start": 274.02,
+  "end": 276.62,
+  "text": "first player has 12 points, the dealer has 7 points."
+ },
+ {
+  "start": 276.62,
+  "end": 281.62,
+  "text": "They need to draw cards, they have 22 points, so they've surpassed 21 points. No matter what the dealer's"
+ },
+ {
+  "start": 282.03,
+  "end": 284.13,
+  "text": "final score is,"
+ },
+ {
+  "start": 284.13,
+  "end": 285.96,
+  "text": "he will lose immediately."
+ },
+ {
+  "start": 285.96,
+  "end": 290.07,
+  "text": "So he loses. The player with 19 points will stop. The"
+ },
+ {
+  "start": 290.07,
+  "end": 291.06,
+  "text": "dealer has 13 points,"
+ },
+ {
+  "start": 291.06,
+  "end": 295.74,
+  "text": "so the dealer must draw cards, and the dealer has also surpassed 21 points."
+ },
+ {
+  "start": 295.74,
+  "end": 297.63,
+  "text": "So the player with 19 points will win. But"
+ },
+ {
+  "start": 297.63,
+  "end": 299.29,
+  "text": "again, this is really important"
+ },
+ {
+  "start": 299.29,
+  "end": 302.02,
+  "text": "because players always play first."
+ },
+ {
+  "start": 302.02,
+  "end": 304.8,
+  "text": "If both the player and the dealer bust, then the player loses."
+ },
+ {
+  "start": 306.03,
+  "end": 307.23,
+  "text": "This is a crucial part of how the casino gains an advantage in blackjack. In the"
+ },
+ {
+  "start": 309.54,
+  "end": 314.43,
+  "text": "third example, the player gets blackjack. With blackjack,"
+ },
+ {
+  "start": 315.87,
+  "end": 317.94,
+  "text": "as long as the dealer doesn't have blackjack, the"
+ },
+ {
+  "start": 317.94,
+  "end": 319.68,
+  "text": "player wins immediately."
+ },
+ {
+  "start": 319.68,
+  "end": 322.86,
+  "text": "But not only do they win immediately, the dealer pays out immediately."
+ },
+ {
+  "start": 322.86,
+  "end": 325.5,
+  "text": "As it says here, blackjack payouts are"
+ },
+ {
+  "start": 325.5,
+  "end": 330.5,
+  "text": "3 to 2. The player will receive 3 to 2 chips, or 150%,"
+ },
+ {
+  "start": 330.57,
+  "end": 334.17,
+  "text": "regardless of whether you bet $5 or $5,000."
+ },
+ {
+  "start": 334.17,
+  "end": 337.89,
+  "text": "When you get blackjack, you get 150% of the bet."
+ },
+ {
+  "start": 337.89,
+  "end": 338.94,
+  "text": "This is very important"
+ },
+ {
+  "start": 338.94,
+  "end": 340.89,
+  "text": "because it's part of how players try to"
+ },
+ {
+  "start": 340.89,
+  "end": 343.38,
+  "text": "regain an advantage over the casino."
+ },
+ {
+  "start": 343.38,
+  "end": 346.39,
+  "text": "Players need an extra 50%"
+ },
+ {
+  "start": 346.39,
+  "end": 349.35,
+  "text": "to have a chance against the casino when playing blackjack."
+ },
+ {
+  "start": 349.35,
+  "end": 351.48,
+  "text": "So let's talk about game decisions."
+ },
+ {
+  "start": 351.48,
+  "end": 353.67,
+  "text": "As a player, you can"
+ },
+ {
+  "start": 353.67,
+  "end": 356.46,
+  "text": "make four main game decisions at a blackjack table:"
+ },
+ {
+  "start": 356.46,
+  "end": 360.3,
+  "text": "take, stop, break, and double down."
+ },
+ {
+  "start": 360.3,
+  "end": 362.31,
+  "text": "We'll explain each of these in detail."
+ },
+ {
+  "start": 362.31,
+  "end": 364.56,
+  "text": "But as you know, there's actually a chart. We"
+ },
+ {
+  "start": 364.56,
+  "end": 366.18,
+  "text": "'ll put a link to it in the description below."
+ },
+ {
+  "start": 366.18,
+  "end": 369.9,
+  "text": "It will show you the"
+ },
+ {
+  "start": 369.9,
+  "end": 371.22,
+  "text": "correct game decisions for each hand of blackjack."
+ },
+ {
+  "start": 371.22,
+  "end": 372.81,
+  "text": "It's called the basic strategy."
+ },
+ {
+  "start": 372.81,
+  "end": 374.94,
+  "text": "It was created by mathematicians."
+ },
+ {
+  "start": 374.94,
+  "end": 376.65,
+  "text": "It's the best way to play every hand in the game."
+ },
+ {
+  "start": 378.87,
+  "end": 381.32,
+  "text": "David, how long do you think it takes to memorize the basic strategy"
+ },
+ {
+  "start": 381.32,
+  "end": 382.8,
+  "text": "?"
+ },
+ {
+  "start": 382.8,
+  "end": 384.45,
+  "text": "- A few hours each day, for several weeks?"
+ },
+ {
+  "start": 384.45,
+  "end": 386.13,
+  "text": "- Yes, it takes several hours a day for several weeks to"
+ },
+ {
+  "start": 386.13,
+  "end": 388.26,
+  "text": "learn how to play perfect blackjack."
+ },
+ {
+  "start": 388.26,
+  "end": 390.3,
+  "text": "This won't give you an advantage over the casino."
+ },
+ {
+  "start": 390.3,
+  "end": 391.71,
+  "text": "You need to count cards for this."
+ },
+ {
+  "start": 391.71,
+  "end": 393.28,
+  "text": "But if you have the right basic strategy and"
+ },
+ {
+  "start": 393.28,
+  "end": 395.25,
+  "text": "play every hand well,"
+ },
+ {
+  "start": 395.25,
+  "end": 396.9,
+  "text": "it will reduce the casino's advantage to a very small margin,"
+ },
+ {
+  "start": 396.9,
+  "end": 400.8,
+  "text": "about half of 1%."
+ },
+ {
+  "start": 400.8,
+  "end": 402.23,
+  "text": "First, let's talk about taking cards."
+ },
+ {
+  "start": 402.23,
+  "end": 404.07,
+  "text": "Why do players take cards?"
+ },
+ {
+  "start": 404.07,
+  "end": 406.23,
+  "text": "- [David] To get better cards?"
+ },
+ {
+  "start": 406.23,
+  "end": 407.61,
+  "text": "- [Colin] Yes, yes, take another card."
+ },
+ {
+  "start": 407.61,
+  "end": 408.81,
+  "text": "Let us show you what this looks like. So in"
+ },
+ {
+  "start": 408.81,
+  "end": 411.66,
+  "text": "this case, we have 8 against 7."
+ },
+ {
+  "start": 411.66,
+  "end": 413.94,
+  "text": "So the player will want to take a card, and you will do so by tapping"
+ },
+ {
+  "start": 413.94,
+  "end": 418.38,
+  "text": "or scratching or some kind of tapping on the table."
+ },
+ {
+  "start": 418.38,
+  "end": 420.96,
+  "text": "Then the dealer will give you another card. So your next option is to fold. That is, you"
+ },
+ {
+  "start": 424.35,
+  "end": 425.61,
+  "text": "don't want to take any more cards."
+ },
+ {
+  "start": 425.61,
+  "end": 427.32,
+  "text": "So now it's 18 against the dealer's 7."
+ },
+ {
+  "start": 427.32,
+  "end": 428.55,
+  "text": "You'll want to fold."
+ },
+ {
+  "start": 428.55,
+  "end": 430.49,
+  "text": "So you just wave your hand"
+ },
+ {
+  "start": 430.49,
+  "end": 432.6,
+  "text": "and your hand is over. Our next game decision is to"
+ },
+ {
+  "start": 433.77,
+  "end": 436.47,
+  "text": "fold. When do you fold?"
+ },
+ {
+  "start": 436.47,
+  "end": 437.31,
+  "text": "- [David] When you have a good hand or you don't want to bust?"
+ },
+ {
+  "start": 438.24,
+  "end": 440.04,
+  "text": "- So the third option is to double down."
+ },
+ {
+  "start": 440.04,
+  "end": 442.47,
+  "text": "This only applies to your first two cards, or sometimes after you split your hand."
+ },
+ {
+  "start": 444.33,
+  "end": 446.19,
+  "text": "We'll show you later. When you double down, you bet the same amount as your initial bet. Your maximum bet is"
+ },
+ {
+  "start": 447.75,
+  "end": 449.94,
+  "text": "your initial bet. An expert tip: You should never double down for anything less than your full amount. When the basic strategy says to double down,"
+ },
+ {
+  "start": 454.02,
+  "end": 456.05,
+  "text": "you should always double down. So let me show you what this looks like. So when you double down, technically, every hand in these cards is actually a hand you should double down on. So the first hand is 9. What you do is bet the same amount next to it and then hold up one finger. The"
+ },
+ {
+  "start": 456.05,
+  "end": 459.18,
+  "text": "dealer will give"
+ },
+ {
+  "start": 461.61,
+  "end": 463.35,
+  "text": "you a horizontal card indicating"
+ },
+ {
+  "start": 465.51,
+  "end": 467.94,
+  "text": "you can't take the hand, and that hand is over. This is 11. 11 always doubles against 6. Again, in the"
+ },
+ {
+  "start": 467.94,
+  "end": 469.02,
+  "text": "previous hand, this was a weak 18. So this is 8 or 18. The correct decision is to double down. By then, all three hands are complete, and"
+ },
+ {
+  "start": 469.02,
+  "end": 472.5,
+  "text": "you just need to... Hopefully,"
+ },
+ {
+  "start": 473.94,
+  "end": 475.98,
+  "text": "the dealer will bust, and you'll get all those bets back. Another thing to note is the proper doubling strategy"
+ },
+ {
+  "start": 484.2,
+  "end": 488.19,
+  "text": "in blackjack. The"
+ },
+ {
+  "start": 489.99,
+  "end": 492.66,
+  "text": "basic strategy is to only double when you have a favorable hand. So, while you might be afraid to bet again with your original bet, this is the correct way to play. And, if you don't"
+ },
+ {
+  "start": 506.22,
+  "end": 509.29,
+  "text": "double when you should, you're actually just wasting your money in the long run. Splitting is an"
+ },
+ {
+  "start": 509.29,
+  "end": 511.94,
+  "text": "option"
+ },
+ {
+  "start": 511.94,
+  "end": 514.98,
+  "text": "when you have two cards of equal value."
+ },
+ {
+  "start": 514.98,
+  "end": 517.11,
+  "text": "So, if you have a pair of 2s, a pair of 7s, or even a pair of 10s, you can choose to split those cards. So here we have a pair of 8s, to split them, you'll"
+ },
+ {
+  "start": 517.11,
+  "end": 520.09,
+  "text": "bet a second"
+ },
+ {
+  "start": 527.19,
+  "end": 529.53,
+  "text": "equal bet, split your fingers, like saying two hands. Then you'll get the cards. You"
+ },
+ {
+  "start": 531.69,
+  "end": 532.8,
+  "text": "get another 8, so"
+ },
+ {
+  "start": 535.47,
+  "end": 538.44,
+  "text": "you can split it again. So you do the same thing, and then you'll be split into three hands. You'll stand on each hand to stop first. And"
+ },
+ {
+  "start": 538.44,
+  "end": 541.59,
+  "text": "here we have a pair of aces that will always be split. So again,"
+ },
+ {
+  "start": 541.59,
+  "end": 544.41,
+  "text": "you hold up two"
+ },
+ {
+  "start": 544.41,
+  "end": 547.15,
+  "text": "fingers and say two hands. With a pair of aces,"
+ },
+ {
+  "start": 547.15,
+  "end": 550.29,
+  "text": "you'll only get one card,"
+ },
+ {
+  "start": 551.94,
+  "end": 553.17,
+  "text": "so the dealer will put them aside to indicate you can't take the cards, and then those hands are over. Then the dealer will play their hand."
+ },
+ {
+  "start": 568.56,
+  "end": 573.27,
+  "text": "Again, if you want to know how to play the correct basic strategy, there's a link in the description below. This will allow you to learn the correct way to play every hand of blackjack \u2013 this doesn't guarantee you'll win, it will give you the best chance \u2013"
+ },
+ {
+  "start": 577.14,
+  "end": 579.24,
+  "text": "so when the dealer has an ace, the"
+ },
+ {
+  "start": 581.08,
+  "end": 584.99,
+  "text": "player has another option: buy insurance. It works like this:"
+ },
+ {
+  "start": 584.99,
+  "end": 586.53,
+  "text": "if you want to"
+ },
+ {
+  "start": 593.09,
+  "end": 595.11,
+  "text": "ensure your hand can beat the dealer's blackjack, they'll let"
+ },
+ {
+  "start": 595.11,
+  "end": 596.52,
+  "text": "you do it. They'll do this and say \""
+ },
+ {
+  "start": 600.99,
+  "end": 602.55,
+  "text": "insurance,\" letting you buy insurance. To do this, you'll put half"
+ },
+ {
+  "start": 602.55,
+  "end": 606.75,
+  "text": "your bet into insurance here. Then, if the dealer does have blackjack, you'll lose the hand because you have 14 points and they have 21. But then the insurance will pay out two to one, so it basically means you'll break even. Now, if you're just following the basic strategy, then never"
+ },
+ {
+  "start": 610.46,
+  "end": 612.75,
+  "text": "buy insurance. But that's how game decisions work. Therefore, unless you're a"
+ },
+ {
+  "start": 623.78,
+  "end": 626.43,
+  "text": "card counter, never buy"
+ },
+ {
+  "start": 628.89,
+  "end": 633.18,
+  "text": "insurance. David, do"
+ },
+ {
+  "start": 636.09,
+  "end": 637.9,
+  "text": "you agree? - Okay, basic strategy suggests this isn't a wise move - so when you're at a casino, other players or the dealer might say, oh, if you have a good hand you shouldn't"
+ },
+ {
+  "start": 637.9,
+  "end": 639.93,
+  "text": "buy insurance, or don't insure a bad hand,"
+ },
+ {
+  "start": 639.93,
+  "end": 642.15,
+  "text": "or it's just casino nonsense. It's not based on math or logic."
+ },
+ {
+  "start": 642.15,
+  "end": 645.96,
+  "text": "So, unless you learn how to count cards like David and I do, never buy insurance. There's another"
+ },
+ {
+  "start": 648.18,
+  "end": 651.93,
+  "text": "decision we haven't talked about yet, and that's surrendering. It's only offered in about 10% of casinos, but"
+ },
+ {
+  "start": 654.3,
+  "end": 657.15,
+  "text": "if a casino does offer it, it can actually be very valuable to players if you know how to play it correctly. So"
+ },
+ {
+  "start": 664.42,
+  "end": 667.47,
+  "text": "if you're"
+ },
+ {
+  "start": 675.12,
+  "end": 678.12,
+  "text": "at a casino that offers surrendering, and you want to surrender, all you have to do is slide your finger across the table, draw a line, and you'll probably say surrender. This makes it clear to the"
+ },
+ {
+  "start": 678.12,
+  "end": 681.33,
+  "text": "casino that you want to surrender. Surrendering is you immediately giving up your hand and only losing half your bet. Therefore, before the hand ends, you'll lose $5 out of $10. Mathematically, if it's a hand where the casino has a 50% or more"
+ },
+ {
+  "start": 681.33,
+  "end": 684.14,
+  "text": "advantage over you,"
+ },
+ {
+  "start": 697.95,
+  "end": 701.16,
+  "text": "you just need to give up half your bet and continue to the next round. At this point you might be thinking, \"Hey, this sounds"
+ },
+ {
+  "start": 712.38,
+  "end": 715.38,
+  "text": "great. All I have to do is follow the basic strategy"
+ },
+ {
+  "start": 716.94,
+  "end": 718.53,
+  "text": "and beat the house. Is it really that simple, David?\" - Okay,"
+ },
+ {
+  "start": 718.53,
+  "end": 722.21,
+  "text": "you do need to think a little bit. - Yes, okay, what if I'm just a lucky blackjack player"
+ },
+ {
+  "start": 724.44,
+  "end": 725.97,
+  "text": "?"
+ },
+ {
+  "start": 725.97,
+  "end": 728.1,
+  "text": "- Well, that's great. But that doesn't guarantee you'll always win. - Exactly, so casinos aren't stupid. They design the game to give them an"
+ },
+ {
+  "start": 728.1,
+  "end": 732.09,
+  "text": "advantage over players. There are actually two reasons for this. The first reason is that very few players actually follow the basic strategy. How often do you find a player with the perfect basic strategy at a blackjack table? - Less than 5% of the time -"
+ },
+ {
+  "start": 732.09,
+  "end": 733.29,
+  "text": "Yes, that's really rare. Therefore, following the basic strategy wo"
+ },
+ {
+  "start": 734.46,
+  "end": 737.22,
+  "text": "n't bring you victory. It will reduce the casino's"
+ },
+ {
+  "start": 741.18,
+  "end": 744.15,
+  "text": "advantage to about 0.5%, while the average gambler"
+ },
+ {
+  "start": 750.45,
+  "end": 753.36,
+  "text": "at a blackjack table might play at a disadvantage of about 2%, which is actually about the same as or not much better than playing slots. Do you only want to play slots"
+ },
+ {
+  "start": 753.36,
+  "end": 754.56,
+  "text": "?"
+ },
+ {
+  "start": 754.56,
+  "end": 756.51,
+  "text": "- [David] No - The second"
+ },
+ {
+  "start": 770.4,
+  "end": 773.28,
+  "text": "reason people don't have an advantage is the way the game is designed. So I told you before, if both the player and the dealer bust, who will lose"
+ },
+ {
+  "start": 773.28,
+  "end": 774.69,
+  "text": "?"
+ },
+ {
+  "start": 774.69,
+  "end": 775.52,
+  "text": "- Okay, if a player busts before the dealer, the player loses. - That's right. Since"
+ },
+ {
+  "start": 782.28,
+  "end": 785.7,
+  "text": "players always play first, even if they all bust, the player still loses."
+ },
+ {
+  "start": 785.7,
+  "end": 787.83,
+  "text": "Therefore, even if blackjack is advantageous to the player, and doubling down is also advantageous, these are not enough to gain an advantage in the casino."
+ },
+ {
+  "start": 801.09,
+  "end": 804.54,
+  "text": "You need something more, and that is card counting. So in the short term, anyone can have good luck one day"
+ },
+ {
+  "start": 807.83,
+  "end": 809.52,
+  "text": "or night, but over time, probability will have an impact. If you are playing, even if you are playing a perfect basic"
+ },
+ {
+  "start": 809.52,
+  "end": 811.87,
+  "text": "strategy, in the long run, the casino will eventually take your money. Now you can gain an advantage, but you"
+ },
+ {
+  "start": 817.89,
+  "end": 820.2,
+  "text": "need more. What is the first step to gaining a casino advantage? - Basic strategy, use it well - A well-developed basic strategy. Then"
+ },
+ {
+  "start": 820.2,
+  "end": 823.2,
+  "text": "what's the second step?"
+ },
+ {
+  "start": 823.2,
+  "end": 825.78,
+  "text": "- Card counting - Yes, that's illegal, right? - No,"
+ },
+ {
+  "start": 831.14,
+  "end": 833.22,
+  "text": "use your brain. - I think using your brain in a casino is illegal. - No, using your brain is legal."
+ },
+ {
+  "start": 833.22,
+  "end": 835.41,
+  "text": "Casinos invite you to play the game. Use your brain to beat it. - That's what David and I have been doing for 15 years. We've"
+ },
+ {
+  "start": 836.91,
+  "end": 838.74,
+  "text": "played as professional card counters. The two of us have"
+ },
+ {
+  "start": 838.74,
+  "end": 839.85,
+  "text": "won over $1.5 million. We are part of a team, one of the more infamous teams known"
+ },
+ {
+  "start": 842.19,
+  "end": 844.68,
+  "text": "as the Church Team, who legally"
+ },
+ {
+  "start": 844.68,
+  "end": 847.42,
+  "text": "won $3.2 million from casinos"
+ },
+ {
+  "start": 853.32,
+  "end": 854.15,
+  "text": "through card counting. The role of card counting is to tell you how to bet and when to change your game decisions, thus"
+ },
+ {
+  "start": 861.36,
+  "end": 864.03,
+  "text": "giving you an advantage over the casino. I'm going to be honest with you. While casinos don't like people who can"
+ },
+ {
+  "start": 865.23,
+  "end": 867.48,
+  "text": "beat them, and"
+ },
+ {
+  "start": 867.48,
+  "end": 870.51,
+  "text": "therefore have the right to refuse to serve anyone, if you want to learn how to beat the casino, that"
+ },
+ {
+  "start": 872.58,
+  "end": 874.11,
+  "text": "'s all we're after."
+ },
+ {
+  "start": 874.11,
+  "end": 876.24,
+  "text": "You can learn more by subscribing to the following: You can watch our videos on card"
+ },
+ {
+  "start": 876.24,
+  "end": 878.16,
+  "text": "counting"
+ },
+ {
+  "start": 878.16,
+  "end": 880.68,
+  "text": "and visit blackjackapprenticeship.com"
+ }
+]

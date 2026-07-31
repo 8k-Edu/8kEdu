@@ -103,10 +103,43 @@ def curriculum(goal_id):
 def ensure_video(video_id, title="", channel_name=""):
     """Curriculum.video_id has an FK to videos — make sure the row exists first."""
     with conn() as c, c.cursor() as cur:
+        # nullif on insert too, not just on conflict: readers fall back with
+        # coalesce(v.title, ...), which '' defeats — an untitled row would render blank.
         cur.execute(
-            "insert into videos(video_id,title,channel_name) values (%s,%s,%s) "
+            "insert into videos(video_id,title,channel_name) values (%s,nullif(%s,''),%s) "
             "on conflict (video_id) do update set title=coalesce(nullif(excluded.title,''), videos.title)",
             (video_id, title, channel_name))
+        c.commit()
+
+
+def upsert_frames(video_id, rows, title=""):
+    """rows: [(t_s, storage_path)]. ensure_video first — frames.video_id has an FK to videos
+    and a third of the library's frame dirs predate their videos row."""
+    if not rows:
+        return 0
+    ensure_video(video_id, title)
+    with conn() as c, c.cursor() as cur:
+        cur.executemany(
+            "insert into frames(video_id,t_s,storage_path) values (%s,%s,%s) "
+            "on conflict (video_id,t_s) do update set storage_path=excluded.storage_path",
+            [(video_id, t_s, path) for t_s, path in rows])
+        c.commit()
+    return len(rows)
+
+
+def frames_manifest(video_id):
+    """[{"time","file"}] in frames.json's shape, for machines with no local manifest.
+    Both fields come straight from their stored column: ingest.py derives `time` and the
+    filename from the same float differently, so reconstructing either from the other
+    silently mismatches roughly a third of frames."""
+    with conn() as c, c.cursor() as cur:
+        cur.execute("select t_s, storage_path from frames where video_id=%s order by t_s", (video_id,))
+        return [{"time": float(t_s), "file": path.rsplit("/", 1)[-1]} for t_s, path in cur.fetchall()]
+
+
+def delete_frames(video_id):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("delete from frames where video_id=%s", (video_id,))
         c.commit()
 
 
@@ -205,6 +238,7 @@ _WIDGET_EVENT_KEYS = (
     "handle", "video_id", "t_s", "frame_file", "kind",
     "t_cache_lookup_ms", "t_backend_ask_ms", "t_parse_validate_ms", "t_total_ms",
     "cache_hit", "model", "spec_valid", "widget_kind", "error",
+    "t_frame_fetch_ms", "frame_source",
 )
 
 

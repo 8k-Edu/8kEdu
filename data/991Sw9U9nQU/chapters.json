@@ -1,0 +1,47 @@
+[
+ {
+  "start": 0,
+  "end": 42,
+  "title": "Intro"
+ },
+ {
+  "start": 42,
+  "end": 113,
+  "title": "Determine what you can afford"
+ },
+ {
+  "start": 113,
+  "end": 164,
+  "title": "Find a real estate agent"
+ },
+ {
+  "start": 164,
+  "end": 380,
+  "title": "Get organized"
+ },
+ {
+  "start": 380,
+  "end": 429,
+  "title": "Begin shopping"
+ },
+ {
+  "start": 429,
+  "end": 455,
+  "title": "Make an offer"
+ },
+ {
+  "start": 455,
+  "end": 533,
+  "title": "Due Diligence"
+ },
+ {
+  "start": 533,
+  "end": 696,
+  "title": "Underwriting Appraisal"
+ },
+ {
+  "start": 696,
+  "end": 793,
+  "title": "Closing"
+ }
+]
