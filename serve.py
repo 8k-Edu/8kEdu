@@ -206,7 +206,11 @@ def nearest_frame(video: str, t: float) -> dict | None:
     return min(frames, key=lambda f: abs(f["time"] - t)) if frames else None
 
 
-def _no_manifest() -> dict:
+def _no_manifest(video: str, t: float, kind: str) -> dict:
+    """Fire an event so widget_events records these misses too; every other error path in
+    the handlers does the same. Otherwise 'no manifest anywhere' is invisible to /agent/perf."""
+    _fire_event({"video_id": video, "t_s": t, "kind": kind, "spec_valid": False,
+                 "error": "no manifest"})
     return {"error": "this video hasn't been processed yet — no keyframe manifest on disk or in Supabase"}
 
 
@@ -280,7 +284,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     if fr is None:
-        return _no_manifest()
+        return _no_manifest(req.video, req.time, "widget")
     context = (
         f'Teacher is saying: "{req.text[:1200]}"\n\n'
         f'The student selected that passage and asked for an interactive widget'
@@ -397,7 +401,7 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
     t_start = time.perf_counter()
     fr = nearest_frame(req.video, req.time)
     if fr is None:
-        return _no_manifest()
+        return _no_manifest(req.video, req.time, "region")
     handle = _handle()
     use, metered, model_name = backend, False, info.get("model")
     if req.cloud:

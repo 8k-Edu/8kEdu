@@ -278,6 +278,7 @@ def _materialize(frame: Path, data: bytes) -> Path:
     and escape the FileNotFoundError handling that keeps /api/widget off a 500."""
     import tempfile
     for parent in (frame.parent, _fallback_dir(frame)):
+        tmp = None
         try:
             parent.mkdir(parents=True, exist_ok=True)
             fd, name = tempfile.mkstemp(dir=parent, suffix=".part")
@@ -288,6 +289,13 @@ def _materialize(frame: Path, data: bytes) -> Path:
             os.replace(tmp, dest)
             return dest
         except OSError:
+            # An interrupted write leaves a .part behind; the next attempt would too, and
+            # the disk would grow one orphan per failed materialize.
+            if tmp is not None:
+                try:
+                    tmp.unlink()
+                except OSError:
+                    pass
             continue
     return frame
 

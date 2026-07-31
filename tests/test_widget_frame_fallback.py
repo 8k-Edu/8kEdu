@@ -114,11 +114,18 @@ class ManifestFallbackTests(unittest.TestCase):
             def frames_manifest(_video):
                 return []
 
-        with patch.object(serve, "DATA", Path("/nonexistent")), patch.object(serve, "_db", DB()):
+        events = []
+        with patch.object(serve, "DATA", Path("/nonexistent")), \
+                patch.object(serve, "_db", DB()), \
+                patch.object(serve, "_fire_event", events.append):
             self.assertIsNone(serve.nearest_frame("vid", 10))
             result = serve.make_widget(serve.Ask(text="x", time=10, video="vid"))
 
         self.assertIn("hasn't been processed yet", result["error"])
+        # The no-manifest branch should still be visible in widget_events, like every other
+        # error path in these handlers.
+        self.assertEqual(events[-1]["error"], "no manifest")
+        self.assertEqual(events[-1]["kind"], "widget")
 
     def test_a_database_failure_is_not_cached_as_an_empty_manifest(self):
         class DB:

@@ -76,8 +76,10 @@ def _neg_hit(key: tuple[str, str]) -> bool:
 
 def _neg_put(key: tuple[str, str]) -> None:
     with _neg_lock:
-        if len(_neg) >= _NEG_MAX:
-            _neg.clear()
+        # FIFO: drop the oldest insertion, not the whole map. A burst of misses against
+        # an unpublished video would otherwise wipe the cache repeatedly and defeat it.
+        while len(_neg) >= _NEG_MAX:
+            _neg.pop(next(iter(_neg)))
         _neg[key] = time.monotonic() + _NEG_TTL_S
 
 
