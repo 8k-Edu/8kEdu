@@ -5,6 +5,8 @@ import markUrl from './assets/mark.png'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
 import { restore, signInGuest, signOut } from './supa.js'
+import { Timeline } from './Timeline.jsx'
+import { resolveTimelineDuration } from './timeline.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -117,11 +119,20 @@ function useYouTube(videoId) {
   const holder = useRef(null)
   const player = useRef(null)
   const [time, setTime] = useState(0)
+  const [playerDuration, setPlayerDuration] = useState(null)
   useEffect(() => {
+    let disposed = false
+    setPlayerDuration(null)
+    const readDuration = (target = player.current) => {
+      const nextDuration = target?.getDuration?.()
+      if (Number.isFinite(nextDuration) && nextDuration > 0) setPlayerDuration(nextDuration)
+    }
     const boot = () => {
+      if (disposed || !holder.current) return
       player.current = new window.YT.Player(holder.current, {
         videoId,
         playerVars: { modestbranding: 1, rel: 0 },
+        events: { onReady: event => readDuration(event.target) },
       })
     }
     if (window.YT?.Player) boot()
@@ -133,12 +144,18 @@ function useYouTube(videoId) {
     }
     const poll = setInterval(() => {
       const t = player.current?.getCurrentTime?.()
-      if (typeof t === 'number') setTime(t)
+      if (Number.isFinite(t)) setTime(t)
+      readDuration()
     }, 500)
-    return () => clearInterval(poll)
+    return () => {
+      disposed = true
+      clearInterval(poll)
+      player.current?.destroy?.()
+      player.current = null
+    }
   }, [videoId])
   const seek = (t) => player.current?.seekTo?.(t, true)
-  return { holder, time, seek }
+  return { holder, time, seek, playerDuration }
 }
 
 function ShareModal({ url, onClose }) {
@@ -579,7 +596,6 @@ function Lecture({ videoId, role }) {
   const [chapters, setChapters] = useState([])
   const [selected, setSelected] = useState(null)
   const [followVideo, setFollowVideo] = useState(true)
-  const [duration, setDuration] = useState(7200)
   const [shareUrl, setShareUrl] = useState(null)
   const [ask, setAsk] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -590,7 +606,11 @@ function Lecture({ videoId, role }) {
   const [touchMode, setTouchMode] = useState(false)
   const liveParams = useRef(null)
   const published = useRef(null)
-  const { holder, time, seek } = useYouTube(videoId)
+  const { holder, time, seek, playerDuration } = useYouTube(videoId)
+  const duration = useMemo(
+    () => resolveTimelineDuration(playerDuration, cues, chapters),
+    [playerDuration, cues, chapters],
+  )
   // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
   const [analyzed, setAnalyzed] = useState(INGESTED.includes(videoId))
@@ -638,7 +658,7 @@ function Lecture({ videoId, role }) {
     }
     fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
       setConcepts(cs)
-      if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
+      if (cs.length) setAnalyzed(true)
       else autoProcess()
     }).catch(() => { setConcepts([]); autoProcess() })
     fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
@@ -801,7 +821,7 @@ function Lecture({ videoId, role }) {
           clearInterval(poll)
           const cs = await fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
           setConcepts(cs)
-          if (cs.length) { setAnalyzed(true); setDuration(Math.max(...cs.map(c => c.time)) * 1.08) }
+          if (cs.length) setAnalyzed(true)
           fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
           fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
         } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
@@ -863,36 +883,15 @@ function Lecture({ videoId, role }) {
             }}>{touchMode ? '✕ done' : '🎯 touch the screen'}</button>
           </div>
 
-          <div style={{ position: 'relative', height: 30, marginTop: 10, background: 'linear-gradient(180deg, #161b22, #10141a)', borderRadius: 999, border: '1px solid #30363d', overflow: 'hidden' }}>
-            {/* chapter shading for rhythm */}
-            {chapters.map((ch, i) => i % 2 === 1 && (
-              <div key={i} style={{
-                position: 'absolute', top: 0, bottom: 0,
-                left: `${(ch.start / duration) * 100}%`,
-                width: `${(((ch.end ?? duration) - ch.start) / duration) * 100}%`,
-                background: '#ffffff05',
-              }} />
-            ))}
-            {concepts.map((c, i) => {
-              const isActive = c === active
-              return (
-                <button key={i} title={`${c.title} · ${TYPE_ICON[c.widget] ?? ''}`} className="tl-tick"
-                  onClick={() => { setSelected(c); liveParams.current = null; setFollowVideo(true); pinnedUntil.current = Date.now() + 60000; seek(c.time) }}
-                  style={{
-                    position: 'absolute', left: `calc(${(c.time / duration) * 100}% - 2px)`,
-                    top: '50%', width: 4, border: 'none', padding: 0, borderRadius: 99,
-                    height: isActive ? 22 : c.user_made ? 18 : 13,
-                    background: c.user_made ? '#e3b341' : (TYPE_COLOR[c.widget] ?? '#6e7681'),
-                    opacity: isActive ? 1 : 0.65,
-                    transform: 'translateY(-50%)',
-                    boxShadow: isActive ? `0 0 10px ${TYPE_COLOR[c.widget] ?? '#2f81f7'}` : 'none',
-                    transition: 'height .15s, opacity .15s',
-                  }} />
-              )
-            })}
-            {/* playhead */}
-            <div style={{ position: 'absolute', left: `calc(${(time / duration) * 100}% - 1px)`, top: 0, bottom: 0, width: 2, background: '#f85149', boxShadow: '0 0 6px #f8514988' }} />
-          </div>
+          <Timeline chapters={chapters} concepts={concepts} duration={duration} time={time}
+            active={active} typeIcons={TYPE_ICON} typeColors={TYPE_COLOR}
+            onPick={(concept) => {
+              setSelected(concept)
+              liveParams.current = null
+              setFollowVideo(true)
+              pinnedUntil.current = Date.now() + 60000
+              seek(concept.time)
+            }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
             {['transcript', 'moments'].map(t => (
               <button key={t} onClick={() => setTab(t)} style={{
