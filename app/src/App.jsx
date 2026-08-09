@@ -6,10 +6,32 @@ import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
 import { restore, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
-import { formatTimelineTime, hasTimelineDuration, latestPlayerDuration, resolveTimelineDuration } from './timeline.js'
+import { conceptKey, formatTimelineTime, hasTimelineDuration, latestPlayerDuration, mergeConcepts, resolveTimelineDuration } from './timeline.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+// fetch resolves on 404/500, so a rolled-back backend answering {"detail":"Not Found"} would
+// otherwise flow straight into the timeline.
+const jsonOr = async (url, fallback, init) => {
+  try {
+    const r = await fetch(url, init)
+    return r.ok ? await r.json() : fallback
+  } catch { return fallback }
+}
+const jsonArray = async (url, init) => {
+  const body = await jsonOr(url, [], init)
+  return Array.isArray(body) ? body : []
+}
+const settledWithin = (promise, ms, fallback) =>
+  Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))])
+
+const fetchBaseConcepts = (videoId, signal) => jsonArray(P + `/${videoId}/concepts.json`, { signal })
+// Bounded: a backend that accepts the connection and never answers must not strand the
+// caller waiting on both fetches before it can decide whether to auto-process.
+const fetchSavedWidgets = (videoId, signal) => settledWithin(
+  jsonArray(P + `/api/saved-widgets?video=${encodeURIComponent(videoId)}`, { signal }), 8000, [])
+const generatedHere = (concepts) => concepts.filter(c => c.user_made)
 
 const TYPE_ICON = {
   matrix_mul: '✕', attention: '◧', softmax: '▮', function_plot: '∿', composite: '⧉', notebook: '🐍',
@@ -626,10 +648,19 @@ function Lecture({ videoId, role }) {
   const [identity, setIdentity] = useState(null)
   const [cloud, setCloud] = useState(false)
   const [billing, setBilling] = useState(null)
-  const requestHeaders = useMemo(() => ({
-    'Content-Type': 'application/json',
-    ...(identity?.token ? { Authorization: `Bearer ${identity.token}` } : {}),
-  }), [identity?.token])
+  // Saving a generated widget needs a verified identity, so sign the visitor in silently on
+  // their first generation rather than making them find a button first.
+  const authHeaders = useCallback(async () => {
+    let who = identity
+    if (!who?.token) {
+      who = await signInGuest()
+      setIdentity(who)
+    }
+    return {
+      'Content-Type': 'application/json',
+      ...(who?.token ? { Authorization: `Bearer ${who.token}` } : {}),
+    }
+  }, [identity])
   const refreshBilling = useCallback(() => {
     if (!identity?.token) { setBilling(null); return }
     fetch(P + '/api/billing', { headers: { Authorization: `Bearer ${identity.token}` } }).then(r => r.json()).then(setBilling).catch(() => setBilling(null))
@@ -650,6 +681,7 @@ function Lecture({ videoId, role }) {
     if (spec && spec.need_credits) { setToast(spec.error || 'out of credits — add your OpenRouter key or switch to local'); return true }
     return false
   }
+  const noteSave = (spec) => { if (spec?.save_error) setToast(`not saved: ${spec.save_error}`) }
 
   useEffect(() => {
     fetch(P + '/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
@@ -665,14 +697,24 @@ function Lecture({ videoId, role }) {
         processVideo()
       }
     }
-    fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
-      setConcepts(cs)
-      if (cs.length) setAnalyzed(true)
+    const controller = new AbortController()
+    const { signal } = controller
+    setConcepts([])
+    const base = fetchBaseConcepts(videoId, signal)
+    const saved = fetchSavedWidgets(videoId, signal)
+    // The pipeline's concepts land on their own: a slow or rolled-back /api/saved-widgets
+    // must never hold the timeline back.
+    base.then(cs => { if (!signal.aborted) setConcepts(cur => mergeConcepts(cs, generatedHere(cur))) })
+    Promise.all([base, saved]).then(([cs, ss]) => {
+      if (signal.aborted) return
+      setConcepts(cur => mergeConcepts(cs, [...ss, ...generatedHere(cur)]))
+      if (cs.length || ss.length) setAnalyzed(true)
       else autoProcess()
-    }).catch(() => { setConcepts([]); autoProcess() })
-    fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
-    fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
-    fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => setMetadata(null))
+    })
+    jsonArray(P + `/${videoId}/transcript.json`, { signal }).then(v => { if (!signal.aborted) setCues(v) })
+    jsonArray(P + `/${videoId}/chapters.json`, { signal }).then(v => { if (!signal.aborted) setChapters(v) })
+    jsonOr(P + `/${videoId}/metadata.json`, null, { signal }).then(v => { if (!signal.aborted) setMetadata(v) })
+    return () => controller.abort()
   }, [videoId])
 
   const pinnedUntil = useRef(0)
@@ -715,7 +757,7 @@ function Lecture({ videoId, role }) {
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
       const r = await fetch(P + '/api/region', {
         method: 'POST',
-        headers: requestHeaders,
+        headers: await authHeaders(),
         body: JSON.stringify({ text: around, time, ...rect, video: videoId, cloud }),
       })
       const spec = await r.json()
@@ -724,8 +766,9 @@ function Lecture({ videoId, role }) {
       if (spec.answer) {
         setSelected({ widget: 'answer', title: 'about that region', explanation: spec.answer, time: spec.time, user_made: true })
       } else {
-        setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+        setConcepts(cs => mergeConcepts(cs, [spec]))
         setSelected(spec)
+        noteSave(spec)
       }
       setFollowVideo(false)
       setTouchMode(false)
@@ -744,7 +787,7 @@ function Lecture({ videoId, role }) {
       const around = cues.filter(c => Math.abs(c.start - time) < 35).map(c => c.text).join(' ')
       const r = await fetch(P + '/api/widget', {
         method: 'POST',
-        headers: requestHeaders,
+        headers: await authHeaders(),
         body: JSON.stringify({ text: around || question, time, ask: question, video: videoId, cloud }),
       })
       const spec = await r.json()
@@ -755,8 +798,9 @@ function Lecture({ videoId, role }) {
         setFollowVideo(false)
         return
       }
-      setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+      setConcepts(cs => mergeConcepts(cs, [spec]))
       setSelected(spec)
+      noteSave(spec)
       setFollowVideo(false)
     } catch {
       setToast('ask endpoint offline — run: uv run serve.py')
@@ -771,14 +815,15 @@ function Lecture({ videoId, role }) {
     try {
       const r = await fetch(P + '/api/widget', {
         method: 'POST',
-        headers: requestHeaders,
+        headers: await authHeaders(),
         body: JSON.stringify({ text: ask.text, time: ask.time, ask: intent, video: videoId, cloud }),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
       if (spec.error) { setToast(`couldn't map that moment: ${spec.error}`); return }
-      setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+      setConcepts(cs => mergeConcepts(cs, [spec]))
       setSelected(spec)
+      noteSave(spec)
       setFollowVideo(false)
       setAsk(null)
     } catch {
@@ -797,16 +842,21 @@ function Lecture({ videoId, role }) {
       const around = cues.filter(c => Math.abs(c.start - (cur.time ?? time)) < 35).map(c => c.text).join(' ')
       const ask = `The current widget is a "${cur.widget}" titled "${cur.title}". Regenerate it, applying this change: ${instruction}`
       const r = await fetch(P + '/api/widget', {
-        method: 'POST', headers: requestHeaders,
-        body: JSON.stringify({ text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud }),
+        method: 'POST', headers: await authHeaders(),
+        body: JSON.stringify({
+          text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud,
+          // a pipeline concept has no id, so the server tombstones it by key instead
+          ...(cur.id ? { replaces: cur.id } : { replaces_key: conceptKey(cur) }),
+        }),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
       if (spec.error) { setToast(`couldn't refine: ${spec.error}`); return }
       if (spec.answer) { setToast(String(spec.answer).slice(0, 150)); return }
       const refined = { ...spec, user_made: true }
-      setConcepts(cs => { const i = cs.indexOf(cur); if (i >= 0) { const n = [...cs]; n[i] = refined; return n } return [...cs, refined].sort((a, b) => a.time - b.time) })
+      setConcepts(cs => mergeConcepts(cs.filter(c => c !== cur), [refined]))
       setSelected(refined)
+      noteSave(spec)
       liveParams.current = null
       setFollowVideo(false)
     } catch {
@@ -829,12 +879,12 @@ function Lecture({ videoId, role }) {
         setProc(s)
         if (s.state === 'done') {
           clearInterval(poll)
-          const cs = await fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
-          setConcepts(cs)
-          if (cs.length) setAnalyzed(true)
-          fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
-          fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
-          fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => {})
+          const [cs, ss] = await Promise.all([fetchBaseConcepts(videoId), fetchSavedWidgets(videoId)])
+          setConcepts(cur => mergeConcepts(cs, [...ss, ...generatedHere(cur)]))
+          if (cs.length || ss.length) setAnalyzed(true)
+          jsonArray(P + `/${videoId}/transcript.json`).then(setCues)
+          jsonArray(P + `/${videoId}/chapters.json`).then(setChapters)
+          jsonOr(P + `/${videoId}/metadata.json`, null).then(setMetadata)
         } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
       } catch { /* keep polling */ }
     }, 2500)

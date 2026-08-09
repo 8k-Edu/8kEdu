@@ -2,6 +2,9 @@ data/*/video.*
 data/*/frames/
 # per-request region crops, regenerated on demand
 data/*/crops/
+# widget-store write artifacts — never source (see agent/widget_store.py)
+data/*/user_concepts.json.tmp
+data/*/user_concepts.corrupt.json
 data/pyodide-dist/
 data/pyodide
 .env

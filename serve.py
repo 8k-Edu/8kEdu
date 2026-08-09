@@ -21,7 +21,10 @@ from urllib.request import Request, urlopen
 import uvicorn
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from agent import widget_store
 
 from analyze import (BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend,
                      openrouter_backend, resolve_frame, valid)
@@ -84,6 +87,35 @@ def _fire_event(payload: dict) -> None:
     if not _db:
         return
     _db.enqueue_widget_event(payload)
+
+
+def _owner_for(authorization: str | None) -> str | None:
+    """Only a verified identity may write to the shared store — see agent/widget_store.py.
+    Unlike the cloud path this runs on every request, including handlers called directly in
+    tests, where `authorization` is still FastAPI's unresolved Header default."""
+    if not isinstance(authorization, str):
+        return None
+    try:
+        return _authenticated_handle(authorization)
+    except CloudUnavailable:
+        return None
+
+
+def _persisted(spec: dict, video: str, owner: str | None, ev: dict,
+               replaces: str = "", replaces_key: str = "") -> dict:
+    """The generated spec plus whether it made it into the store the timeline reloads.
+    Answers carry no widget, so they stay ephemeral like they always were."""
+    if not spec.get("widget"):
+        return spec
+    try:
+        entry = widget_store.save(video, spec, owner or "", replaces=replaces,
+                                  replaces_key=replaces_key)
+    except widget_store.SaveRejected as e:
+        return {**spec, "saved": False, "save_error": str(e)}
+    except widget_store.StoreUnavailable as e:
+        _fire_event({**ev, "kind": "save", "error": str(e)[:200]})
+        return {**spec, "saved": False, "save_error": "this widget couldn't be saved"}
+    return {**spec, "id": entry["id"], "saved": True}
 
 
 def _ms(t0: float) -> int:
@@ -180,6 +212,8 @@ class Ask(BaseModel):
     ask: str = ""
     video: str = DEFAULT_VIDEO
     cloud: bool = False
+    replaces: str = ""       # id of the saved widget this refinement supersedes
+    replaces_key: str = ""   # pipeline concepts carry no id — see mergeConcepts in timeline.js
 
 
 def frames_for(video: str) -> list[dict]:
@@ -351,6 +385,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
 
     ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "widget", "model": model_name}
+    owner = _owner_for(authorization)
 
     genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
@@ -366,7 +401,10 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
                   t_total_ms=_ms(t_start))
         _fire_event(ev)
         bal = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
-        return _with_billing({**cached, "cached": True}, req.cloud, model_name, bal)
+        # A hit returns before the tail below, so persisting only there would never save a
+        # widget for a box someone already generated once.
+        out = _persisted(cached, req.video, owner, ev, req.replaces, req.replaces_key)
+        return _with_billing({**out, "cached": True}, req.cloud, model_name, bal)
 
     # Before spend_credit: a pull from Supabase Storage can fail, and a credit spent on a
     # request that never reaches the model is a credit lost.
@@ -425,7 +463,8 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
-    return _with_billing(spec, req.cloud, model_name, credits_left)
+    out = _persisted(spec, req.video, owner, ev, req.replaces, req.replaces_key)
+    return _with_billing(out, req.cloud, model_name, credits_left)
 
 
 class RegionAsk(BaseModel):
@@ -459,6 +498,7 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
             return {"error": e.reason, "need_credits": True, "cloud": True}
     ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "region", "model": model_name}
+    owner = _owner_for(authorization)
 
     genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
@@ -473,7 +513,8 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
                   t_backend_ask_ms=0, t_parse_validate_ms=0, t_total_ms=_ms(t_start))
         _fire_event(ev)
         balance = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
-        return _with_billing({**cached, "cached": True}, req.cloud, model_name, balance)
+        out = _persisted(cached, req.video, owner, ev)
+        return _with_billing({**out, "cached": True}, req.cloud, model_name, balance)
     ev["cache_hit"] = False
 
     src = _frame_path(ev, req.video, fr)
@@ -546,7 +587,19 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
     _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
-    return _with_billing(spec, req.cloud, model_name, credits_left)
+    out = _persisted(spec, req.video, owner, ev)
+    return _with_billing(out, req.cloud, model_name, credits_left)
+
+
+@app.get("/api/saved-widgets")
+def saved_widgets(video: str = DEFAULT_VIDEO):
+    """Everything generated for this video, for the timeline to merge with concepts.json."""
+    try:
+        return widget_store.load(video)
+    except widget_store.BadVideoId as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    except widget_store.StoreUnavailable as e:
+        return JSONResponse(status_code=503, content={"error": str(e)})
 
 
 @app.get("/api/info")
