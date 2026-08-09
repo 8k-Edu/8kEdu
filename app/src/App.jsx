@@ -4,12 +4,34 @@ import QRCode from 'qrcode'
 import markUrl from './assets/mark.png'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
-import { restore, signInGuest, signOut } from './supa.js'
+import { restore, signInEmail, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
-import { formatTimelineTime, hasTimelineDuration, latestPlayerDuration, resolveTimelineDuration } from './timeline.js'
+import { conceptKey, formatTimelineTime, hasTimelineDuration, latestPlayerDuration, mergeConcepts, resolveTimelineDuration } from './timeline.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+// fetch resolves on 404/500, so a rolled-back backend answering {"detail":"Not Found"} would
+// otherwise flow straight into the timeline.
+const jsonOr = async (url, fallback, init) => {
+  try {
+    const r = await fetch(url, init)
+    return r.ok ? await r.json() : fallback
+  } catch { return fallback }
+}
+const jsonArray = async (url, init) => {
+  const body = await jsonOr(url, [], init)
+  return Array.isArray(body) ? body : []
+}
+const settledWithin = (promise, ms, fallback) =>
+  Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))])
+
+const fetchBaseConcepts = (videoId, signal) => jsonArray(P + `/${videoId}/concepts.json`, { signal })
+// Bounded: a backend that accepts the connection and never answers must not strand the
+// caller waiting on both fetches before it can decide whether to auto-process.
+const fetchSavedWidgets = (videoId, signal) => settledWithin(
+  jsonArray(P + `/api/saved-widgets?video=${encodeURIComponent(videoId)}`, { signal }), 8000, [])
+const generatedHere = (concepts) => concepts.filter(c => c.user_made)
 
 const TYPE_ICON = {
   matrix_mul: '✕', attention: '◧', softmax: '▮', function_plot: '∿', composite: '⧉', notebook: '🐍',
@@ -503,6 +525,88 @@ function AskBox({ ask, onClose, onCreate, busy }) {
 
 const CC_INPUT = { background: '#0d1117', border: '1px solid #30363d', borderRadius: 6, color: '#e6edf3', padding: '6px 8px', fontSize: 12.5, outline: 'none', width: '100%', boxSizing: 'border-box' }
 
+const PILL = {
+  fontSize: 11.5, border: '1px solid #30363d', borderRadius: 999, padding: '4px 10px',
+  cursor: 'pointer', background: 'transparent', whiteSpace: 'nowrap',
+}
+
+const PANEL = {
+  position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22',
+  border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex',
+  flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a',
+}
+const HINT = { fontSize: 11, color: '#6e7681', lineHeight: 1.45 }
+
+function AccountControl({ identity, onIdentity, flags, onFlags }) {
+  const [open, setOpen] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+  const team = identity?.mode === 'cloud'
+  const signIn = async () => {
+    setBusy(true)
+    setNote('')
+    try {
+      const result = await signInEmail(email.trim(), password)
+      if (result.error) { setNote(result.error); return }
+      onIdentity(result.identity)
+      setOpen(false)
+      setPassword('')
+    } finally { setBusy(false) }
+  }
+  const setGuestSaves = async (guest_saves) => {
+    setNote('')
+    const next = await fetch(P + '/api/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${identity.token}` },
+      body: JSON.stringify({ guest_saves }),
+    }).then(r => r.json()).catch(() => ({ error: 'flags endpoint offline' }))
+    if (next.error) { setNote(next.error); return }
+    onFlags(next)
+  }
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ ...PILL, color: team ? '#56d364' : '#8b949e' }}>
+        {team ? `◕ ${identity.handle}` : '🕶 guest'} ▾
+      </button>
+      {open && team && (
+        <div style={PANEL}>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#e6edf3', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!flags?.guest_saves} onChange={e => setGuestSaves(e.target.checked)} />
+            guests can save widgets
+          </label>
+          <div style={HINT}>
+            Off means only signed-in team members add to a video's timeline. Guests keep
+            generating widgets either way — theirs just stop being kept.
+          </div>
+          {note && <div style={{ fontSize: 11, color: '#f85149' }}>{note}</div>}
+          <button onClick={async () => { await signOut(); onIdentity(null); setOpen(false) }}
+            style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer' }}>
+            sign out
+          </button>
+        </div>
+      )}
+      {open && !team && (
+        <div style={PANEL}>
+          <div style={{ fontSize: 11.5, color: '#8b949e', lineHeight: 1.45 }}>
+            {flags?.guest_saves
+              ? 'Widgets you make are kept on this video’s timeline for everyone. Sign in to keep yours under your own name, and to change that.'
+              : 'Guest widgets aren’t being kept right now — sign in to save yours to the timeline.'}
+          </div>
+          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" style={CC_INPUT} />
+          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="password" style={CC_INPUT} />
+          {note && <div style={{ fontSize: 11, color: '#f85149', lineHeight: 1.4 }}>{note}</div>}
+          <button onClick={signIn} disabled={busy || !email || !password}
+            style={{ background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer', opacity: busy || !email || !password ? .5 : 1 }}>
+            {busy ? '…' : 'sign in'}
+          </button>
+        </div>
+      )}
+    </span>
+  )
+}
+
 function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refreshBilling }) {
   const [open, setOpen] = useState(false)
   const [key, setKey] = useState('')
@@ -624,6 +728,7 @@ function Lecture({ videoId, role }) {
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
   const [analyzed, setAnalyzed] = useState(INGESTED.includes(videoId))
   const [identity, setIdentity] = useState(null)
+  const [featureFlags, setFeatureFlags] = useState(null)
   const [cloud, setCloud] = useState(false)
   const [billing, setBilling] = useState(null)
   const requestHeaders = useMemo(() => ({
@@ -639,7 +744,7 @@ function Lecture({ videoId, role }) {
   const enableCloud = async () => {
     const nextIdentity = identity?.token ? identity : await signInGuest()
     if (!nextIdentity?.token) {
-      setToast('cloud credits need Supabase guest sign-in; local inference is still available')
+      setToast('cloud credits need an account — use “sign in to save”; local inference is still available')
       return
     }
     setIdentity(nextIdentity)
@@ -650,9 +755,11 @@ function Lecture({ videoId, role }) {
     if (spec && spec.need_credits) { setToast(spec.error || 'out of credits — add your OpenRouter key or switch to local'); return true }
     return false
   }
+  const noteSave = (spec) => { if (spec?.save_error) setToast(`not saved: ${spec.save_error}`) }
 
   useEffect(() => {
     fetch(P + '/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
+    jsonOr(P + '/api/flags', null).then(setFeatureFlags)
   }, [])
 
   useEffect(() => {
@@ -665,14 +772,24 @@ function Lecture({ videoId, role }) {
         processVideo()
       }
     }
-    fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : []).then(cs => {
-      setConcepts(cs)
-      if (cs.length) setAnalyzed(true)
+    const controller = new AbortController()
+    const { signal } = controller
+    setConcepts([])
+    const base = fetchBaseConcepts(videoId, signal)
+    const saved = fetchSavedWidgets(videoId, signal)
+    // The pipeline's concepts land on their own: a slow or rolled-back /api/saved-widgets
+    // must never hold the timeline back.
+    base.then(cs => { if (!signal.aborted) setConcepts(cur => mergeConcepts(cs, generatedHere(cur))) })
+    Promise.all([base, saved]).then(([cs, ss]) => {
+      if (signal.aborted) return
+      setConcepts(cur => mergeConcepts(cs, [...ss, ...generatedHere(cur)]))
+      if (cs.length || ss.length) setAnalyzed(true)
       else autoProcess()
-    }).catch(() => { setConcepts([]); autoProcess() })
-    fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
-    fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
-    fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => setMetadata(null))
+    })
+    jsonArray(P + `/${videoId}/transcript.json`, { signal }).then(v => { if (!signal.aborted) setCues(v) })
+    jsonArray(P + `/${videoId}/chapters.json`, { signal }).then(v => { if (!signal.aborted) setChapters(v) })
+    jsonOr(P + `/${videoId}/metadata.json`, null, { signal }).then(v => { if (!signal.aborted) setMetadata(v) })
+    return () => controller.abort()
   }, [videoId])
 
   const pinnedUntil = useRef(0)
@@ -724,8 +841,9 @@ function Lecture({ videoId, role }) {
       if (spec.answer) {
         setSelected({ widget: 'answer', title: 'about that region', explanation: spec.answer, time: spec.time, user_made: true })
       } else {
-        setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+        setConcepts(cs => mergeConcepts(cs, [spec]))
         setSelected(spec)
+        noteSave(spec)
       }
       setFollowVideo(false)
       setTouchMode(false)
@@ -755,8 +873,9 @@ function Lecture({ videoId, role }) {
         setFollowVideo(false)
         return
       }
-      setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+      setConcepts(cs => mergeConcepts(cs, [spec]))
       setSelected(spec)
+      noteSave(spec)
       setFollowVideo(false)
     } catch {
       setToast('ask endpoint offline — run: uv run serve.py')
@@ -777,8 +896,9 @@ function Lecture({ videoId, role }) {
       const spec = await r.json()
       if (applyBilling(spec)) return
       if (spec.error) { setToast(`couldn't map that moment: ${spec.error}`); return }
-      setConcepts(cs => [...cs, spec].sort((a, b) => a.time - b.time))
+      setConcepts(cs => mergeConcepts(cs, [spec]))
       setSelected(spec)
+      noteSave(spec)
       setFollowVideo(false)
       setAsk(null)
     } catch {
@@ -798,15 +918,20 @@ function Lecture({ videoId, role }) {
       const ask = `The current widget is a "${cur.widget}" titled "${cur.title}". Regenerate it, applying this change: ${instruction}`
       const r = await fetch(P + '/api/widget', {
         method: 'POST', headers: requestHeaders,
-        body: JSON.stringify({ text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud }),
+        body: JSON.stringify({
+          text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud,
+          // a pipeline concept has no id, so the server tombstones it by key instead
+          ...(cur.id ? { replaces: cur.id } : { replaces_key: conceptKey(cur) }),
+        }),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
       if (spec.error) { setToast(`couldn't refine: ${spec.error}`); return }
       if (spec.answer) { setToast(String(spec.answer).slice(0, 150)); return }
       const refined = { ...spec, user_made: true }
-      setConcepts(cs => { const i = cs.indexOf(cur); if (i >= 0) { const n = [...cs]; n[i] = refined; return n } return [...cs, refined].sort((a, b) => a.time - b.time) })
+      setConcepts(cs => mergeConcepts(cs.filter(c => c !== cur), [refined]))
       setSelected(refined)
+      noteSave(spec)
       liveParams.current = null
       setFollowVideo(false)
     } catch {
@@ -829,12 +954,12 @@ function Lecture({ videoId, role }) {
         setProc(s)
         if (s.state === 'done') {
           clearInterval(poll)
-          const cs = await fetch(P + `/${videoId}/concepts.json`).then(r => r.ok ? r.json() : [])
-          setConcepts(cs)
-          if (cs.length) setAnalyzed(true)
-          fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
-          fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
-          fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => {})
+          const [cs, ss] = await Promise.all([fetchBaseConcepts(videoId), fetchSavedWidgets(videoId)])
+          setConcepts(cur => mergeConcepts(cs, [...ss, ...generatedHere(cur)]))
+          if (cs.length || ss.length) setAnalyzed(true)
+          jsonArray(P + `/${videoId}/transcript.json`).then(setCues)
+          jsonArray(P + `/${videoId}/chapters.json`).then(setChapters)
+          jsonOr(P + `/${videoId}/metadata.json`, null).then(setMetadata)
         } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
       } catch { /* keep polling */ }
     }, 2500)
@@ -853,6 +978,7 @@ function Lecture({ videoId, role }) {
         </a>
         <span style={{ color: '#8b949e', fontSize: 13.5 }}>video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <AccountControl identity={identity} onIdentity={setIdentity} flags={featureFlags} onFlags={setFeatureFlags} />
           <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} />
           {roleCfg && (
             <span style={{ fontSize: 11.5, color: '#d2a8ff', border: '1px solid #8957e555', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>

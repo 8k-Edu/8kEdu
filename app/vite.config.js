@@ -30,6 +30,11 @@ const banner = () => ({
 // `<videoId>/(frames|crops)/…` so a future top-level route named /frames/… would not
 // silently 404.
 const PRIVATE_DATA = /^\/[^/]+\/(frames|crops)\//
+// Server-owned runtime state that also lives under data/: the widget store and the feature
+// flags. Reached through /api/*, never as a static file — baking a snapshot of either into
+// dist/ would publish stale widgets and quarantined content. See agent/widget_store.py.
+const RUNTIME_STATE = /^\/(flags\.json|[^/]+\/user_concepts)/
+const RUNTIME_FILES = /^(user_concepts|flags)\./
 const hideCachedFrames = () => {
   let outDir
   return {
@@ -37,7 +42,8 @@ const hideCachedFrames = () => {
     configResolved(c) { outDir = path.resolve(c.root, c.build.outDir) },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (PRIVATE_DATA.test((req.url || '').split('?')[0])) {
+        const url = (req.url || '').split('?')[0]
+        if (PRIVATE_DATA.test(url) || RUNTIME_STATE.test(url)) {
           res.statusCode = 404
           res.end()
           return
@@ -49,9 +55,15 @@ const hideCachedFrames = () => {
     closeBundle() {
       if (!outDir || !existsSync(outDir)) return
       for (const entry of readdirSync(outDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue
+        if (!entry.isDirectory()) {
+          if (RUNTIME_FILES.test(entry.name)) rmSync(path.join(outDir, entry.name), { force: true })
+          continue
+        }
         for (const dir of ['frames', 'crops']) {
           rmSync(path.join(outDir, entry.name, dir), { recursive: true, force: true })
+        }
+        for (const file of readdirSync(path.join(outDir, entry.name))) {
+          if (RUNTIME_FILES.test(file)) rmSync(path.join(outDir, entry.name, file), { force: true })
         }
       }
     },

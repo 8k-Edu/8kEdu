@@ -61,6 +61,17 @@ export async function restore() {
   return existing ? { uid: existing, handle: existing, mode: 'local', client: null } : null
 }
 
+// Saving a generated widget writes to a store every visitor reads, so it takes a team
+// account. There is no sign-up here on purpose — accounts are provisioned in the Supabase
+// dashboard; guests keep full use of the app, their widgets just aren't kept.
+export async function signInEmail(email, password) {
+  const c = await client()
+  if (!c) return { error: 'accounts are not configured on this server' }
+  const { data, error } = await c.auth.signInWithPassword({ email, password })
+  if (error) return { error: error.message }
+  return { identity: cloud(data.session, c) }
+}
+
 export async function signInGuest() {
   const c = await client()
   if (c) {

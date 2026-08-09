@@ -22,9 +22,30 @@ anywhere.
 | `nginx` | 80/443 | static frontend + reverse-proxy to the two APIs + serves `data/` |
 | Supabase | (cloud) | shared cache, learner state, community, credits |
 | OpenRouter | (cloud) | the vision + reasoning model (via API key) |
+| `data/` on disk | — | keyframes, transcripts, and the saved-widget store |
 
 Everything talks to Supabase (already cloud) and OpenRouter (cloud). The server holds
 no model weights.
+
+### `data/` is stateful
+
+Not everything durable lives in Supabase. Widgets learners generate in the player are
+written to `data/<video_id>/user_concepts.json`, and the runtime flags to `data/flags.json`
+(see `agent/widget_store.py`, `agent/flags.py`). That means:
+
+- **`data/` must be writable by the `serve.py` user and must survive a redeploy.** Put it on
+  a persistent volume and deploy the code beside it, not over it — a fresh checkout with an
+  empty `data/` silently drops every saved widget.
+- **Back it up with the same seriousness as the database.** There is no second copy: the
+  `concepts` table is rebuilt *from* disk by `upsert_concepts`, not the other way round.
+- **One `serve.py` process only.** The store serialises writes with an in-process lock, so a
+  second worker or a second replica can lose an update. Adding `--workers` is the signal to
+  move the store to Postgres; nothing outside `agent/widget_store.py` has to change.
+- `user_concepts*.json` and `flags.json*` are runtime state, not source. They are gitignored,
+  excluded from the frontend build, and never served as static files — reads go through
+  `/api/saved-widgets`.
+- Set `KEDU_TEAM` to the accounts allowed to change runtime flags. Supabase sign-up is open,
+  so a signed-in stranger is not a teammate; an empty allowlist means nobody qualifies.
 
 ---
 
@@ -86,6 +107,12 @@ NEMOTRON_API_KEY=sk-or-v1-xxxxxxxx         # same key as above
 
 # ── Session ───────────────────────────────────────────────────────────────────
 AGENT_HANDLE=server
+
+# ── Saved widgets ─────────────────────────────────────────────────────────────
+KEDU_TEAM=@example.com                     # accounts allowed to change /api/flags
+                                           # (addresses, or a whole domain as @example.com)
+# KEDU_SAVE_WIDGETS=0                      # stop persisting generated widgets entirely
+# KEDU_SAVE_NOTEBOOKS=1                    # share notebooks too — off by default, see §0
 ```
 
 > **How it works:** `serve.py`/`analyze.py` read `KEDU_BACKEND=openrouter` +

@@ -51,7 +51,7 @@ YouTube contains exceptional teaching, but video is passive: learners can watch 
 
 8kEdu watches a lecture through its transcript and keyframes, identifies teachable moments, and turns them into live widgets beside the player. Learners can change parameters, run Python, remix an artifact, or export selected moments.
 
-An autonomous agent discovers and processes lectures, while a curator grows a reusable library. Nemotron produces structured concept specs; a deterministic React widget kit renders them. Supabase stores shared artifacts and learner state.
+An autonomous agent discovers and processes lectures, while a curator grows a reusable library. Nemotron produces structured concept specs; a deterministic React widget kit renders them. Supabase stores shared artifacts and learner state; widgets a learner generates in the player are kept on the API host in `data/<video_id>/user_concepts.json` and rejoin that video's timeline for everyone who watches it next.
 
 The recursive layer connects equivalent concepts across teachers. Later runs reuse validated widgets and spend model calls only on uncertain frames, improving the content pipeline over time.
 
@@ -109,7 +109,22 @@ uv run analyze.py --backend vllm --video <id>
 uv run serve.py --backend vllm
 ```
 
-Supported analysis backends include `mlx`, `lmstudio`, `vllm`, `openai`, `gemini`, and `openrouter`. Local inference is the default. In the lesson header, authenticated guest users can switch to credit-metered OpenRouter or enter their own key; BYOK keys remain only in the running API process and are never persisted.
+Supported analysis backends include `mlx`, `lmstudio`, `vllm`, `openai`, `gemini`, and `openrouter`. Local inference is the default. In the lesson header, a signed-in account can switch to credit-metered OpenRouter or enter their own key; BYOK keys remain only in the running API process and are never persisted.
+
+### Saved widgets
+
+A widget minted from the video — by pointing at a region or asking in words — is written to
+`data/<video_id>/user_concepts.json` on the API host and merged over the pipeline's
+`concepts.json` when anyone loads that video. Signed-out visitors save under a shared `guest`
+owner; a signed-in account owns what it saves, and only its owner can supersede it.
+
+`KEDU_TEAM` lists the accounts allowed to change runtime behaviour through `/api/flags`, as
+addresses or a whole domain written `@example.com` —
+currently `guest_saves`, which turns guest persistence on and off without a redeploy. Being
+signed in is not enough: Supabase sign-up is open, so authorization is the server's own
+allowlist. `KEDU_SAVE_WIDGETS=0` disables persistence entirely, and notebook widgets are
+excluded by default because their Python executes when the widget opens (`KEDU_SAVE_NOTEBOOKS=1`
+opts in).
 
 ### Serving Nemotron on Apple Silicon (vLLM)
 

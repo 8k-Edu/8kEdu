@@ -7,8 +7,10 @@ import react from '@vitejs/plugin-react'
 import { createServer } from 'vite'
 import {
   chapterTimelineRange,
+  conceptKey,
   formatTimelineTime,
   latestPlayerDuration,
+  mergeConcepts,
   resolveTimelineDuration,
   timelinePlayheadPercent,
   timelineTickAppearance,
@@ -94,6 +96,53 @@ test('timeline timestamps are formatted for accessible labels', () => {
   assert.equal(formatTimelineTime(0), '0:00')
   assert.equal(formatTimelineTime(70.3), '1:10')
   assert.equal(formatTimelineTime(6689.1), '1:51:29')
+})
+
+test('pipeline concepts have no id, so the key falls back to widget and rounded time', () => {
+  assert.equal(conceptKey({ id: 'abc', widget: 'softmax', time: 12.4 }), 'abc')
+  assert.equal(conceptKey({ widget: 'softmax', time: 12.4 }), 'softmax@12')
+  assert.equal(conceptKey({ widget: 'softmax', time: 12.6 }), 'softmax@13')
+})
+
+test('saved widgets merge into the pipeline concepts, newest definition winning', () => {
+  const base = [
+    { widget: 'spreadsheet', title: 'pipeline', time: 30 },
+    { widget: 'softmax', title: 'stale', time: 90 },
+  ]
+  const saved = [
+    { id: 'h1', widget: 'softmax', title: 'saved', time: 90, user_made: true },
+    { id: 'h2', widget: 'matrix_mul', title: 'also saved', time: 10, user_made: true },
+  ]
+
+  const merged = mergeConcepts(base, saved)
+
+  assert.deepEqual(merged.map(c => c.title), ['also saved', 'pipeline', 'saved'])
+})
+
+test('the same saved widget arriving twice collapses to one entry', () => {
+  const saved = [{ id: 'h1', widget: 'softmax', title: 'a', time: 5 }]
+  assert.equal(mergeConcepts([], [...saved, ...saved]).length, 1)
+})
+
+test('a refined widget suppresses the id-less pipeline concept it replaced', () => {
+  const base = [{ widget: 'spreadsheet', title: 'original', time: 42.2 }]
+  const saved = [{
+    id: 'h9', widget: 'function_plot', title: 'refined', time: 42.2,
+    replaces_key: 'spreadsheet@42',
+  }]
+
+  const merged = mergeConcepts(base, saved)
+
+  assert.deepEqual(merged.map(c => c.title), ['refined'])
+})
+
+test('a non-array response can never wipe the timeline', () => {
+  const base = [{ widget: 'spreadsheet', title: 'pipeline', time: 30 }]
+  for (const junk of [null, undefined, { detail: 'Not Found' }, 'nope']) {
+    assert.deepEqual(mergeConcepts(base, junk).map(c => c.title), ['pipeline'])
+    assert.deepEqual(mergeConcepts(junk, base).map(c => c.title), ['pipeline'])
+  }
+  assert.deepEqual(mergeConcepts([], []), [])
 })
 
 const occurrences = (text, pattern) => (text.match(pattern) ?? []).length

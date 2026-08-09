@@ -6,6 +6,7 @@ POST /api/widget {"text": "...", "time": 1234.5, "ask": "let me play with the ma
 """
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -21,7 +22,10 @@ from urllib.request import Request, urlopen
 import uvicorn
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from agent import flags, widget_store
 
 from analyze import (BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend,
                      openrouter_backend, resolve_frame, valid)
@@ -38,8 +42,9 @@ backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
 _byok_keys: dict[str, str] = {}
 _byok_lock = threading.Lock()
-_auth_cache: dict[str, str] = {}
+_auth_cache: dict[str, dict] = {}
 _auth_lock = threading.Lock()
+_AUTH_TTL_MAX = 300  # recheck with Supabase at least this often, whatever the JWT claims
 
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
@@ -53,13 +58,27 @@ def _handle() -> str:
     return os.environ.get("AGENT_HANDLE", "demo")
 
 
-def _authenticated_handle(authorization: str | None) -> str:
+def _token_expiry(token: str) -> float:
+    """`exp` out of the JWT payload, capped so a long-lived token still gets rechecked.
+    No signature check needed — Supabase already vouched for the token; this only bounds
+    how long we trust our own cache after a sign-out or a deleted account."""
+    ceiling = time.time() + _AUTH_TTL_MAX
+    try:
+        payload = token.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        return min(float(claims["exp"]), ceiling)
+    except Exception:
+        return ceiling
+
+
+def _identify(authorization: str | None) -> dict:
+    """{handle, email} for a verified Supabase session. Raises CloudUnavailable otherwise."""
     if not authorization or not authorization.startswith("Bearer "):
-        raise CloudUnavailable("cloud requires guest sign-in")
+        raise CloudUnavailable("cloud requires signing in")
     token = authorization.removeprefix("Bearer ").strip()
     with _auth_lock:
         cached = _auth_cache.get(token)
-    if cached:
+    if cached and cached["expires_at"] > time.time():
         return cached
     base_url = os.environ.get("SUPABASE_URL", "").rstrip("/")
     publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "")
@@ -71,19 +90,80 @@ def _authenticated_handle(authorization: str | None) -> str:
     )
     try:
         with urlopen(request, timeout=10) as response:
-            user_id = json.loads(response.read())["id"]
+            user = json.loads(response.read())
     except Exception as error:
-        raise CloudUnavailable("guest session expired — sign in again") from error
-    handle = f"auth-{user_id}"
+        with _auth_lock:
+            _auth_cache.pop(token, None)
+        raise CloudUnavailable("session expired — sign in again") from error
+    identity = {"handle": f"auth-{user['id']}", "email": (user.get("email") or "").lower(),
+                "expires_at": _token_expiry(token)}
     with _auth_lock:
-        _auth_cache[token] = handle
-    return handle
+        _auth_cache[token] = identity
+    return identity
+
+
+def _authenticated_handle(authorization: str | None) -> str:
+    return _identify(authorization)["handle"]
 
 
 def _fire_event(payload: dict) -> None:
     if not _db:
         return
     _db.enqueue_widget_event(payload)
+
+
+def _owner_for(authorization: str | None) -> str:
+    """Who a saved widget belongs to — see agent/widget_store.py.
+    Unlike the cloud path this runs on every request, including handlers called directly in
+    tests, where `authorization` is still FastAPI's unresolved Header default."""
+    if not isinstance(authorization, str):
+        return widget_store.GUEST_OWNER
+    try:
+        return _authenticated_handle(authorization)
+    except CloudUnavailable:
+        return widget_store.GUEST_OWNER
+
+
+def _team() -> set[str]:
+    return {e.strip().lower() for e in os.environ.get("KEDU_TEAM", "").split(",") if e.strip()}
+
+
+def _on_the_team(email: str) -> bool:
+    """An entry is either a whole address or a domain written `@example.com`."""
+    email = email.lower()
+    if not email:
+        return False
+    return any(email == entry or (entry.startswith("@") and email.endswith(entry))
+               for entry in _team())
+
+
+def _team_member(authorization: str | None) -> str | None:
+    """A signed-in stranger is not a teammate. Supabase sign-up is open, so authentication
+    alone can't gate a privileged action — the allowlist is the server's own, out of KEDU_TEAM,
+    and an unset one means nobody qualifies."""
+    try:
+        identity = _identify(authorization)
+    except CloudUnavailable:
+        return None
+    return identity["handle"] if _on_the_team(identity["email"]) else None
+
+
+def _persisted(spec: dict, video: str, owner: str | None, ev: dict,
+               replaces: str = "", replaces_key: str = "") -> dict:
+    """The generated spec plus whether it made it into the store the timeline reloads.
+    Answers carry no widget, so they stay ephemeral like they always were."""
+    if not spec.get("widget"):
+        return spec
+    try:
+        entry = widget_store.save(video, spec, owner or "", replaces=replaces,
+                                  replaces_key=replaces_key)
+    except widget_store.SaveRejected as e:
+        return {**spec, "saved": False, "save_error": str(e)}
+    except (widget_store.StoreUnavailable, OSError) as e:
+        # Losing the save must never cost the learner the generation they just waited for.
+        _fire_event({**ev, "kind": "save", "error": str(e)[:200]})
+        return {**spec, "saved": False, "save_error": "this widget couldn't be saved"}
+    return {**spec, "id": entry["id"], "saved": True}
 
 
 def _ms(t0: float) -> int:
@@ -180,6 +260,8 @@ class Ask(BaseModel):
     ask: str = ""
     video: str = DEFAULT_VIDEO
     cloud: bool = False
+    replaces: str = ""       # id of the saved widget this refinement supersedes
+    replaces_key: str = ""   # pipeline concepts carry no id — see mergeConcepts in timeline.js
 
 
 def frames_for(video: str) -> list[dict]:
@@ -351,6 +433,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
 
     ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "widget", "model": model_name}
+    owner = _owner_for(authorization)
 
     genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
@@ -366,7 +449,10 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
                   t_total_ms=_ms(t_start))
         _fire_event(ev)
         bal = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
-        return _with_billing({**cached, "cached": True}, req.cloud, model_name, bal)
+        # A hit returns before the tail below, so persisting only there would never save a
+        # widget for a box someone already generated once.
+        out = _persisted(cached, req.video, owner, ev, req.replaces, req.replaces_key)
+        return _with_billing({**out, "cached": True}, req.cloud, model_name, bal)
 
     # Before spend_credit: a pull from Supabase Storage can fail, and a credit spent on a
     # request that never reaches the model is a credit lost.
@@ -425,7 +511,8 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
-    return _with_billing(spec, req.cloud, model_name, credits_left)
+    out = _persisted(spec, req.video, owner, ev, req.replaces, req.replaces_key)
+    return _with_billing(out, req.cloud, model_name, credits_left)
 
 
 class RegionAsk(BaseModel):
@@ -459,6 +546,7 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
             return {"error": e.reason, "need_credits": True, "cloud": True}
     ev = {"handle": handle, "video_id": req.video, "t_s": req.time,
           "frame_file": fr["file"], "kind": "region", "model": model_name}
+    owner = _owner_for(authorization)
 
     genre = _genre_for(req.video, req.text)
     t0 = time.perf_counter()
@@ -473,7 +561,8 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
                   t_backend_ask_ms=0, t_parse_validate_ms=0, t_total_ms=_ms(t_start))
         _fire_event(ev)
         balance = _db.user_billing(handle)["credits"] if (req.cloud and metered and _db) else None
-        return _with_billing({**cached, "cached": True}, req.cloud, model_name, balance)
+        out = _persisted(cached, req.video, owner, ev)
+        return _with_billing({**out, "cached": True}, req.cloud, model_name, balance)
     ev["cache_hit"] = False
 
     src = _frame_path(ev, req.video, fr)
@@ -546,7 +635,45 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
     _cache_put(h, req.video, spec)
     ev.update(spec_valid=True, widget_kind=spec.get("widget"), t_total_ms=_ms(t_start))
     _fire_event(ev)
-    return _with_billing(spec, req.cloud, model_name, credits_left)
+    out = _persisted(spec, req.video, owner, ev)
+    return _with_billing(out, req.cloud, model_name, credits_left)
+
+
+@app.get("/api/saved-widgets")
+def saved_widgets(video: str = DEFAULT_VIDEO):
+    """Everything generated for this video, for the timeline to merge with concepts.json.
+    Public, so it carries only what the widget kit renders — never who saved it."""
+    try:
+        return [{k: v for k, v in row.items() if k != "owner"}
+                for row in widget_store.load(video)]
+    except widget_store.BadVideoId as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    except widget_store.StoreUnavailable as e:
+        return JSONResponse(status_code=503, content={"error": str(e)})
+
+
+class FlagUpdate(BaseModel):
+    guest_saves: bool | None = None
+
+
+@app.get("/api/flags")
+def get_flags():
+    return flags.load()
+
+
+@app.post("/api/flags")
+def set_flags(req: FlagUpdate, authorization: str | None = Header(default=None)):
+    """Team members only — a guest flipping the guest-saves flag would defeat the point."""
+    if not _team_member(authorization):
+        return JSONResponse(status_code=403,
+                            content={"error": "only the team can change this"})
+    changes = req.model_dump(exclude_none=True)
+    if not changes:
+        return flags.load()
+    try:
+        return flags.update(changes)
+    except OSError as e:
+        return JSONResponse(status_code=503, content={"error": f"could not save flags: {e}"})
 
 
 @app.get("/api/info")

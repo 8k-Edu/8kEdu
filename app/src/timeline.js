@@ -62,6 +62,33 @@ export function timelineTickAppearance(concept, isActive, typeColors = {}) {
   }
 }
 
+const asArray = (value) => (Array.isArray(value) ? value : [])
+
+const fallbackKey = (concept) => `${concept?.widget}@${Math.round(concept?.time ?? 0)}`
+
+export function conceptKey(concept) {
+  return concept?.id ?? fallbackKey(concept)
+}
+
+// Pipeline concepts (data/<video>/concepts.json) carry no id, so a saved widget claims the
+// slot it occupies by widget+second, or by an explicit replaces_key when a refinement
+// changed the widget type. See agent/widget_store.py for where the ids come from.
+export function mergeConcepts(base, saved) {
+  const savedConcepts = asArray(saved)
+  const shadowed = new Set()
+  for (const concept of savedConcepts) {
+    shadowed.add(fallbackKey(concept))
+    if (concept.replaces_key) shadowed.add(concept.replaces_key)
+  }
+  const byKey = new Map()
+  for (const concept of asArray(base)) {
+    if (shadowed.has(fallbackKey(concept)) || shadowed.has(conceptKey(concept))) continue
+    byKey.set(conceptKey(concept), concept)
+  }
+  for (const concept of savedConcepts) byKey.set(conceptKey(concept), concept)
+  return [...byKey.values()].sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
+}
+
 export function formatTimelineTime(time) {
   const seconds = Math.max(0, Math.floor(Number.isFinite(time) ? time : 0))
   const hours = Math.floor(seconds / 3600)

@@ -2,6 +2,9 @@ data/*/video.*
 data/*/frames/
 # per-request region crops, regenerated on demand
 data/*/crops/
+# server-owned runtime state, not source (see agent/widget_store.py, agent/flags.py)
+data/*/user_concepts*.json*
+data/flags.json*
 data/pyodide-dist/
 data/pyodide
 .env
