@@ -1,7 +1,7 @@
 """Ingest a YouTube lecture: video + transcript + keyframes.
 
 Usage: uv run ingest.py <youtube_url_or_id> [--out data]
-Outputs: <out>/video.mp4, <out>/transcript.json, <out>/frames/f_<sec>.jpg
+Outputs: <out>/video.mp4, <out>/metadata.json, <out>/transcript.json, <out>/frames/f_<sec>.jpg
 """
 
 import argparse
@@ -98,13 +98,13 @@ def duration_sec(video: Path) -> float:
     return int(h) * 3600 + int(mm) * 60 + float(ss)
 
 
-def extract_frames(video: Path, out: Path) -> list[dict]:
+def extract_frames(video: Path, out: Path, duration: float | None = None) -> list[dict]:
     """Uniform sampling: MAX_FRAMES frames, timestamp = index * interval."""
     frames_dir = out / "frames"
     frames_dir.mkdir(exist_ok=True)
     for old in frames_dir.glob("*.jpg"):
         old.unlink()
-    dur = duration_sec(video)
+    dur = duration if duration is not None else duration_sec(video)
     interval = max(dur / MAX_FRAMES, 10)
     run([
         "ffmpeg", "-y", "-i", str(video),
@@ -119,6 +119,10 @@ def extract_frames(video: Path, out: Path) -> list[dict]:
         raw.rename(final)
         meta.append({"time": round(sec, 1), "file": final.name})
     return meta
+
+
+def write_metadata(out: Path, duration: float) -> None:
+    (out / "metadata.json").write_text(json.dumps({"duration": round(duration, 3)}, indent=1))
 
 
 FRAME_LEAD_S = 2  # section starts this far before the target so the cut lands on a keyframe
@@ -245,9 +249,11 @@ def main() -> None:
 
     video = download(args.url, out)
     cues = parse_vtt(out)
-    frames = extract_frames(video, out)
+    duration = duration_sec(video)
+    frames = extract_frames(video, out, duration)
     chapters = fetch_chapters(args.url, out)
 
+    write_metadata(out, duration)
     (out / "transcript.json").write_text(json.dumps(cues, indent=1))
     (out / "frames.json").write_text(json.dumps(frames, indent=1))
     published = publish_frames(video_id(args.url), out, frames)
