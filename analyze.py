@@ -15,6 +15,7 @@ Outputs: <data>/concepts.json
 """
 
 import argparse
+import ast
 import base64
 import hashlib
 import json
@@ -96,7 +97,7 @@ If the frame teaches a concept a student could MANIPULATE, emit a spec:
   params.cells is REQUIRED for notebook — 1-3 python strings that actually compute and
   print/plot the result. A notebook spec without cells is INVALID and will be discarded.
 - spreadsheet: an Excel/spreadsheet screen (a grid of cells) is shown → params
-  {cells: 2D array of the visible values (headers + a few real rows), features:
+  {cells: 2D array of the visible values (headers + a few real rows, at most 5 rows by 8 columns), features:
   which of wrap/merge_center/orientation/bold/currency/percent this moment teaches,
   highlight: {row,col} of the focal cell}. Use the ACTUAL text/numbers in the frame.
 
@@ -162,7 +163,7 @@ GENRE_PROMPTS = {
     ),
     "spreadsheet": (
         "This is a spreadsheet/Excel tutorial. Emit a `spreadsheet` widget: cells = a SMALL "
-        "focused excerpt of the grid on screen — at most 4 columns by 5 rows (a header row plus "
+        "focused excerpt of the grid on screen — at most 8 columns by 5 rows (a header row plus "
         "a few real rows), exact values from the frame, pick the columns most relevant to the "
         "moment. features = the actions this moment teaches (wrap, merge_center, orientation, "
         "bold, currency, percent), highlight = {row,col} of the focal cell. The learner gets an "
@@ -235,7 +236,14 @@ def valid(spec: dict | None) -> bool:
     w = spec["widget"]
     if w == "notebook":
         cells = p.get("cells")
-        return isinstance(cells, list) and len(cells) > 0 and all(isinstance(c, str) and c.strip() for c in cells)
+        if not (isinstance(cells, list) and cells and all(isinstance(c, str) and c.strip() for c in cells)):
+            return False
+        try:
+            for cell in cells:
+                ast.parse(cell)
+        except (SyntaxError, TypeError, ValueError):
+            return False
+        return True
     if w == "matrix_mul":
         return mat(p.get("a")) and mat(p.get("b")) and len(p["a"][0]) == len(p["b"])
     if w == "attention":

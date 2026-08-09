@@ -7,6 +7,7 @@ import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporte
 import { restore, signInEmail, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
 import { conceptKey, formatTimelineTime, hasTimelineDuration, latestPlayerDuration, mergeConcepts, resolveTimelineDuration } from './timeline.js'
+import { buildRefinementRequest } from './refinement.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -671,7 +672,7 @@ class WidgetBoundary extends React.Component {
       return (
         <div style={{ border: '1px solid #d29922aa', background: '#1c1710', borderRadius: 10, padding: '14px 16px', fontSize: 13, color: '#d29922' }}>
           ⚠ this widget's spec didn't render ({String(this.state.err?.message || this.state.err).slice(0, 90)}) —
-          use the refine box below to regenerate it, or pick another moment.
+          use the refine box below to edit it, or pick another moment.
         </div>
       )
     }
@@ -679,18 +680,18 @@ class WidgetBoundary extends React.Component {
   }
 }
 
-// Chat box under a widget: type an instruction → regenerate the widget honoring it.
+// Chat box under a widget: type an instruction → edit the current widget.
 function RefineBox({ onRefine, busy }) {
   const [v, setV] = useState('')
   const send = () => { if (v.trim() && !busy) { onRefine(v.trim()); setV('') } }
   return (
     <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
       <input value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} disabled={busy}
-        placeholder={busy ? 'regenerating…' : '↻ refine this widget — e.g. add a slider, use bigger numbers, explain it simpler'}
+        placeholder={busy ? 'refining…' : '✎ refine this widget — e.g. add a slider, use bigger numbers, explain it simpler'}
         style={{ flex: 1, background: '#0d1117', border: '1px solid #30363d', borderRadius: 8, color: '#e6edf3', padding: '8px 11px', fontSize: 12.5, outline: 'none' }} />
       <button onClick={send} disabled={busy || !v.trim()}
         style={{ background: '#1f6feb', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: (busy || !v.trim()) ? 'default' : 'pointer', opacity: (busy || !v.trim()) ? .6 : 1 }}>
-        {busy ? '…' : '↻ regenerate'}
+        {busy ? '…' : 'apply edit'}
       </button>
     </div>
   )
@@ -915,14 +916,13 @@ function Lecture({ videoId, role }) {
     setBusy(true)
     try {
       const around = cues.filter(c => Math.abs(c.start - (cur.time ?? time)) < 35).map(c => c.text).join(' ')
-      const ask = `The current widget is a "${cur.widget}" titled "${cur.title}". Regenerate it, applying this change: ${instruction}`
       const r = await fetch(P + '/api/widget', {
         method: 'POST', headers: requestHeaders,
-        body: JSON.stringify({
-          text: around || cur.title || '', time: cur.time ?? time, ask, video: videoId, cloud,
-          // a pipeline concept has no id, so the server tombstones it by key instead
-          ...(cur.id ? { replaces: cur.id } : { replaces_key: conceptKey(cur) }),
-        }),
+        body: JSON.stringify(buildRefinementRequest({
+          spec: cur, liveParams: liveParams.current, instruction,
+          text: around || cur.title || '', time, video: videoId, cloud,
+          replaces: cur.id, replacesKey: conceptKey(cur),
+        })),
       })
       const spec = await r.json()
       if (applyBilling(spec)) return
