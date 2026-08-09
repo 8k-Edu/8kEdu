@@ -7,7 +7,7 @@ import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporte
 import { restore, signInEmail, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
 import { conceptKey, formatTimelineTime, hasTimelineDuration, latestPlayerDuration, mergeConcepts, resolveTimelineDuration } from './timeline.js'
-import { buildRefinementRequest } from './refinement.js'
+import { buildRefinementRequest, nextRefinementRevision, widgetInstanceKey } from './refinement.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -704,6 +704,7 @@ function Lecture({ videoId, role }) {
   const [chapters, setChapters] = useState([])
   const [metadata, setMetadata] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [refinementRevision, setRefinementRevision] = useState(0)
   const [followVideo, setFollowVideo] = useState(true)
   const [shareUrl, setShareUrl] = useState(null)
   const [ask, setAsk] = useState(null)
@@ -931,6 +932,7 @@ function Lecture({ videoId, role }) {
       const refined = { ...spec, user_made: true }
       setConcepts(cs => mergeConcepts(cs.filter(c => c !== cur), [refined]))
       setSelected(refined)
+      setRefinementRevision(revision => nextRefinementRevision(revision, 'success'))
       noteSave(spec)
       liveParams.current = null
       setFollowVideo(false)
@@ -1112,8 +1114,8 @@ function Lecture({ videoId, role }) {
                 }}>share remix</button>
               </div>
               {Widget ? (
-                <WidgetBoundary resetKey={`${active.time}-${active.widget}-${active.title}`}>
-                  <Widget key={`${active.time}-${active.widget}`} params={active.params ?? {}} onState={onState} />
+                <WidgetBoundary resetKey={widgetInstanceKey(active, refinementRevision)}>
+                  <Widget key={widgetInstanceKey(active, refinementRevision)} params={active.params ?? {}} onState={onState} />
                 </WidgetBoundary>
               ) : null}
               {Widget ? <RefineBox onRefine={refineWidget} busy={busy} /> : null}

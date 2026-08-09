@@ -1,24 +1,11 @@
-const MAX_SOURCE_CHARS = 12000
-
-const encodedSize = (value) => JSON.stringify(value).length
-
-const boundedSource = (spec, params) => {
-  if (spec.widget !== 'notebook' && spec.widget !== 'spreadsheet') return { ...spec, params }
-  const cells = params?.cells
-  if (!Array.isArray(cells)) return { ...spec, params }
-  const kept = []
-  for (const cell of cells) {
-    const next = { ...spec, params: { ...params, cells: [...kept, cell] } }
-    if (encodedSize(next) > MAX_SOURCE_CHARS) break
-    kept.push(cell)
-  }
-  return { ...spec, params: { ...params, cells: kept } }
-}
-
 export const buildRefinementSource = (spec, liveParams) => {
   const params = { ...(spec.params ?? {}), ...(liveParams ?? {}) }
-  return boundedSource(spec, params)
+  return { ...spec, params }
 }
+
+export const nextRefinementRevision = (revision, outcome) => outcome === 'success' ? revision + 1 : revision
+
+export const widgetInstanceKey = (spec, revision) => `${spec.time}-${spec.widget}-${revision}`
 
 export const buildRefinementRequest = ({ spec, liveParams, instruction, text, time, video, cloud, replaces, replacesKey }) => ({
   text,

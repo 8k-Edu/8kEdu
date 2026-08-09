@@ -1,7 +1,7 @@
 import contextlib
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import serve
 from analyze import valid
@@ -29,21 +29,22 @@ class FakeBackend:
 
 class RefinementTests(unittest.TestCase):
     @contextlib.contextmanager
-    def serving(self, backend, cached=None):
+    def serving(self, backend, cached=None, cache_put=None, persisted=None):
         with contextlib.ExitStack() as stack:
             for target, value in (
                 ("backend", backend), ("_db", None), ("_genre_for", lambda *_: "general"),
                 ("nearest_frame", lambda *_: {"file": "f.jpg", "time": 1}),
                 ("_frame_path", lambda *_: "frame.jpg"), ("_cache_get_first", lambda *_: cached),
-                ("_cache_put", lambda *_: None), ("_persisted", lambda spec, *_args: spec),
+                ("_cache_put", cache_put or (lambda *_: None)),
+                ("_persisted", persisted or (lambda spec, *_args: spec)),
                 ("_fire_event", lambda *_: None), ("_owner_for", lambda *_: "guest"),
             ):
                 stack.enter_context(patch.object(serve, target, value))
             yield
 
-    def refine(self, source, instruction, backend, cached=None):
+    def refine(self, source, instruction, backend, cached=None, allow_conversion=False):
         req = serve.Ask(text="nearby transcript", time=1, ask=instruction, video="video",
-                        current_spec=source)
+                        current_spec=source, allow_conversion=allow_conversion)
         with self.serving(backend, cached):
             return serve.make_widget(req)
 
@@ -83,15 +84,52 @@ class RefinementTests(unittest.TestCase):
             b = serve._refinement_context(second, serve._bounded_refinement_source(second.current_spec)[0])
             self.assertNotEqual(serve._prompt_hash("video", "f.jpg", a), serve._prompt_hash("video", "f.jpg", b))
 
-    def test_source_bounding_drops_whole_cells_or_rows(self):
+    def test_oversized_sources_are_rejected_without_backend_calls(self):
         cell = "x" * 7000
-        source, error = serve._bounded_refinement_source({**NOTEBOOK, "params": {"cells": [cell, cell]}})
-        self.assertIsNone(error)
-        self.assertEqual(source["params"]["cells"], [cell])
+        notebook_source = {**NOTEBOOK, "params": {"cells": [cell, cell]}}
+        source, error = serve._bounded_refinement_source(notebook_source)
+        self.assertIsNone(source)
+        self.assertEqual(error, "the current widget is too large to refine")
         row = ["x" * 2500] * 3
-        source, error = serve._bounded_refinement_source({**SHEET, "params": {"cells": [row, row]}})
-        self.assertIsNone(error)
-        self.assertEqual(source["params"]["cells"], [row])
+        spreadsheet_source = {**SHEET, "params": {"cells": [row, row]}}
+        source, error = serve._bounded_refinement_source(spreadsheet_source)
+        self.assertIsNone(source)
+        self.assertEqual(error, "the current widget is too large to refine")
+        for oversized_source in (notebook_source, spreadsheet_source):
+            backend = FakeBackend(NOTEBOOK)
+            result = self.refine(oversized_source, "edit", backend)
+            self.assertEqual(result["error"], "the current widget is too large to refine")
+            self.assertEqual(backend.contexts, [])
+
+    def test_refinement_rejects_changed_widget_type_without_conversion(self):
+        for source, replacement in ((NOTEBOOK, SHEET), (SHEET, NOTEBOOK)):
+            backend = FakeBackend(replacement)
+            cache_put, persisted = Mock(), Mock()
+            with self.serving(backend, cache_put=cache_put, persisted=persisted):
+                result = serve.make_widget(serve.Ask(text="t", time=1, ask="edit", video="video", current_spec=source))
+            self.assertIn("changed widget type", result["error"])
+            self.assertEqual(len(backend.contexts), 1)
+            cache_put.assert_not_called()
+            persisted.assert_not_called()
+
+    def test_cached_refinement_rejects_changed_widget_type(self):
+        backend = FakeBackend(NOTEBOOK)
+        cache_put, persisted = Mock(), Mock()
+        with self.serving(backend, cached=SHEET, cache_put=cache_put, persisted=persisted):
+            result = serve.make_widget(serve.Ask(text="t", time=1, ask="edit", video="video", current_spec=NOTEBOOK))
+        self.assertIn("changed widget type", result["error"])
+        self.assertEqual(backend.contexts, [])
+        cache_put.assert_not_called()
+        persisted.assert_not_called()
+
+    def test_refinement_allows_explicit_widget_conversion(self):
+        result = self.refine(NOTEBOOK, "turn this into a spreadsheet", FakeBackend(SHEET), allow_conversion=True)
+        self.assertEqual(result["widget"], "spreadsheet")
+
+    def test_non_target_refinement_source_does_not_enforce_widget_type(self):
+        source = {**NOTEBOOK, "widget": "function_plot"}
+        result = self.refine(source, "replace it", FakeBackend(SHEET))
+        self.assertEqual(result["widget"], "spreadsheet")
 
     def test_invalid_refinement_is_not_returned_or_cached(self):
         invalid = {**NOTEBOOK, "params": {"cells": ["if True:\n print(1)\n  print(2)"]}}
