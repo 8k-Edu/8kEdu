@@ -6,7 +6,7 @@ import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
 import { restore, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
-import { resolveTimelineDuration } from './timeline.js'
+import { formatTimelineTime, hasTimelineDuration, latestPlayerDuration, resolveTimelineDuration } from './timeline.js'
 
 // API + per-video data live under the app's base path (dev.perspectivity.co/8kedu in prod, / in dev)
 const P = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -120,12 +120,19 @@ function useYouTube(videoId) {
   const player = useRef(null)
   const [time, setTime] = useState(0)
   const [playerDuration, setPlayerDuration] = useState(null)
+  const playerDurationRef = useRef(null)
   useEffect(() => {
     let disposed = false
+    let durationPolls = 0
+    playerDurationRef.current = null
     setPlayerDuration(null)
     const readDuration = (target = player.current) => {
       const nextDuration = target?.getDuration?.()
-      if (Number.isFinite(nextDuration) && nextDuration > 0) setPlayerDuration(nextDuration)
+      const currentDuration = playerDurationRef.current
+      const acceptedDuration = latestPlayerDuration(currentDuration, nextDuration)
+      if (acceptedDuration === currentDuration) return
+      playerDurationRef.current = acceptedDuration
+      setPlayerDuration(acceptedDuration)
     }
     const boot = () => {
       if (disposed || !holder.current) return
@@ -145,7 +152,8 @@ function useYouTube(videoId) {
     const poll = setInterval(() => {
       const t = player.current?.getCurrentTime?.()
       if (Number.isFinite(t)) setTime(t)
-      readDuration()
+      durationPolls += 1
+      if (!hasTimelineDuration(playerDurationRef.current) || durationPolls % 10 === 0) readDuration()
     }, 500)
     return () => {
       disposed = true
@@ -188,12 +196,7 @@ function ShareModal({ url, onClose }) {
 
 // ---------- transcript: reading surface AND creation surface ----------
 
-export const fmt = (t) => {
-  t = Math.max(0, Math.floor(t))
-  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60
-  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-           : `${m}:${String(s).padStart(2, '0')}`
-}
+export const fmt = formatTimelineTime
 
 const chip = {
   background: '#1f6feb26', color: '#4493f8', border: 'none', borderRadius: 6,
@@ -594,6 +597,7 @@ function Lecture({ videoId, role }) {
   const [concepts, setConcepts] = useState([])
   const [cues, setCues] = useState([])
   const [chapters, setChapters] = useState([])
+  const [metadata, setMetadata] = useState(null)
   const [selected, setSelected] = useState(null)
   const [followVideo, setFollowVideo] = useState(true)
   const [shareUrl, setShareUrl] = useState(null)
@@ -608,8 +612,13 @@ function Lecture({ videoId, role }) {
   const published = useRef(null)
   const { holder, time, seek, playerDuration } = useYouTube(videoId)
   const duration = useMemo(
-    () => resolveTimelineDuration(playerDuration, cues, chapters),
-    [playerDuration, cues, chapters],
+    () => resolveTimelineDuration({
+      ingestDuration: metadata?.duration,
+      playerDuration,
+      cues,
+      chapters,
+    }),
+    [metadata?.duration, playerDuration, cues, chapters],
   )
   // A video counts as analyzed if its concepts.json actually loads — the hardcoded gallery
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
@@ -663,6 +672,7 @@ function Lecture({ videoId, role }) {
     }).catch(() => { setConcepts([]); autoProcess() })
     fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => setCues([]))
     fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => setChapters([]))
+    fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => setMetadata(null))
   }, [videoId])
 
   const pinnedUntil = useRef(0)
@@ -824,6 +834,7 @@ function Lecture({ videoId, role }) {
           if (cs.length) setAnalyzed(true)
           fetch(P + `/${videoId}/transcript.json`).then(r => r.ok ? r.json() : []).then(setCues).catch(() => {})
           fetch(P + `/${videoId}/chapters.json`).then(r => r.ok ? r.json() : []).then(setChapters).catch(() => {})
+          fetch(P + `/${videoId}/metadata.json`).then(r => r.ok ? r.json() : null).then(setMetadata).catch(() => {})
         } else if (s.state === 'error') { clearInterval(poll); setToast(`processing failed: ${s.error}`) }
       } catch { /* keep polling */ }
     }, 2500)
