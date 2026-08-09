@@ -118,7 +118,8 @@ A widget minted from the video — by pointing at a region or asking in words �
 `concepts.json` when anyone loads that video. Signed-out visitors save under a shared `guest`
 owner; a signed-in account owns what it saves, and only its owner can supersede it.
 
-`KEDU_TEAM` lists the accounts allowed to change runtime behaviour through `/api/flags` —
+`KEDU_TEAM` lists the accounts allowed to change runtime behaviour through `/api/flags`, as
+addresses or a whole domain written `@example.com` —
 currently `guest_saves`, which turns guest persistence on and off without a redeploy. Being
 signed in is not enough: Supabase sign-up is open, so authorization is the server's own
 allowlist. `KEDU_SAVE_WIDGETS=0` disables persistence entirely, and notebook widgets are

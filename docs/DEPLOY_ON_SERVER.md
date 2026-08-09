@@ -109,7 +109,8 @@ NEMOTRON_API_KEY=sk-or-v1-xxxxxxxx         # same key as above
 AGENT_HANDLE=server
 
 # ── Saved widgets ─────────────────────────────────────────────────────────────
-KEDU_TEAM=you@example.com                  # accounts allowed to change /api/flags
+KEDU_TEAM=@example.com                     # accounts allowed to change /api/flags
+                                           # (addresses, or a whole domain as @example.com)
 # KEDU_SAVE_WIDGETS=0                      # stop persisting generated widgets entirely
 # KEDU_SAVE_NOTEBOOKS=1                    # share notebooks too — off by default, see §0
 ```

@@ -128,6 +128,15 @@ def _team() -> set[str]:
     return {e.strip().lower() for e in os.environ.get("KEDU_TEAM", "").split(",") if e.strip()}
 
 
+def _on_the_team(email: str) -> bool:
+    """An entry is either a whole address or a domain written `@example.com`."""
+    email = email.lower()
+    if not email:
+        return False
+    return any(email == entry or (entry.startswith("@") and email.endswith(entry))
+               for entry in _team())
+
+
 def _team_member(authorization: str | None) -> str | None:
     """A signed-in stranger is not a teammate. Supabase sign-up is open, so authentication
     alone can't gate a privileged action — the allowlist is the server's own, out of KEDU_TEAM,
@@ -136,7 +145,7 @@ def _team_member(authorization: str | None) -> str | None:
         identity = _identify(authorization)
     except CloudUnavailable:
         return None
-    return identity["handle"] if identity["email"].lower() in _team() else None
+    return identity["handle"] if _on_the_team(identity["email"]) else None
 
 
 def _persisted(spec: dict, video: str, owner: str | None, ev: dict,

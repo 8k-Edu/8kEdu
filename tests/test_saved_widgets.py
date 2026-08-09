@@ -229,6 +229,20 @@ class FlagEndpointTests(SavedWidgetTestCase):
         with patch.object(flags, "DATA", self.root):
             self.assertFalse(flags.load()["guest_saves"])
 
+    def test_a_domain_entry_admits_the_whole_team_without_listing_it(self):
+        with self._as("azehady@perspectivity.co", team="@perspectivity.co"):
+            updated = serve.set_flags(serve.FlagUpdate(guest_saves=False),
+                                      authorization="Bearer t")
+        self.assertEqual(updated["guest_saves"], False)
+
+    def test_a_domain_entry_does_not_admit_a_lookalike_address(self):
+        for impostor in ("attacker@notperspectivity.co", "perspectivity.co@evil.com",
+                         "someone@sub.perspectivity.co.evil.com"):
+            with self._as(impostor, team="@perspectivity.co"):
+                response = serve.set_flags(serve.FlagUpdate(guest_saves=False),
+                                           authorization="Bearer t")
+            self.assertEqual(response.status_code, 403, impostor)
+
     def test_a_damaged_flag_file_fails_closed_rather_than_re_enabling_guest_saves(self):
         (self.root / "flags.json").write_text("{broken")
 
