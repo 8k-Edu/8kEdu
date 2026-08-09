@@ -16,7 +16,7 @@ from unittest.mock import patch
 from PIL import Image
 
 import serve
-from agent import widget_store
+from agent import flags, widget_store
 
 SPEC = ('{"has_concept":true,"widget":"softmax","title":"Softmax",'
         '"explanation":"Normalize logits","params":{"logits":[1,2]}}')
@@ -126,15 +126,72 @@ class RegionPersistenceTests(SavedWidgetTestCase):
         self.assertEqual(self._saved(), [])
 
 
+class GuestTests(SavedWidgetTestCase):
+    def test_a_signed_out_visitor_saves_under_the_shared_guest_owner(self):
+        result = self._region(owner=widget_store.GUEST_OWNER)
+
+        self.assertTrue(result["saved"])
+        self.assertEqual([c["owner"] for c in self._saved()], [widget_store.GUEST_OWNER])
+
+    def test_no_authorization_header_resolves_to_the_guest_owner(self):
+        self.assertEqual(serve._owner_for(None), widget_store.GUEST_OWNER)
+        self.assertEqual(serve._owner_for("not a bearer token"), widget_store.GUEST_OWNER)
+        self.assertIsNone(serve._team_member(None))
+
+    def test_the_team_flag_turns_guest_saving_off_without_touching_team_saving(self):
+        with patch.object(flags, "DATA", self.root):
+            flags.update({"guest_saves": False})
+
+            guest = self._region(owner=widget_store.GUEST_OWNER)
+            self.assertFalse(guest["saved"])
+            self.assertIn("sign in", guest["save_error"])
+            self.assertEqual(self._saved(), [])
+
+            team = self._region(owner="auth-alice", cached={
+                "has_concept": True, "widget": "matrix_mul", "title": "M",
+                "params": {"a": [[1]], "b": [[2]]}, "time": 5})
+            self.assertTrue(team["saved"])
+
+    def test_a_guest_cannot_replace_a_team_members_widget(self):
+        self._region(owner="auth-alice")
+        victim = self._saved()[0]
+
+        with patch.object(widget_store, "DATA", self.root):
+            widget_store.save("vid", {"widget": "softmax", "title": "guest edit",
+                                      "params": {"logits": [7, 8]}, "time": 300},
+                              owner=widget_store.GUEST_OWNER, replaces=victim["id"])
+
+        self.assertIn(victim["id"], {c["id"] for c in self._saved()})
+
+
+class FlagEndpointTests(SavedWidgetTestCase):
+    def test_a_guest_cannot_change_the_flags(self):
+        with patch.object(flags, "DATA", self.root), \
+                patch.object(serve, "_owner_for", return_value=widget_store.GUEST_OWNER):
+            response = serve.set_flags(serve.FlagUpdate(guest_saves=False), authorization=None)
+
+        self.assertEqual(response.status_code, 403)
+        with patch.object(flags, "DATA", self.root):
+            self.assertTrue(flags.load()["guest_saves"])
+
+    def test_a_team_member_can_change_the_flags(self):
+        with patch.object(flags, "DATA", self.root), \
+                patch.object(serve, "_owner_for", return_value="auth-alice"):
+            updated = serve.set_flags(serve.FlagUpdate(guest_saves=False),
+                                      authorization="Bearer t")
+
+        self.assertEqual(updated["guest_saves"], False)
+        with patch.object(flags, "DATA", self.root):
+            self.assertFalse(flags.load()["guest_saves"])
+
+    def test_a_damaged_flag_file_falls_back_to_defaults_instead_of_raising(self):
+        (self.root / "flags.json").write_text("{broken")
+
+        with patch.object(flags, "DATA", self.root):
+            self.assertEqual(flags.load(), flags.DEFAULTS)
+
+
 class OwnershipTests(SavedWidgetTestCase):
-    def test_without_a_verified_identity_the_widget_renders_but_is_not_saved(self):
-        result = self._region(owner=None)
-
-        self.assertEqual(result["widget"], "softmax")
-        self.assertFalse(result["saved"])
-        self.assertIn("sign in", result["save_error"])
-        self.assertEqual(self._saved(), [])
-
     def test_one_owner_cannot_replace_another_owners_widget(self):
         self._region(owner="auth-alice")
         victim = self._saved()[0]
@@ -199,7 +256,7 @@ class PathAndSwitchTests(SavedWidgetTestCase):
                     self.assertRaises(widget_store.StoreUnavailable):
                 widget_store.load(bad)
 
-    def test_the_kill_switch_restores_the_old_behaviour(self):
+    def test_the_operator_kill_switch_restores_the_old_behaviour(self):
         with patch.dict(os.environ, {"KEDU_SAVE_WIDGETS": "0"}):
             result = self._region()
 

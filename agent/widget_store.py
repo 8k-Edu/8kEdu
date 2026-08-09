@@ -17,9 +17,12 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
+from agent import flags
+
 DATA = Path("data")
 FILENAME = "user_concepts.json"
 CORRUPT_FILENAME = "user_concepts.corrupt.json"
+GUEST_OWNER = "guest"  # everyone signed out shares one owner, so team widgets stay theirs
 MAX_PER_OWNER = 50
 MAX_PER_VIDEO = 300
 
@@ -94,7 +97,9 @@ def save(video: str, spec: dict, owner: str, replaces: str = "",
     if not _switch("KEDU_SAVE_WIDGETS"):
         raise SaveRejected("saving generated widgets is switched off")
     if not owner:
-        raise SaveRejected("guest widgets aren't kept — sign in to save this to the timeline")
+        raise SaveRejected("no owner to save this widget under")
+    if owner == GUEST_OWNER and not flags.load()["guest_saves"]:
+        raise SaveRejected("guest widgets aren't being kept — sign in to save this")
     widget = spec.get("widget")
     if not widget:
         raise SaveRejected("only widget specs are saved, not answers")

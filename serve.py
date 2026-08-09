@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from agent import widget_store
+from agent import flags, widget_store
 
 from analyze import (BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend,
                      openrouter_backend, resolve_frame, valid)
@@ -89,16 +89,21 @@ def _fire_event(payload: dict) -> None:
     _db.enqueue_widget_event(payload)
 
 
-def _owner_for(authorization: str | None) -> str | None:
-    """Only a verified identity may write to the shared store — see agent/widget_store.py.
+def _owner_for(authorization: str | None) -> str:
+    """Who a saved widget belongs to — see agent/widget_store.py.
     Unlike the cloud path this runs on every request, including handlers called directly in
     tests, where `authorization` is still FastAPI's unresolved Header default."""
     if not isinstance(authorization, str):
-        return None
+        return widget_store.GUEST_OWNER
     try:
         return _authenticated_handle(authorization)
     except CloudUnavailable:
-        return None
+        return widget_store.GUEST_OWNER
+
+
+def _team_member(authorization: str | None) -> str | None:
+    owner = _owner_for(authorization)
+    return None if owner == widget_store.GUEST_OWNER else owner
 
 
 def _persisted(spec: dict, video: str, owner: str | None, ev: dict,
@@ -600,6 +605,26 @@ def saved_widgets(video: str = DEFAULT_VIDEO):
         return JSONResponse(status_code=400, content={"error": str(e)})
     except widget_store.StoreUnavailable as e:
         return JSONResponse(status_code=503, content={"error": str(e)})
+
+
+class FlagUpdate(BaseModel):
+    guest_saves: bool | None = None
+
+
+@app.get("/api/flags")
+def get_flags():
+    return flags.load()
+
+
+@app.post("/api/flags")
+def set_flags(req: FlagUpdate, authorization: str | None = Header(default=None)):
+    """Team members only — a guest flipping the guest-saves flag would defeat the point."""
+    if not _team_member(authorization):
+        return JSONResponse(status_code=403, content={"error": "sign in to change this"})
+    changes = req.model_dump(exclude_none=True)
+    if not changes:
+        return flags.load()
+    return flags.update(changes)
 
 
 @app.get("/api/info")

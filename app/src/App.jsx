@@ -530,43 +530,74 @@ const PILL = {
   cursor: 'pointer', background: 'transparent', whiteSpace: 'nowrap',
 }
 
-function AccountControl({ identity, onIdentity }) {
+const PANEL = {
+  position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22',
+  border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex',
+  flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a',
+}
+const HINT = { fontSize: 11, color: '#6e7681', lineHeight: 1.45 }
+
+function AccountControl({ identity, onIdentity, flags, onFlags }) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
-  const submit = async (authenticate) => {
+  const team = identity?.mode === 'cloud'
+  const signIn = async () => {
     setBusy(true)
     setNote('')
     try {
-      const result = await authenticate(email.trim(), password)
+      const result = await signInEmail(email.trim(), password)
       if (result.error) { setNote(result.error); return }
       onIdentity(result.identity)
       setOpen(false)
       setPassword('')
     } finally { setBusy(false) }
   }
-  if (identity?.mode === 'cloud') {
-    return (
-      <button onClick={async () => { await signOut(); onIdentity(null) }}
-        title={`signed in as ${identity.handle} · click to sign out`}
-        style={{ ...PILL, color: '#56d364' }}>◕ {identity.handle}</button>
-    )
+  const setGuestSaves = async (guest_saves) => {
+    setNote('')
+    const next = await fetch(P + '/api/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${identity.token}` },
+      body: JSON.stringify({ guest_saves }),
+    }).then(r => r.json()).catch(() => ({ error: 'flags endpoint offline' }))
+    if (next.error) { setNote(next.error); return }
+    onFlags(next)
   }
   return (
     <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ ...PILL, color: '#8b949e' }}>🕶 guest · sign in ▾</button>
-      {open && (
-        <div style={{ position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22', border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ ...PILL, color: team ? '#56d364' : '#8b949e' }}>
+        {team ? `◕ ${identity.handle}` : '🕶 guest'} ▾
+      </button>
+      {open && team && (
+        <div style={PANEL}>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#e6edf3', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!flags?.guest_saves} onChange={e => setGuestSaves(e.target.checked)} />
+            guests can save widgets
+          </label>
+          <div style={HINT}>
+            Off means only signed-in team members add to a video's timeline. Guests keep
+            generating widgets either way — theirs just stop being kept.
+          </div>
+          {note && <div style={{ fontSize: 11, color: '#f85149' }}>{note}</div>}
+          <button onClick={async () => { await signOut(); onIdentity(null); setOpen(false) }}
+            style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer' }}>
+            sign out
+          </button>
+        </div>
+      )}
+      {open && !team && (
+        <div style={PANEL}>
           <div style={{ fontSize: 11.5, color: '#8b949e', lineHeight: 1.45 }}>
-            Make all the widgets you like as a guest — they just aren't kept. A team account
-            saves them onto this video's timeline for everyone who watches it.
+            {flags?.guest_saves
+              ? 'Widgets you make are kept on this video’s timeline for everyone. Sign in to keep yours under your own name, and to change that.'
+              : 'Guest widgets aren’t being kept right now — sign in to save yours to the timeline.'}
           </div>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" style={CC_INPUT} />
           <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="password" style={CC_INPUT} />
           {note && <div style={{ fontSize: 11, color: '#f85149', lineHeight: 1.4 }}>{note}</div>}
-          <button onClick={() => submit(signInEmail)} disabled={busy || !email || !password}
+          <button onClick={signIn} disabled={busy || !email || !password}
             style={{ background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer', opacity: busy || !email || !password ? .5 : 1 }}>
             {busy ? '…' : 'sign in'}
           </button>
@@ -697,6 +728,7 @@ function Lecture({ videoId, role }) {
   // list is only the initial guess, so freshly-analyzed videos aren't stuck as "not analyzed".
   const [analyzed, setAnalyzed] = useState(INGESTED.includes(videoId))
   const [identity, setIdentity] = useState(null)
+  const [featureFlags, setFeatureFlags] = useState(null)
   const [cloud, setCloud] = useState(false)
   const [billing, setBilling] = useState(null)
   const requestHeaders = useMemo(() => ({
@@ -727,6 +759,7 @@ function Lecture({ videoId, role }) {
 
   useEffect(() => {
     fetch(P + '/api/info').then(r => r.json()).then(setEngine).catch(() => setEngine(null))
+    jsonOr(P + '/api/flags', null).then(setFeatureFlags)
   }, [])
 
   useEffect(() => {
@@ -945,7 +978,7 @@ function Lecture({ videoId, role }) {
         </a>
         <span style={{ color: '#8b949e', fontSize: 13.5 }}>video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <AccountControl identity={identity} onIdentity={setIdentity} />
+          <AccountControl identity={identity} onIdentity={setIdentity} flags={featureFlags} onFlags={setFeatureFlags} />
           <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} />
           {roleCfg && (
             <span style={{ fontSize: 11.5, color: '#d2a8ff', border: '1px solid #8957e555', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
