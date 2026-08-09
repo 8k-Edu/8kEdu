@@ -42,8 +42,8 @@ class SaveRejected(Exception):
     """The store is fine; policy says this spec doesn't get persisted."""
 
 
-def _switch(name: str) -> bool:
-    return os.environ.get(name, "1") != "0"
+def _switch(name: str, default: str = "1") -> bool:
+    return os.environ.get(name, default) != "0"
 
 
 def _dir(video: str) -> Path:
@@ -65,7 +65,7 @@ def load(video: str) -> list[dict]:
         raw = _path(video).read_text()
     except FileNotFoundError:
         return []
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         raise StoreUnavailable(str(e)) from e
     return _parse(raw, video)
 
@@ -103,8 +103,11 @@ def save(video: str, spec: dict, owner: str, replaces: str = "",
     widget = spec.get("widget")
     if not widget:
         raise SaveRejected("only widget specs are saved, not answers")
-    if widget == "notebook" and not _switch("KEDU_SAVE_NOTEBOOKS"):
-        raise SaveRejected("notebook widgets are not shared")
+    # Off by default: a notebook's cells are executed on render (see Notebook in widgets.jsx),
+    # so a persisted one runs for every later visitor. Opt in only once those cells are
+    # confined to a worker with no DOM, storage or network reach.
+    if widget == "notebook" and not _switch("KEDU_SAVE_NOTEBOOKS", "0"):
+        raise SaveRejected("notebook widgets aren't shared — they execute on open")
 
     entry = {**spec, "id": spec_id(video, spec), "owner": owner,
              "created_at": datetime.now(timezone.utc).isoformat()}
@@ -113,6 +116,12 @@ def save(video: str, spec: dict, owner: str, replaces: str = "",
 
     with _lock:
         rows = _read_for_write(video)
+        # Ids are content-addressed, so two people can generate byte-identical specs. The
+        # first one to save it keeps it — otherwise a guest replaying a cached team widget
+        # would quietly take it over, and with it the right to replace it.
+        twin = next((r for r in rows if r.get("id") == entry["id"]), None)
+        if twin is not None and twin.get("owner") != owner:
+            return twin
         rows = [r for r in rows if not _superseded_by(r, entry, owner, replaces)]
         _check_caps(rows, owner)
         rows.append(entry)
@@ -129,18 +138,21 @@ def _read_for_write(video: str) -> list[dict]:
         raw = path.read_text()
     except FileNotFoundError:
         return []
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         raise StoreUnavailable(str(e)) from e
     try:
         return _parse(raw, video)
     except StoreUnavailable:
-        path.replace(_dir(video) / CORRUPT_FILENAME)
+        try:
+            path.replace(_dir(video) / CORRUPT_FILENAME)
+        except OSError:
+            pass  # a failed quarantine still must not overwrite the bad bytes
         raise
 
 
 def _superseded_by(row: dict, entry: dict, owner: str, replaces: str) -> bool:
     if row.get("id") == entry["id"]:
-        return True
+        return row.get("owner") == owner
     return bool(replaces) and row.get("id") == replaces and row.get("owner") == owner
 
 
@@ -153,10 +165,15 @@ def _check_caps(rows: list[dict], owner: str) -> None:
 
 def _write(video: str, rows: list[dict]) -> None:
     directory = _dir(video)
-    directory.mkdir(parents=True, exist_ok=True)
     tmp = directory / f"{FILENAME}.tmp"
     try:
+        directory.mkdir(parents=True, exist_ok=True)
         tmp.write_text(json.dumps(rows, indent=1))
         os.replace(tmp, _path(video))
+    except OSError as e:
+        raise StoreUnavailable(f"could not write {video}/{FILENAME}: {e}") from e
     finally:
-        tmp.unlink(missing_ok=True)
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass

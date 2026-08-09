@@ -6,6 +6,7 @@ POST /api/widget {"text": "...", "time": 1234.5, "ask": "let me play with the ma
 """
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -41,8 +42,9 @@ backend = None  # set in main()
 info = {"backend": "?", "model": "?", "mode": "?"}
 _byok_keys: dict[str, str] = {}
 _byok_lock = threading.Lock()
-_auth_cache: dict[str, str] = {}
+_auth_cache: dict[str, dict] = {}
 _auth_lock = threading.Lock()
+_AUTH_TTL_MAX = 300  # recheck with Supabase at least this often, whatever the JWT claims
 
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
@@ -56,13 +58,27 @@ def _handle() -> str:
     return os.environ.get("AGENT_HANDLE", "demo")
 
 
-def _authenticated_handle(authorization: str | None) -> str:
+def _token_expiry(token: str) -> float:
+    """`exp` out of the JWT payload, capped so a long-lived token still gets rechecked.
+    No signature check needed — Supabase already vouched for the token; this only bounds
+    how long we trust our own cache after a sign-out or a deleted account."""
+    ceiling = time.time() + _AUTH_TTL_MAX
+    try:
+        payload = token.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        return min(float(claims["exp"]), ceiling)
+    except Exception:
+        return ceiling
+
+
+def _identify(authorization: str | None) -> dict:
+    """{handle, email} for a verified Supabase session. Raises CloudUnavailable otherwise."""
     if not authorization or not authorization.startswith("Bearer "):
-        raise CloudUnavailable("cloud requires guest sign-in")
+        raise CloudUnavailable("cloud requires signing in")
     token = authorization.removeprefix("Bearer ").strip()
     with _auth_lock:
         cached = _auth_cache.get(token)
-    if cached:
+    if cached and cached["expires_at"] > time.time():
         return cached
     base_url = os.environ.get("SUPABASE_URL", "").rstrip("/")
     publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "")
@@ -74,13 +90,20 @@ def _authenticated_handle(authorization: str | None) -> str:
     )
     try:
         with urlopen(request, timeout=10) as response:
-            user_id = json.loads(response.read())["id"]
+            user = json.loads(response.read())
     except Exception as error:
-        raise CloudUnavailable("guest session expired — sign in again") from error
-    handle = f"auth-{user_id}"
+        with _auth_lock:
+            _auth_cache.pop(token, None)
+        raise CloudUnavailable("session expired — sign in again") from error
+    identity = {"handle": f"auth-{user['id']}", "email": (user.get("email") or "").lower(),
+                "expires_at": _token_expiry(token)}
     with _auth_lock:
-        _auth_cache[token] = handle
-    return handle
+        _auth_cache[token] = identity
+    return identity
+
+
+def _authenticated_handle(authorization: str | None) -> str:
+    return _identify(authorization)["handle"]
 
 
 def _fire_event(payload: dict) -> None:
@@ -101,9 +124,19 @@ def _owner_for(authorization: str | None) -> str:
         return widget_store.GUEST_OWNER
 
 
+def _team() -> set[str]:
+    return {e.strip().lower() for e in os.environ.get("KEDU_TEAM", "").split(",") if e.strip()}
+
+
 def _team_member(authorization: str | None) -> str | None:
-    owner = _owner_for(authorization)
-    return None if owner == widget_store.GUEST_OWNER else owner
+    """A signed-in stranger is not a teammate. Supabase sign-up is open, so authentication
+    alone can't gate a privileged action — the allowlist is the server's own, out of KEDU_TEAM,
+    and an unset one means nobody qualifies."""
+    try:
+        identity = _identify(authorization)
+    except CloudUnavailable:
+        return None
+    return identity["handle"] if identity["email"].lower() in _team() else None
 
 
 def _persisted(spec: dict, video: str, owner: str | None, ev: dict,
@@ -117,7 +150,8 @@ def _persisted(spec: dict, video: str, owner: str | None, ev: dict,
                                   replaces_key=replaces_key)
     except widget_store.SaveRejected as e:
         return {**spec, "saved": False, "save_error": str(e)}
-    except widget_store.StoreUnavailable as e:
+    except (widget_store.StoreUnavailable, OSError) as e:
+        # Losing the save must never cost the learner the generation they just waited for.
         _fire_event({**ev, "kind": "save", "error": str(e)[:200]})
         return {**spec, "saved": False, "save_error": "this widget couldn't be saved"}
     return {**spec, "id": entry["id"], "saved": True}
@@ -598,9 +632,11 @@ def make_region_widget(req: RegionAsk, authorization: str | None = Header(defaul
 
 @app.get("/api/saved-widgets")
 def saved_widgets(video: str = DEFAULT_VIDEO):
-    """Everything generated for this video, for the timeline to merge with concepts.json."""
+    """Everything generated for this video, for the timeline to merge with concepts.json.
+    Public, so it carries only what the widget kit renders — never who saved it."""
     try:
-        return widget_store.load(video)
+        return [{k: v for k, v in row.items() if k != "owner"}
+                for row in widget_store.load(video)]
     except widget_store.BadVideoId as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
     except widget_store.StoreUnavailable as e:
@@ -620,11 +656,15 @@ def get_flags():
 def set_flags(req: FlagUpdate, authorization: str | None = Header(default=None)):
     """Team members only — a guest flipping the guest-saves flag would defeat the point."""
     if not _team_member(authorization):
-        return JSONResponse(status_code=403, content={"error": "sign in to change this"})
+        return JSONResponse(status_code=403,
+                            content={"error": "only the team can change this"})
     changes = req.model_dump(exclude_none=True)
     if not changes:
         return flags.load()
-    return flags.update(changes)
+    try:
+        return flags.update(changes)
+    except OSError as e:
+        return JSONResponse(status_code=503, content={"error": f"could not save flags: {e}"})
 
 
 @app.get("/api/info")
