@@ -61,23 +61,14 @@ export async function restore() {
   return existing ? { uid: existing, handle: existing, mode: 'local', client: null } : null
 }
 
-// Saving a generated widget writes to a store every visitor reads, so it needs an account
-// rather than the anonymous/guest identity the remix feed gets by with.
+// Saving a generated widget writes to a store every visitor reads, so it takes a team
+// account. There is no sign-up here on purpose — accounts are provisioned in the Supabase
+// dashboard; guests keep full use of the app, their widgets just aren't kept.
 export async function signInEmail(email, password) {
   const c = await client()
   if (!c) return { error: 'accounts are not configured on this server' }
   const { data, error } = await c.auth.signInWithPassword({ email, password })
   if (error) return { error: error.message }
-  return { identity: cloud(data.session, c) }
-}
-
-export async function signUpEmail(email, password) {
-  const c = await client()
-  if (!c) return { error: 'accounts are not configured on this server' }
-  const { data, error } = await c.auth.signUp({ email, password })
-  if (error) return { error: error.message }
-  // No session means the project requires email confirmation before the account is usable.
-  if (!data.session) return { pending: 'check your email to confirm, then sign in' }
   return { identity: cloud(data.session, c) }
 }
 

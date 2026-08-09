@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import markUrl from './assets/mark.png'
 import { WIDGETS } from './widgets.jsx'
 import { buildDeckHtml, buildMarkdown, buildNotebook, download } from './exporters.js'
-import { restore, signInEmail, signInGuest, signOut, signUpEmail } from './supa.js'
+import { restore, signInEmail, signInGuest, signOut } from './supa.js'
 import { Timeline } from './Timeline.jsx'
 import { conceptKey, formatTimelineTime, hasTimelineDuration, latestPlayerDuration, mergeConcepts, resolveTimelineDuration } from './timeline.js'
 
@@ -541,7 +541,7 @@ function AccountControl({ identity, onIdentity }) {
     setNote('')
     try {
       const result = await authenticate(email.trim(), password)
-      if (result.error || result.pending) { setNote(result.error || result.pending); return }
+      if (result.error) { setNote(result.error); return }
       onIdentity(result.identity)
       setOpen(false)
       setPassword('')
@@ -556,25 +556,20 @@ function AccountControl({ identity, onIdentity }) {
   }
   return (
     <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ ...PILL, color: '#8b949e' }}>sign in to save ▾</button>
+      <button onClick={() => setOpen(o => !o)} style={{ ...PILL, color: '#8b949e' }}>🕶 guest · sign in ▾</button>
       {open && (
         <div style={{ position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22', border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a' }}>
           <div style={{ fontSize: 11.5, color: '#8b949e', lineHeight: 1.45 }}>
-            Widgets you generate are kept on this video's timeline for everyone who watches it — that needs an account.
+            Make all the widgets you like as a guest — they just aren't kept. A team account
+            saves them onto this video's timeline for everyone who watches it.
           </div>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" style={CC_INPUT} />
           <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="password" style={CC_INPUT} />
           {note && <div style={{ fontSize: 11, color: '#f85149', lineHeight: 1.4 }}>{note}</div>}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => submit(signInEmail)} disabled={busy || !email || !password}
-              style={{ flex: 1, background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer', opacity: busy || !email || !password ? .5 : 1 }}>
-              {busy ? '…' : 'sign in'}
-            </button>
-            <button onClick={() => submit(signUpEmail)} disabled={busy || !email || !password}
-              style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>
-              create account
-            </button>
-          </div>
+          <button onClick={() => submit(signInEmail)} disabled={busy || !email || !password}
+            style={{ background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: 6, fontSize: 12, cursor: 'pointer', opacity: busy || !email || !password ? .5 : 1 }}>
+            {busy ? '…' : 'sign in'}
+          </button>
         </div>
       )}
     </span>

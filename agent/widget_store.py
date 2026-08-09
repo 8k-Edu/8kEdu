@@ -94,7 +94,7 @@ def save(video: str, spec: dict, owner: str, replaces: str = "",
     if not _switch("KEDU_SAVE_WIDGETS"):
         raise SaveRejected("saving generated widgets is switched off")
     if not owner:
-        raise SaveRejected("sign in to save this widget")
+        raise SaveRejected("guest widgets aren't kept — sign in to save this to the timeline")
     widget = spec.get("widget")
     if not widget:
         raise SaveRejected("only widget specs are saved, not answers")
