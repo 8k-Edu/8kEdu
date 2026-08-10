@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import subprocess
 import sys
 import threading
@@ -27,8 +28,8 @@ from pydantic import BaseModel
 
 from agent import flags, widget_store
 
-from analyze import (BACKEND_CHOICES, compose_system, detect_genre, extract_json, make_backend,
-                     openrouter_backend, resolve_frame, valid)
+from analyze import (BACKEND_CHOICES, OpenAIBackend, compose_system, detect_genre, extract_json,
+                     make_backend, openrouter_backend, resolve_frame, valid)
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -45,6 +46,33 @@ _byok_lock = threading.Lock()
 _auth_cache: dict[str, dict] = {}
 _auth_lock = threading.Lock()
 _AUTH_TTL_MAX = 300  # recheck with Supabase at least this often, whatever the JWT claims
+
+# Admin-set custom cloud inference endpoint (e.g. an in-house DGX server). Server-wide:
+# both live widget generation and the ingest keyframe sweep use it when set. base_url/model
+# are non-secret; the api_key is a per-deploy operator credential (like .env), so we persist
+# the lot to a gitignored file so it survives a restart.
+_CLOUD_CFG_FILE = DATA / ".cloud_endpoint.json"
+_cloud_cfg_lock = threading.Lock()
+_cloud_cfg: dict[str, str] = {}
+
+
+def _load_cloud_cfg() -> None:
+    global _cloud_cfg
+    try:
+        _cloud_cfg = json.loads(_CLOUD_CFG_FILE.read_text())
+    except Exception:
+        _cloud_cfg = {}
+
+
+_load_cloud_cfg()
+
+
+def _public_cloud_cfg() -> dict:
+    """What the UI may see — endpoint + model, never the key."""
+    with _cloud_cfg_lock:
+        cfg = dict(_cloud_cfg)
+    return {"configured": bool(cfg.get("base_url")),
+            "base_url": cfg.get("base_url", ""), "model": cfg.get("model", "")}
 
 # R4 — frame-level cache. Identical (video, frame, genre, ask) across users → no VLM call.
 try:
@@ -383,6 +411,13 @@ def _cloud_ctx(handle: str):
     """Resolve a cloud (OpenRouter) backend for this learner.
     Returns (backend, metered, model_name). BYOK key → unmetered; else platform key + credits.
     Raises CloudUnavailable when the learner can't pay (no key, no credits, billing offline)."""
+    # A custom endpoint (e.g. the in-house DGX) is server-wide and free — use it for everyone,
+    # unmetered, ahead of OpenRouter. Set from the dashboard settings by an admin.
+    with _cloud_cfg_lock:
+        cfg = dict(_cloud_cfg)
+    if cfg.get("base_url"):
+        b = OpenAIBackend(cfg["base_url"], cfg.get("api_key") or "none", cfg.get("model") or "default")
+        return b, False, cfg.get("model") or "custom"
     if not _db:
         raise CloudUnavailable("billing offline")
     mdl = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
@@ -708,7 +743,17 @@ def _run_ingest(vid: str, url: str, limit: int, backend: str):
     # cloud (OpenRouter) batches frames concurrently → a live drop finishes in ~30-60s,
     # vs. a sequential local reasoning model taking minutes. Fan out when on cloud.
     env = {**os.environ}
-    if backend == "openrouter":
+    with _cloud_cfg_lock:
+        cfg = dict(_cloud_cfg)
+    if cfg.get("base_url"):
+        # custom endpoint (e.g. an in-house DGX) → analyze's generic OpenAI-compatible
+        # backend, run host-side (the containment sandbox only allowlists OpenRouter).
+        backend = "openai"
+        env["KEDU_BASE_URL"] = cfg["base_url"]
+        env["KEDU_MODEL"] = cfg.get("model") or "default"
+        env["KEDU_API_KEY"] = cfg.get("api_key") or "none"
+        env["KEDU_ALLOW_CLOUD"] = "1"
+    if backend in ("openrouter", "openai"):
         env["KEDU_CONCURRENCY"] = env.get("KEDU_CONCURRENCY", "6")
     try:
         vd = ROOT / "data" / vid
@@ -719,7 +764,7 @@ def _run_ingest(vid: str, url: str, limit: int, backend: str):
         # untrusted frames is the part worth containing. KEDU_CONTAINED=1 runs analyze.py
         # inside the Docker egress-allowlist sandbox (deploy/containment/) — cloud analog of
         # the OpenShell/scoutclaw demo. Off by default → the plain host path.
-        contained = os.environ.get("KEDU_CONTAINED") == "1"
+        contained = os.environ.get("KEDU_CONTAINED") == "1" and not cfg.get("base_url")
         _set_job(vid, step="analyzing frames → widgets" + (" (contained)" if contained else ""),
                  contained=contained)
         if contained:
@@ -776,16 +821,20 @@ def billing(authorization: str | None = Header(default=None)):
     if not _db:
         return {"credits": 0, "has_own_key": False, "cloud_available": False}
     try:
-        h = _authenticated_handle(authorization)
+        ident = _identify(authorization)
+        h = ident["handle"]
     except CloudUnavailable as error:
         return {"credits": 0, "has_own_key": False, "cloud_available": False,
                 "authenticated": False, "error": error.reason}
     b = _db.user_billing(h)
     with _byok_lock:
         b["has_own_key"] = bool(_byok_keys.get(h))
-    b["cloud_available"] = b["has_own_key"] or bool(os.environ.get("OPENROUTER_API_KEY"))
+    cfg = _public_cloud_cfg()
+    b["cloud_endpoint"] = cfg
+    b["is_admin"] = bool(ident.get("is_admin"))
+    b["cloud_available"] = cfg["configured"] or b["has_own_key"] or bool(os.environ.get("OPENROUTER_API_KEY"))
     b["authenticated"] = True
-    b["model"] = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+    b["model"] = cfg["model"] or os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
     return b
 
 
@@ -809,6 +858,67 @@ def set_openrouter_key(req: KeyReq, authorization: str | None = Header(default=N
     result = _db.user_billing(h)
     result["has_own_key"] = bool(key)
     return {"ok": True, **result}
+
+
+class LoginReq(BaseModel):
+    user: str = ""
+    password: str = ""
+
+
+@app.post("/api/login")
+def login(req: LoginReq):
+    """Global operator login — no Supabase. Mints a session token that _identify() honors
+    from cache, so cloud + admin settings work without an anonymous sign-in."""
+    admin_user = os.environ.get("KEDU_ADMIN_USER", "")  # read at call time — .env loads after import
+    admin_pass = os.environ.get("KEDU_ADMIN_PASS", "")
+    if not admin_user or not admin_pass:
+        return {"ok": False, "error": "admin login is not configured on this server"}
+    if not secrets.compare_digest(req.user, admin_user) or not secrets.compare_digest(req.password, admin_pass):
+        return {"ok": False, "error": "wrong username or password"}
+    token = "kedu-admin-" + secrets.token_urlsafe(24)
+    identity = {"handle": "8kedu-admin", "email": "", "is_admin": True,
+                "expires_at": time.time() + 30 * 24 * 3600}
+    with _auth_lock:
+        _auth_cache[token] = identity
+    return {"ok": True, "token": token, "handle": "8kedu-admin", "is_admin": True}
+
+
+class CloudEndpointReq(BaseModel):
+    base_url: str = ""
+    model: str = ""
+    api_key: str = ""
+
+
+@app.get("/api/cloud-endpoint")
+def get_cloud_endpoint():
+    """Current custom endpoint (endpoint + model only — never the key)."""
+    return _public_cloud_cfg()
+
+
+@app.post("/api/cloud-endpoint")
+def set_cloud_endpoint(req: CloudEndpointReq, authorization: str | None = Header(default=None)):
+    """Admin-only: point cloud inference at a custom OpenAI-compatible endpoint (e.g. the
+    in-house DGX), or clear it (empty base_url) to fall back to OpenRouter. Server-wide."""
+    try:
+        if not _identify(authorization).get("is_admin"):
+            return {"ok": False, "error": "admin sign-in required"}
+    except CloudUnavailable as error:
+        return {"ok": False, "error": error.reason}
+    base_url = req.base_url.strip()
+    global _cloud_cfg
+    if base_url:
+        if not re.match(r"^https?://", base_url):
+            return {"ok": False, "error": "endpoint must start with http:// or https://"}
+        cfg = {"base_url": base_url, "model": req.model.strip() or "default", "api_key": req.api_key.strip()}
+    else:
+        cfg = {}
+    with _cloud_cfg_lock:
+        _cloud_cfg = cfg
+        try:
+            _CLOUD_CFG_FILE.write_text(json.dumps(cfg))
+        except Exception:
+            pass
+    return {"ok": True, **_public_cloud_cfg()}
 
 
 def main() -> None:

@@ -607,13 +607,28 @@ function AccountControl({ identity, onIdentity, flags, onFlags }) {
   )
 }
 
-function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refreshBilling }) {
+function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refreshBilling, onIdentity }) {
   const [open, setOpen] = useState(false)
   const [key, setKey] = useState('')
   const [saving, setSaving] = useState(false)
   const [keyError, setKeyError] = useState('')
+  const [user, setUser] = useState(''); const [pass, setPass] = useState(''); const [authErr, setAuthErr] = useState('')
+  const [epUrl, setEpUrl] = useState(''); const [epModel, setEpModel] = useState(''); const [epKey, setEpKey] = useState(''); const [epErr, setEpErr] = useState('')
+  const authed = !!identity?.token
+  const ep = billing?.cloud_endpoint
   const credits = billing?.credits
-  const broke = cloud && !billing?.has_own_key && typeof credits === 'number' && credits <= 0
+  const broke = cloud && authed && !billing?.has_own_key && !ep?.configured && typeof credits === 'number' && credits <= 0
+  useEffect(() => { if (cloud && !authed) setOpen(true) }, [cloud, authed])
+  const adminLogin = async () => {
+    setSaving(true); setAuthErr('')
+    try {
+      const r = await fetch(P + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: user.trim(), password: pass }) })
+      const d = await r.json()
+      if (!d.ok) { setAuthErr(d.error || 'login failed'); return }
+      onIdentity({ token: d.token, handle: d.handle, is_admin: d.is_admin, mode: 'cloud', client: null })
+      setPass(''); refreshBilling()
+    } finally { setSaving(false) }
+  }
   const saveKey = async (value) => {
     setSaving(true)
     try {
@@ -627,6 +642,17 @@ function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refresh
       setKeyError(''); setKey(''); refreshBilling()
     } finally { setSaving(false) }
   }
+  const saveEndpoint = async (clear) => {
+    setSaving(true); setEpErr('')
+    try {
+      const body = clear ? { base_url: '' } : { base_url: epUrl.trim(), model: epModel.trim(), api_key: epKey.trim() }
+      const r = await fetch(P + '/api/cloud-endpoint', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${identity.token}` }, body: JSON.stringify(body) })
+      const d = await r.json()
+      if (!d.ok) { setEpErr(d.error || 'could not set endpoint'); return }
+      setEpUrl(''); setEpModel(''); setEpKey(''); refreshBilling()
+    } finally { setSaving(false) }
+  }
+  const label = ep?.configured ? `⚡ ${ep.model || 'custom'}` : billing?.has_own_key ? '🔑 your key' : `◈ ${credits ?? '…'} credits`
   return (
     <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       <span style={{ display: 'inline-flex', border: '1px solid #30363d', borderRadius: 999, overflow: 'hidden', fontSize: 11.5 }}>
@@ -634,26 +660,52 @@ function CloudControl({ identity, cloud, setCloud, enableCloud, billing, refresh
         <button onClick={enableCloud} style={{ background: cloud ? '#1f6feb' : 'transparent', color: cloud ? '#fff' : '#8b949e', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>☁ cloud</button>
       </span>
       {cloud && (
-        <button onClick={() => setOpen(o => !o)} title="credits & OpenRouter key"
+        <button onClick={() => setOpen(o => !o)} title="cloud inference settings"
           style={{ fontSize: 11.5, color: broke ? '#f85149' : '#56d364', border: `1px solid ${broke ? '#f85149' : '#30363d'}`, borderRadius: 999, padding: '4px 10px', cursor: 'pointer', background: 'transparent', whiteSpace: 'nowrap' }}>
-          {billing?.has_own_key ? '🔑 your key' : `◈ ${credits ?? '…'} credits`} ▾
+          {authed ? label : '🔒 sign in'} ▾
         </button>
       )}
       {open && cloud && (
-        <div style={{ position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 268, background: '#161b22', border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#8b949e' }}><span>Account</span><span style={{ fontFamily: mono }}>{identity?.handle || 'signing in…'}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8b949e' }}>
-            <span>Credits</span><b style={{ color: broke ? '#f85149' : '#56d364' }}>{credits ?? '…'}</b>
-          </div>
-          <div style={{ height: 1, background: '#30363d', margin: '2px 0' }} />
-          <div style={{ fontSize: 11.5, color: '#8b949e' }}>Your OpenRouter key {billing?.has_own_key ? '· set (unmetered)' : '· optional → unmetered'}</div>
-          <input value={key} onChange={e => setKey(e.target.value)} type="password" placeholder="sk-or-v1-…" style={CC_INPUT} />
-          {keyError && <div style={{ fontSize: 11, color: '#f85149' }}>{keyError}</div>}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => saveKey(key)} disabled={saving || !key} style={{ flex: 1, background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: '6px', fontSize: 12, cursor: key ? 'pointer' : 'default', opacity: key ? 1 : .5 }}>{saving ? 'saving…' : 'save key'}</button>
-            {billing?.has_own_key && <button onClick={() => saveKey('')} style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>clear</button>}
-          </div>
-          <div style={{ fontSize: 10.5, color: '#6e7681', lineHeight: 1.45 }}>Cloud runs on OpenRouter — 1 credit per generation. Bring your own key for unmetered use; it stays only in this server session and is never saved. Local is always free.</div>
+        <div style={{ position: 'absolute', right: 0, top: '135%', zIndex: 30, width: 288, background: '#161b22', border: '1px solid #30363d', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 9, boxShadow: '0 10px 30px #000a' }}>
+          {!authed ? (
+            <>
+              <div style={{ fontSize: 11.5, color: '#8b949e' }}>Operator sign-in unlocks cloud generation.</div>
+              <input value={user} onChange={e => setUser(e.target.value)} placeholder="username" style={CC_INPUT} />
+              <input value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && adminLogin()} type="password" placeholder="password" style={CC_INPUT} />
+              {authErr && <div style={{ fontSize: 11, color: '#f85149' }}>{authErr}</div>}
+              <button onClick={adminLogin} disabled={saving || !user || !pass} style={{ background: '#1f6feb', color: '#fff', border: 'none', borderRadius: 6, padding: '6px', fontSize: 12, cursor: (user && pass) ? 'pointer' : 'default', opacity: (user && pass) ? 1 : .5 }}>{saving ? 'signing in…' : 'sign in'}</button>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#8b949e' }}><span>Account</span><span style={{ fontFamily: mono }}>{identity?.handle || '…'}</span></div>
+              {ep?.configured && <div style={{ fontSize: 11, color: '#56d364' }}>Inference → {ep.model || 'custom'} <span style={{ color: '#6e7681' }}>({ep.base_url})</span></div>}
+              {!ep?.configured && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8b949e' }}><span>Credits</span><b style={{ color: broke ? '#f85149' : '#56d364' }}>{credits ?? '…'}</b></div>}
+              {billing?.is_admin && (
+                <>
+                  <div style={{ height: 1, background: '#30363d', margin: '2px 0' }} />
+                  <div style={{ fontSize: 11.5, color: '#8b949e' }}>Custom inference endpoint <span style={{ color: '#6e7681' }}>(OpenAI-compatible, e.g. DGX)</span></div>
+                  <input value={epUrl} onChange={e => setEpUrl(e.target.value)} placeholder="https://dgx.local:8000/v1" style={CC_INPUT} />
+                  <input value={epModel} onChange={e => setEpModel(e.target.value)} placeholder="model name" style={CC_INPUT} />
+                  <input value={epKey} onChange={e => setEpKey(e.target.value)} type="password" placeholder="api key (optional)" style={CC_INPUT} />
+                  {epErr && <div style={{ fontSize: 11, color: '#f85149' }}>{epErr}</div>}
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => saveEndpoint(false)} disabled={saving || !epUrl} style={{ flex: 1, background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: '6px', fontSize: 12, cursor: epUrl ? 'pointer' : 'default', opacity: epUrl ? 1 : .5 }}>{saving ? 'saving…' : 'use this endpoint'}</button>
+                    {ep?.configured && <button onClick={() => saveEndpoint(true)} style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>clear</button>}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#6e7681', lineHeight: 1.45 }}>Server-wide: drives both live widgets and video processing. Applies to everyone until cleared.</div>
+                  <div style={{ height: 1, background: '#30363d', margin: '2px 0' }} />
+                </>
+              )}
+              <div style={{ fontSize: 11.5, color: '#8b949e' }}>Your OpenRouter key {billing?.has_own_key ? '· set (unmetered)' : '· optional → unmetered'}</div>
+              <input value={key} onChange={e => setKey(e.target.value)} type="password" placeholder="sk-or-v1-…" style={CC_INPUT} />
+              {keyError && <div style={{ fontSize: 11, color: '#f85149' }}>{keyError}</div>}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => saveKey(key)} disabled={saving || !key} style={{ flex: 1, background: '#238636', color: '#fff', border: 'none', borderRadius: 6, padding: '6px', fontSize: 12, cursor: key ? 'pointer' : 'default', opacity: key ? 1 : .5 }}>{saving ? 'saving…' : 'save key'}</button>
+                {billing?.has_own_key && <button onClick={() => saveKey('')} style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>clear</button>}
+              </div>
+              <div style={{ fontSize: 10.5, color: '#6e7681', lineHeight: 1.45 }}>Default cloud runs on OpenRouter — 1 credit per generation. A custom endpoint or your own key is unmetered. Keys stay in this server session only. Local is always free.</div>
+            </>
+          )}
         </div>
       )}
     </span>
@@ -742,12 +794,10 @@ function Lecture({ videoId, role }) {
   useEffect(() => { restore().then(setIdentity) }, [])
   useEffect(() => { refreshBilling() }, [refreshBilling])
   const enableCloud = async () => {
+    // Try the existing session; if there's none, still open cloud so CloudControl can
+    // offer the operator (8kedu) login — no Supabase guest sign-in required.
     const nextIdentity = identity?.token ? identity : await signInGuest()
-    if (!nextIdentity?.token) {
-      setToast('cloud credits need an account — use “sign in to save”; local inference is still available')
-      return
-    }
-    setIdentity(nextIdentity)
+    if (nextIdentity?.token) setIdentity(nextIdentity)
     setCloud(true)
   }
   const applyBilling = (spec) => {
@@ -979,7 +1029,7 @@ function Lecture({ videoId, role }) {
         <span style={{ color: '#8b949e', fontSize: 13.5 }}>video → interactive learning dashboard</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <AccountControl identity={identity} onIdentity={setIdentity} flags={featureFlags} onFlags={setFeatureFlags} />
-          <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} />
+          <CloudControl identity={identity} cloud={cloud} setCloud={setCloud} enableCloud={enableCloud} billing={billing} refreshBilling={refreshBilling} onIdentity={setIdentity} />
           {roleCfg && (
             <span style={{ fontSize: 11.5, color: '#d2a8ff', border: '1px solid #8957e555', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
               {roleCfg.icon} {roleCfg.label}
