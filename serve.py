@@ -36,7 +36,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 DATA = Path("data")
 DEFAULT_VIDEO = "42L1q1Z4Ojc"  # metadata only — its keyframes are neither on disk nor backfilled
-PROMPT_VERSION = "v1"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
+PROMPT_VERSION = "v2"  # bump when SYSTEM/prompt changes → new cache keys, no stale serves
 WIDGET_MAX_PX = int(os.environ.get("KEDU_MAX_PX", "768"))
 _frames_cache: dict[str, list] = {}
 backend = None  # set in main()
@@ -290,6 +290,7 @@ class Ask(BaseModel):
     cloud: bool = False
     replaces: str = ""       # id of the saved widget this refinement supersedes
     replaces_key: str = ""   # pipeline concepts carry no id — see mergeConcepts in timeline.js
+    current_spec: dict | None = None
 
 
 def frames_for(video: str) -> list[dict]:
@@ -384,11 +385,11 @@ def _frame_path(ev: dict, video: str, fr: dict) -> Path:
     return src
 
 
-SS_MAX_ROWS, SS_MAX_COLS = 5, 4
+SS_MAX_ROWS, SS_MAX_COLS = 5, 8
 
 
 def _clamp_spreadsheet(spec: dict) -> dict:
-    """Small local models ignore the prompt's 'at most 4x5' hint, so enforce it here:
+    """Small local models ignore the prompt's 'at most 8x5' hint, so enforce it here:
     trim the grid to SS_MAX_ROWS x SS_MAX_COLS and drop an out-of-range highlight."""
     if spec.get("widget") != "spreadsheet":
         return spec
@@ -400,6 +401,59 @@ def _clamp_spreadsheet(spec: dict) -> dict:
     if isinstance(hi, dict) and (hi.get("row", 0) >= len(p["cells"]) or hi.get("col", 0) >= SS_MAX_COLS):
         p["highlight"] = None
     return spec
+
+
+REFINEMENT_SOURCE_MAX_CHARS = 12000
+
+
+def _source_size(spec: dict) -> int:
+    return len(json.dumps(spec, ensure_ascii=False, separators=(",", ":")))
+
+
+def _bounded_refinement_source(source: dict) -> tuple[dict | None, str | None]:
+    try:
+        spec = json.loads(json.dumps(source))
+    except (TypeError, ValueError):
+        return None, "the current widget could not be serialized"
+    params = spec.get("params")
+    if not isinstance(params, dict):
+        return None, "the current widget has no editable parameters"
+    widget = spec.get("widget")
+    cells = params.get("cells")
+    if widget in {"notebook", "spreadsheet"} and not isinstance(cells, list):
+        return None, "the current widget has invalid editable parameters"
+    editable_cells = cells if widget in {"notebook", "spreadsheet"} else []
+    for cell in editable_cells:
+        if widget == "notebook" and not isinstance(cell, str):
+            return None, "the current notebook has an invalid cell"
+        if widget == "spreadsheet" and not isinstance(cell, list):
+            return None, "the current spreadsheet has an invalid row"
+    if _source_size(spec) > REFINEMENT_SOURCE_MAX_CHARS:
+        return None, "the current widget is too large to refine"
+    return spec, None
+
+
+def _refinement_context(req: Ask, source: dict) -> str:
+    return (
+        f'Teacher is saying: "{req.text[:1200]}"\n\n'
+        f'The learner wants this edit: "{req.ask[:300]}"\n\n'
+        "Edit this authoritative current widget spec and return a complete replacement spec. "
+        "Make the smallest change that fulfills the edit. Keep the widget type unchanged — a "
+        "different type means starting a new widget, not refining this one. Preserve every unrelated "
+        "field. For notebooks, repair the supplied cells "
+        "when needed instead of replacing them with an unrelated example. For spreadsheets, preserve existing "
+        "rows and columns except for the requested rename or addition.\n\n"
+        f"CURRENT WIDGET SPEC:\n{json.dumps(source, ensure_ascii=False, separators=(',', ':'))}\n\n"
+        "Emit the complete replacement concept spec JSON."
+    )
+
+
+def _refinement_widget_type_error(source: dict | None, spec: dict) -> str | None:
+    """Refining never converts: a different widget type means building a new widget instead."""
+    source_widget = source.get("widget") if source else None
+    if source_widget and spec.get("widget") != source_widget:
+        return "the refinement changed widget type; your current widget was unchanged"
+    return None
 
 
 class CloudUnavailable(Exception):
@@ -449,13 +503,20 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     fr = nearest_frame(req.video, req.time)
     if fr is None:
         return _no_manifest(req.video, req.time, "widget")
-    context = (
-        f'Teacher is saying: "{req.text[:1200]}"\n\n'
-        f'The student selected that passage and asked for an interactive widget'
-        + (f': "{req.ask[:300]}"' if req.ask else ".")
-        + "\nHonor the student's request if it maps to an available widget type."
-        + "\nEmit the concept spec JSON."
-    )
+    source = None
+    if req.current_spec is not None:
+        source, source_error = _bounded_refinement_source(req.current_spec)
+        if source_error:
+            return {"error": source_error}
+        context = _refinement_context(req, source)
+    else:
+        context = (
+            f'Teacher is saying: "{req.text[:1200]}"\n\n'
+            f'The student selected that passage and asked for an interactive widget'
+            + (f': "{req.ask[:300]}"' if req.ask else ".")
+            + "\nHonor the student's request if it maps to an available widget type."
+            + "\nEmit the concept spec JSON."
+        )
     handle = _handle()
     use, metered, model_name = backend, False, info.get("model")
     if req.cloud:
@@ -477,7 +538,16 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     cached = _cache_get_first(cands)
     ev["t_cache_lookup_ms"] = _ms(t0)
 
+    if cached is not None and cached.get("widget") and not valid(cached):
+        cached = None
+
     if cached is not None:
+        refinement_error = _refinement_widget_type_error(source, cached)
+        if refinement_error:
+            ev.update(cache_hit=True, spec_valid=False, widget_kind=cached.get("widget", "answer"),
+                      error=refinement_error, t_total_ms=_ms(t_start))
+            _fire_event(ev)
+            return {"error": refinement_error}
         ev.update(cache_hit=True, spec_valid=("widget" in cached),
                   widget_kind=cached.get("widget", "answer"),
                   t_backend_ask_ms=0, t_parse_validate_ms=0,
@@ -527,6 +597,11 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
     ev["cache_hit"] = False
 
     if not is_valid:
+        if source is not None:
+            ev.update(spec_valid=False, widget_kind=(spec or {}).get("widget", "none"),
+                      error="invalid widget refinement", t_total_ms=_ms(t_start))
+            _fire_event(ev)
+            return {"error": "the refinement returned an invalid widget; your current widget was unchanged"}
         # not manipulable — still be useful: return the model's explanation as an answer card
         answer = (spec or {}).get("explanation") or raw.strip()[:600]
         if answer:
@@ -539,7 +614,21 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
                   error="no widget found for this moment", t_total_ms=_ms(t_start))
         _fire_event(ev)
         return {"error": "no widget found for this moment", "raw": raw[:400]}
-    spec = _clamp_spreadsheet(spec)
+    # The grid ceiling exists to keep a freshly generated sheet small. A refinement starts from
+    # a sheet the learner already has, so clamping there would silently delete their rows.
+    if source is None:
+        spec = _clamp_spreadsheet(spec)
+    if not valid(spec):
+        ev.update(spec_valid=False, widget_kind=spec.get("widget", "none"),
+                  error="invalid normalized widget", t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return {"error": "the widget could not be validated"}
+    refinement_error = _refinement_widget_type_error(source, spec)
+    if refinement_error:
+        ev.update(spec_valid=False, widget_kind=spec.get("widget", "none"),
+                  error=refinement_error, t_total_ms=_ms(t_start))
+        _fire_event(ev)
+        return {"error": refinement_error}
     spec["time"] = req.time
     spec["frame"] = fr["file"]
     spec["user_made"] = True
