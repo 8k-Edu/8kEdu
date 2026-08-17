@@ -137,6 +137,8 @@
   /* throughput panel reads the opposite way — longer bar = faster (frames/s) */
   .tput .row{grid-template-columns:112px 1fr 78px;}
   .tput .stg{white-space:nowrap;}
+  body:has(section:target) .wrap > :not(section:target){display:none;}
+  body:has(section:target) section:target{margin-top:0;}
 
   @media (max-width:720px){
     .heroes{grid-template-columns:1fr;} .ledger{grid-template-columns:1fr;}
@@ -247,7 +249,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="throughput">
     <div class="head">
       <h2>Concurrent offline sweep — PagedAttention batching scales further</h2>
       <div class="hint">throughput · longer bar = faster · read the <b>ratio</b> (absolute fps is host-dependent)</div>
@@ -288,7 +290,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="paged-attention">
     <div class="head">
       <h2>What PagedAttention actually buys — A/B on the same host</h2>
       <div class="hint"><code>VLLM_METAL_USE_PAGED_ATTENTION</code> off vs on · vllm-metal 0.3.0</div>
@@ -386,6 +388,9 @@
         <span class="badge">${factor}</span></div>
       ${rels}${ghost}</div>`;
   }).join("");
+
+  const anchor = document.getElementById(location.hash.slice(1));
+  if(anchor) requestAnimationFrame(()=>anchor.scrollIntoView());
 
   const root = document.documentElement, btn = document.getElementById("themeBtn");
   btn.addEventListener("click", ()=>{
