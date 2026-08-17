@@ -263,7 +263,6 @@ class Ask(BaseModel):
     replaces: str = ""       # id of the saved widget this refinement supersedes
     replaces_key: str = ""   # pipeline concepts carry no id — see mergeConcepts in timeline.js
     current_spec: dict | None = None
-    allow_conversion: bool = False
 
 
 def frames_for(video: str) -> list[dict]:
@@ -407,12 +406,12 @@ def _bounded_refinement_source(source: dict) -> tuple[dict | None, str | None]:
 
 
 def _refinement_context(req: Ask, source: dict) -> str:
-    conversion = "A widget type conversion is allowed for this edit." if req.allow_conversion else "Keep the widget type unchanged."
     return (
         f'Teacher is saying: "{req.text[:1200]}"\n\n'
         f'The learner wants this edit: "{req.ask[:300]}"\n\n'
         "Edit this authoritative current widget spec and return a complete replacement spec. "
-        f"Make the smallest change that fulfills the edit. {conversion} Preserve every unrelated "
+        "Make the smallest change that fulfills the edit. Keep the widget type unchanged — a "
+        "different type means starting a new widget, not refining this one. Preserve every unrelated "
         "field. For notebooks, repair the supplied cells "
         "when needed instead of replacing them with an unrelated example. For spreadsheets, preserve existing "
         "rows and columns except for the requested rename or addition.\n\n"
@@ -421,9 +420,10 @@ def _refinement_context(req: Ask, source: dict) -> str:
     )
 
 
-def _refinement_widget_type_error(req: Ask, source: dict | None, spec: dict) -> str | None:
+def _refinement_widget_type_error(source: dict | None, spec: dict) -> str | None:
+    """Refining never converts: a different widget type means building a new widget instead."""
     source_widget = source.get("widget") if source else None
-    if source_widget in {"notebook", "spreadsheet"} and not req.allow_conversion and spec.get("widget") != source_widget:
+    if source_widget and spec.get("widget") != source_widget:
         return "the refinement changed widget type; your current widget was unchanged"
     return None
 
@@ -507,7 +507,7 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
         cached = None
 
     if cached is not None:
-        refinement_error = _refinement_widget_type_error(req, source, cached)
+        refinement_error = _refinement_widget_type_error(source, cached)
         if refinement_error:
             ev.update(cache_hit=True, spec_valid=False, widget_kind=cached.get("widget", "answer"),
                       error=refinement_error, t_total_ms=_ms(t_start))
@@ -579,13 +579,16 @@ def make_widget(req: Ask, authorization: str | None = Header(default=None)):
                   error="no widget found for this moment", t_total_ms=_ms(t_start))
         _fire_event(ev)
         return {"error": "no widget found for this moment", "raw": raw[:400]}
-    spec = _clamp_spreadsheet(spec)
+    # The grid ceiling exists to keep a freshly generated sheet small. A refinement starts from
+    # a sheet the learner already has, so clamping there would silently delete their rows.
+    if source is None:
+        spec = _clamp_spreadsheet(spec)
     if not valid(spec):
         ev.update(spec_valid=False, widget_kind=spec.get("widget", "none"),
                   error="invalid normalized widget", t_total_ms=_ms(t_start))
         _fire_event(ev)
         return {"error": "the widget could not be validated"}
-    refinement_error = _refinement_widget_type_error(req, source, spec)
+    refinement_error = _refinement_widget_type_error(source, spec)
     if refinement_error:
         ev.update(spec_valid=False, widget_kind=spec.get("widget", "none"),
                   error=refinement_error, t_total_ms=_ms(t_start))

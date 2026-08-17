@@ -42,9 +42,9 @@ class RefinementTests(unittest.TestCase):
                 stack.enter_context(patch.object(serve, target, value))
             yield
 
-    def refine(self, source, instruction, backend, cached=None, allow_conversion=False):
+    def refine(self, source, instruction, backend, cached=None):
         req = serve.Ask(text="nearby transcript", time=1, ask=instruction, video="video",
-                        current_spec=source, allow_conversion=allow_conversion)
+                        current_spec=source)
         with self.serving(backend, cached):
             return serve.make_widget(req)
 
@@ -101,8 +101,9 @@ class RefinementTests(unittest.TestCase):
             self.assertEqual(result["error"], "the current widget is too large to refine")
             self.assertEqual(backend.contexts, [])
 
-    def test_refinement_rejects_changed_widget_type_without_conversion(self):
-        for source, replacement in ((NOTEBOOK, SHEET), (SHEET, NOTEBOOK)):
+    def test_refinement_rejects_changed_widget_type_for_every_source_type(self):
+        plot = {**NOTEBOOK, "widget": "function_plot"}
+        for source, replacement in ((NOTEBOOK, SHEET), (SHEET, NOTEBOOK), (plot, SHEET)):
             backend = FakeBackend(replacement)
             cache_put, persisted = Mock(), Mock()
             with self.serving(backend, cache_put=cache_put, persisted=persisted):
@@ -122,14 +123,27 @@ class RefinementTests(unittest.TestCase):
         cache_put.assert_not_called()
         persisted.assert_not_called()
 
-    def test_refinement_allows_explicit_widget_conversion(self):
-        result = self.refine(NOTEBOOK, "turn this into a spreadsheet", FakeBackend(SHEET), allow_conversion=True)
-        self.assertEqual(result["widget"], "spreadsheet")
+    def test_refinement_never_converts_even_when_the_learner_asks(self):
+        result = self.refine(NOTEBOOK, "turn this into a spreadsheet", FakeBackend(SHEET))
+        self.assertIn("changed widget type", result["error"])
 
-    def test_non_target_refinement_source_does_not_enforce_widget_type(self):
-        source = {**NOTEBOOK, "widget": "function_plot"}
-        result = self.refine(source, "replace it", FakeBackend(SHEET))
-        self.assertEqual(result["widget"], "spreadsheet")
+    def test_refining_a_taller_sheet_keeps_every_row_and_column(self):
+        tall = [["c" + str(c) for c in range(9)] for _ in range(6)]
+        source = {**SHEET, "params": {"cells": tall}}
+        renamed = {**SHEET, "params": {"cells": [["renamed", *row[1:]] if i == 0 else row
+                                                 for i, row in enumerate(tall)]}}
+        result = self.refine(source, "rename the first column", FakeBackend(renamed))
+        self.assertEqual(len(result["params"]["cells"]), 6)
+        self.assertEqual(len(result["params"]["cells"][0]), 9)
+        self.assertEqual(result["params"]["cells"][0][0], "renamed")
+
+    def test_a_freshly_generated_sheet_is_still_clamped(self):
+        oversized = {**SHEET, "params": {"cells": [["c" + str(c) for c in range(9)] for _ in range(6)]}}
+        backend = FakeBackend(oversized)
+        with self.serving(backend):
+            result = serve.make_widget(serve.Ask(text="t", time=1, video="video"))
+        self.assertEqual(len(result["params"]["cells"]), serve.SS_MAX_ROWS)
+        self.assertEqual(len(result["params"]["cells"][0]), serve.SS_MAX_COLS)
 
     def test_invalid_refinement_is_not_returned_or_cached(self):
         invalid = {**NOTEBOOK, "params": {"cells": ["if True:\n print(1)\n  print(2)"]}}
