@@ -10,6 +10,7 @@ BRAIN_BASE="${NEMOTRON_BASE_URL:-http://localhost:8001/v1}"
 VISION_MODEL="${VLLM_MODEL:-qwen3-vl-4b}"
 BRAIN_MODEL="${NEMOTRON_MODEL:-deepseek-r1-distill-qwen-7b}"
 FRONTEND="${KEDU_DEMO_FRONTEND:-http://localhost:5173}"
+PERF_SITE="${KEDU_DEMO_PERF_SITE:-http://localhost:8106}"
 
 pass() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 fail() { printf '  \033[31m✗\033[0m %s\n' "$1"; FAIL=1; }
@@ -51,12 +52,14 @@ check_match "Excel demo concepts" "$FRONTEND/5IgOP7Lpk5g/concepts.json" 'Excel C
 check_match "Excel demo transcript" "$FRONTEND/5IgOP7Lpk5g/transcript.json" 'text'
 check_match "Excel demo chapters" "$FRONTEND/5IgOP7Lpk5g/chapters.json" 'Wrap Text'
 check_match "Excel demo metadata" "$FRONTEND/5IgOP7Lpk5g/metadata.json" '331.0'
+check_match "viewer-shared Excel widget" "$FRONTEND/api/saved-widgets?video=5IgOP7Lpk5g" 'Sale Price Column in Spreadsheet'
 check_engines
 
 printf '%s\n' '── presentation assets'
 check_file "runbook" "docs/RED_HAT_VLLM_DEMO.md"
 check_file "performance artifact" "docs/perf.html"
-for asset in excel-widget vllm-engine-live vllm-throughput paged-attention; do
+check_match "performance chart server :8106" "$PERF_SITE/perf.html" 'PagedAttention'
+for asset in excel-widget community-reuse refined-quarter-widget vllm-engine-live vllm-throughput paged-attention; do
   check_file "$asset fallback" "docs/assets/redhat-vllm-demo/$asset.png"
 done
 

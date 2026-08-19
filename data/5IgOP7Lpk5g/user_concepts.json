@@ -1,0 +1,50 @@
+[
+ {
+  "has_concept": true,
+  "widget": "spreadsheet",
+  "title": "Sale Price Column in Spreadsheet",
+  "explanation": "The sale price column contains numerical values representing transaction amounts.",
+  "params": {
+   "cells": [
+    [
+     "# ",
+     "$ 16,185.00",
+     "1/1/2014"
+    ],
+    [
+     "#",
+     "$ 13,210.00",
+     "1/1/2014"
+    ],
+    [
+     "#",
+     "$ 21,780.00",
+     "6/1/2014"
+    ],
+    [
+     "#",
+     "$ 8,880.00",
+     "6/1/2014"
+    ],
+    [
+     "#",
+     "$ 24,700.00",
+     "6/1/2014"
+    ]
+   ],
+   "features": [
+    "currency"
+   ],
+   "highlight": {
+    "row": 1,
+    "col": 2
+   }
+  },
+  "time": 40.0,
+  "frame": "f_000040.jpg",
+  "user_made": true,
+  "id": "acfbbf1fddac3e2b3df99d838912d153",
+  "owner": "community-demo",
+  "created_at": "2026-08-18T12:00:00+00:00"
+ }
+]
