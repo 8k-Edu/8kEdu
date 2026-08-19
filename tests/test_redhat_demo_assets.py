@@ -26,6 +26,12 @@ class RedHatDemoAssetsTests(unittest.TestCase):
         frame_names = {frame["file"] for frame in json.loads((DEMO / "frames.json").read_text())}
         self.assertTrue(all(concept["frame"] in frame_names for concept in concepts))
 
+    def test_screen_grab_keyframe_is_a_portable_jpeg(self):
+        keyframe = (DEMO / "frames" / "f_000140.jpg").read_bytes()
+        self.assertGreater(len(keyframe), 100_000)
+        self.assertTrue(keyframe.startswith(b"\xff\xd8\xff"))
+        self.assertTrue(keyframe.endswith(b"\xff\xd9"))
+
     def test_demo_includes_one_valid_viewer_shared_widget(self):
         shared = json.loads((DEMO / "user_concepts.json").read_text())
         self.assertEqual(len(shared), 1)

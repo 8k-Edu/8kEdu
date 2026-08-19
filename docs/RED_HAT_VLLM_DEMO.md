@@ -60,16 +60,20 @@ NEMOTRON_MODEL=deepseek-r1-distill-qwen-7b
 
 The two-engine Metal profile uses Qwen3-VL for video frames and DeepSeek-R1 for agent reasoning because the Metal plugin does not serve Nemotron Omni's MoE architecture. The live user flow in this talk exercises the Qwen3-VL vision engine; the second card shows the reasoning engine available to the wider agent workflow.
 
-### 2. Make keyframes available in a development worktree
+### 2. Verify the portable demo keyframe
 
-The portable transcript, chapters, frame manifest, duration, four prepared widgets, and one viewer-shared widget are tracked. The JPGs remain private and ignored. When presenting from a worktree, link the existing keyframe directory:
+The transcript, chapters, frame manifest, duration, four prepared widgets, one viewer-shared widget, and the required `2:22` keyframe are tracked. No external frame directory is needed for this five-minute demo.
+
+If you want to exercise other moments, copy the remaining ignored development frames from the primary checkout:
 
 ```bash
 export PRIMARY_CHECKOUT=/path/to/your/8kedu
-ln -s "$PRIMARY_CHECKOUT/data/5IgOP7Lpk5g/frames" data/5IgOP7Lpk5g/frames
+rsync -a --ignore-existing \
+  "$PRIMARY_CHECKOUT/data/5IgOP7Lpk5g/frames/" \
+  data/5IgOP7Lpk5g/frames/
 ```
 
-Skip this when `data/5IgOP7Lpk5g/frames/f_000140.jpg` already exists.
+The presentation preflight verifies `data/5IgOP7Lpk5g/frames/f_000140.jpg` directly.
 
 ### 3. Start and warm vLLM
 

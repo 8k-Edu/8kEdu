@@ -52,6 +52,7 @@ check_match "Excel demo concepts" "$FRONTEND/5IgOP7Lpk5g/concepts.json" 'Excel C
 check_match "Excel demo transcript" "$FRONTEND/5IgOP7Lpk5g/transcript.json" 'text'
 check_match "Excel demo chapters" "$FRONTEND/5IgOP7Lpk5g/chapters.json" 'Wrap Text'
 check_match "Excel demo metadata" "$FRONTEND/5IgOP7Lpk5g/metadata.json" '331.0'
+check_file "Excel 2:22 keyframe" "data/5IgOP7Lpk5g/frames/f_000140.jpg"
 check_match "viewer-shared Excel widget" "$FRONTEND/api/saved-widgets?video=5IgOP7Lpk5g" 'Sale Price Column in Spreadsheet'
 check_engines
 
