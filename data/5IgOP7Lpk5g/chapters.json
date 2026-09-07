@@ -1,0 +1,22 @@
+[
+ {
+  "start": 0,
+  "end": 61,
+  "title": "Alignment Options"
+ },
+ {
+  "start": 61,
+  "end": 136,
+  "title": "Shrink to Fit"
+ },
+ {
+  "start": 136,
+  "end": 251,
+  "title": "Wrap Text"
+ },
+ {
+  "start": 251,
+  "end": 331,
+  "title": "Orientation"
+ }
+]

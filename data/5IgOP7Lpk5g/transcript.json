@@ -1,0 +1,717 @@
+[
+ {
+  "start": 0.0,
+  "end": 2.23,
+  "text": "In this Excel tutorial, I'm going to"
+ },
+ {
+  "start": 2.24,
+  "end": 4.95,
+  "text": "show you some of the alignment options"
+ },
+ {
+  "start": 4.96,
+  "end": 7.27,
+  "text": "that you have in Excel that help you so"
+ },
+ {
+  "start": 7.28,
+  "end": 9.07,
+  "text": "that you can see your data the way you"
+ },
+ {
+  "start": 9.08,
+  "end": 11.43,
+  "text": "want to see it. And I'm using this"
+ },
+ {
+  "start": 11.44,
+  "end": 13.63,
+  "text": "sample spreadsheet. It's a pretty big"
+ },
+ {
+  "start": 13.64,
+  "end": 15.63,
+  "text": "spreadsheet. It's got lots of numbers,"
+ },
+ {
+  "start": 15.64,
+  "end": 18.75,
+  "text": "lots of data that's recorded in it. But"
+ },
+ {
+  "start": 18.76,
+  "end": 21.43,
+  "text": "the problem is there's so much data that"
+ },
+ {
+  "start": 21.44,
+  "end": 23.75,
+  "text": "sometimes it doesn't fit within the"
+ },
+ {
+  "start": 23.76,
+  "end": 25.87,
+  "text": "cells that I have. And you can see the"
+ },
+ {
+  "start": 25.88,
+  "end": 28.35,
+  "text": "result if that happens. If the data is"
+ },
+ {
+  "start": 28.36,
+  "end": 30.83,
+  "text": "too big to fit into their cells, then"
+ },
+ {
+  "start": 30.84,
+  "end": 32.71,
+  "text": "you get this symbol here, a bunch of"
+ },
+ {
+  "start": 32.72,
+  "end": 35.47,
+  "text": "pound signs or hashtags. And that's not"
+ },
+ {
+  "start": 35.48,
+  "end": 37.63,
+  "text": "really a problem, but it makes it hard"
+ },
+ {
+  "start": 37.64,
+  "end": 39.71,
+  "text": "to read and understand the data. So"
+ },
+ {
+  "start": 39.72,
+  "end": 41.11,
+  "text": "let's look at some of the options that"
+ },
+ {
+  "start": 41.12,
+  "end": 43.83,
+  "text": "we have. Here on the Home tab, Home"
+ },
+ {
+  "start": 43.84,
+  "end": 46.19,
+  "text": "ribbon, in the alignment group, I have"
+ },
+ {
+  "start": 46.2,
+  "end": 48.59,
+  "text": "some tools that can help me to be able"
+ },
+ {
+  "start": 48.6,
+  "end": 50.51,
+  "text": "to read this data even though the data"
+ },
+ {
+  "start": 50.52,
+  "end": 52.63,
+  "text": "is too big for the cell size that I've"
+ },
+ {
+  "start": 52.64,
+  "end": 54.99,
+  "text": "set it to. So one thing I could do is"
+ },
+ {
+  "start": 55.0,
+  "end": 57.23,
+  "text": "click on a cell and then go here to the"
+ },
+ {
+  "start": 57.24,
+  "end": 59.11,
+  "text": "alignment group. I'm looking for an"
+ },
+ {
+  "start": 59.12,
+  "end": 62.43,
+  "text": "option called shrink to fit. I don't see"
+ },
+ {
+  "start": 62.44,
+  "end": 64.59,
+  "text": "it there. And so I'm going to click the"
+ },
+ {
+  "start": 64.6,
+  "end": 66.39,
+  "text": "launch button here in the lower right"
+ },
+ {
+  "start": 66.4,
+  "end": 68.35,
+  "text": "corner of the alignment group. If I"
+ },
+ {
+  "start": 68.36,
+  "end": 70.43,
+  "text": "click on that, it gives me all of the"
+ },
+ {
+  "start": 70.44,
+  "end": 72.51,
+  "text": "alignment options for the cell that I"
+ },
+ {
+  "start": 72.52,
+  "end": 75.19,
+  "text": "selected. One of the options is shrink"
+ },
+ {
+  "start": 75.2,
+  "end": 78.99,
+  "text": "to fit. I click okay, and look, now that"
+ },
+ {
+  "start": 79.0,
+  "end": 81.91,
+  "text": "number fits in the space provided. Now,"
+ },
+ {
+  "start": 81.92,
+  "end": 83.91,
+  "text": "what if I shrink the column even more?"
+ },
+ {
+  "start": 83.92,
+  "end": 86.35,
+  "text": "Look what happens. The numbers shrink"
+ },
+ {
+  "start": 86.36,
+  "end": 88.67,
+  "text": "even more so that they can fit. No"
+ },
+ {
+  "start": 88.68,
+  "end": 91.47,
+  "text": "matter how small I make that column, the"
+ },
+ {
+  "start": 91.48,
+  "end": 93.83,
+  "text": "number that I have in cell J2 will"
+ },
+ {
+  "start": 93.84,
+  "end": 96.75,
+  "text": "shrink to fit the space provided. So"
+ },
+ {
+  "start": 96.76,
+  "end": 98.95,
+  "text": "that's a great option to have. Now, I"
+ },
+ {
+  "start": 98.96,
+  "end": 100.83,
+  "text": "could apply that to each of these other"
+ },
+ {
+  "start": 100.84,
+  "end": 103.47,
+  "text": "cells. I could click on the next cell,"
+ },
+ {
+  "start": 103.48,
+  "end": 105.43,
+  "text": "click the launch button in alignment,"
+ },
+ {
+  "start": 105.44,
+  "end": 107.87,
+  "text": "and choose shrink to fit, click okay."
+ },
+ {
+  "start": 107.88,
+  "end": 109.59,
+  "text": "But that's going to take forever. So"
+ },
+ {
+  "start": 109.6,
+  "end": 111.99,
+  "text": "better than that, just click on the"
+ },
+ {
+  "start": 112.0,
+  "end": 114.83,
+  "text": "entire column, column J. It highlights"
+ },
+ {
+  "start": 114.84,
+  "end": 116.55,
+  "text": "the whole thing. Then go to the"
+ },
+ {
+  "start": 116.56,
+  "end": 118.91,
+  "text": "alignment group launch button, choose"
+ },
+ {
+  "start": 118.92,
+  "end": 121.15,
+  "text": "shrink to fit, click okay, and now"
+ },
+ {
+  "start": 121.16,
+  "end": 123.95,
+  "text": "everything will shrink to fit. So that's"
+ },
+ {
+  "start": 123.96,
+  "end": 126.71,
+  "text": "a great option. The only downside is"
+ },
+ {
+  "start": 126.72,
+  "end": 128.67,
+  "text": "that it gets so small sometimes that you"
+ },
+ {
+  "start": 128.68,
+  "end": 130.83,
+  "text": "can't read it at all. Okay, so that's"
+ },
+ {
+  "start": 130.84,
+  "end": 132.95,
+  "text": "one thing to consider. Another option"
+ },
+ {
+  "start": 132.96,
+  "end": 136.51,
+  "text": "that we have is to use wrap text. And"
+ },
+ {
+  "start": 136.52,
+  "end": 138.87,
+  "text": "this works best with words better than"
+ },
+ {
+  "start": 138.88,
+  "end": 140.67,
+  "text": "it does with numbers. So I'm going to"
+ },
+ {
+  "start": 140.68,
+  "end": 142.75,
+  "text": "click here where it says month number,"
+ },
+ {
+  "start": 142.76,
+  "end": 144.63,
+  "text": "and I'm going to shrink this column down"
+ },
+ {
+  "start": 144.64,
+  "end": 146.83,
+  "text": "a little bit. The numbers only go 1"
+ },
+ {
+  "start": 146.84,
+  "end": 148.75,
+  "text": "through 12. So this column really"
+ },
+ {
+  "start": 148.76,
+  "end": 150.87,
+  "text": "doesn't need to be very wide except for"
+ },
+ {
+  "start": 150.88,
+  "end": 153.55,
+  "text": "the fact that the column title, month"
+ },
+ {
+  "start": 153.56,
+  "end": 156.27,
+  "text": "number, that takes up a lot of space. So"
+ },
+ {
+  "start": 156.28,
+  "end": 157.95,
+  "text": "I would like to be able to shrink this"
+ },
+ {
+  "start": 157.96,
+  "end": 160.51,
+  "text": "down, but still be able to read month"
+ },
+ {
+  "start": 160.52,
+  "end": 163.63,
+  "text": "number. So with that cell selected, on"
+ },
+ {
+  "start": 163.64,
+  "end": 165.55,
+  "text": "the Home tab, Home ribbon, in the"
+ },
+ {
+  "start": 165.56,
+  "end": 167.59,
+  "text": "alignment group, I could click the"
+ },
+ {
+  "start": 167.6,
+  "end": 169.67,
+  "text": "launch button and do it that way. But in"
+ },
+ {
+  "start": 169.68,
+  "end": 171.79,
+  "text": "this case, there's a button here that"
+ },
+ {
+  "start": 171.8,
+  "end": 174.07,
+  "text": "says wrap text."
+ },
+ {
+  "start": 174.08,
+  "end": 175.95,
+  "text": "Now, for me, the wrap text button is"
+ },
+ {
+  "start": 175.96,
+  "end": 178.35,
+  "text": "kind of small. It's basically a square."
+ },
+ {
+  "start": 178.36,
+  "end": 180.51,
+  "text": "For you, it might be bigger. In"
+ },
+ {
+  "start": 180.52,
+  "end": 183.75,
+  "text": "Microsoft Office, these options adjust"
+ },
+ {
+  "start": 183.76,
+  "end": 187.39,
+  "text": "their size based on your screen size. So"
+ },
+ {
+  "start": 187.4,
+  "end": 189.71,
+  "text": "I have a pretty small computer screen,"
+ },
+ {
+  "start": 189.72,
+  "end": 191.59,
+  "text": "so it has to adjust the size of the"
+ },
+ {
+  "start": 191.6,
+  "end": 193.31,
+  "text": "buttons. So don't panic if you don't see"
+ },
+ {
+  "start": 193.32,
+  "end": 195.67,
+  "text": "the exact same button as I have. Just"
+ },
+ {
+  "start": 195.68,
+  "end": 198.91,
+  "text": "look around for wrap text and click it."
+ },
+ {
+  "start": 198.92,
+  "end": 201.43,
+  "text": "Now, if you can't find it at all, just"
+ },
+ {
+  "start": 201.44,
+  "end": 203.63,
+  "text": "go down to the launch button and you"
+ },
+ {
+  "start": 203.64,
+  "end": 205.87,
+  "text": "should see it there. Okay, so what did"
+ },
+ {
+  "start": 205.88,
+  "end": 208.71,
+  "text": "that do? Wrap text makes it so that the"
+ },
+ {
+  "start": 208.72,
+  "end": 211.35,
+  "text": "text fits in the column width that I"
+ },
+ {
+  "start": 211.36,
+  "end": 213.83,
+  "text": "provided, but the way it fits is by"
+ },
+ {
+  "start": 213.84,
+  "end": 216.39,
+  "text": "wrapping the text. And so it made row"
+ },
+ {
+  "start": 216.4,
+  "end": 219.11,
+  "text": "one much taller than it used to be, but"
+ },
+ {
+  "start": 219.12,
+  "end": 221.95,
+  "text": "it's the same width. Let's go back. I'm"
+ },
+ {
+  "start": 221.96,
+  "end": 223.99,
+  "text": "going to do control Z to go back. You"
+ },
+ {
+  "start": 224.0,
+  "end": 225.91,
+  "text": "can see the width that it is here. Now,"
+ },
+ {
+  "start": 225.92,
+  "end": 228.51,
+  "text": "if I do control Y to redo it, you can"
+ },
+ {
+  "start": 228.52,
+  "end": 230.23,
+  "text": "see it's the same width. It just made it"
+ },
+ {
+  "start": 230.24,
+  "end": 232.71,
+  "text": "taller, and the text wraps. To be"
+ },
+ {
+  "start": 232.72,
+  "end": 234.15,
+  "text": "honest, I don't like that very much in"
+ },
+ {
+  "start": 234.16,
+  "end": 235.83,
+  "text": "this case, but I want you to know that"
+ },
+ {
+  "start": 235.84,
+  "end": 238.03,
+  "text": "that option is available to help you fit"
+ },
+ {
+  "start": 238.04,
+  "end": 240.23,
+  "text": "your data into the cells the way you"
+ },
+ {
+  "start": 240.24,
+  "end": 242.39,
+  "text": "want them to look. Now, there is a third"
+ },
+ {
+  "start": 242.4,
+  "end": 244.71,
+  "text": "tool and a third option to consider, and"
+ },
+ {
+  "start": 244.72,
+  "end": 247.47,
+  "text": "that is instead of wrapping text, maybe"
+ },
+ {
+  "start": 247.48,
+  "end": 249.31,
+  "text": "what I could do is use this alignment"
+ },
+ {
+  "start": 249.32,
+  "end": 252.31,
+  "text": "option here, orientation. So I could"
+ },
+ {
+  "start": 252.32,
+  "end": 255.95,
+  "text": "orient the text in row one so that it's"
+ },
+ {
+  "start": 255.96,
+  "end": 257.91,
+  "text": "vertical. Okay, you can see what that"
+ },
+ {
+  "start": 257.92,
+  "end": 260.67,
+  "text": "did. With it being vertical, I can"
+ },
+ {
+  "start": 260.68,
+  "end": 262.87,
+  "text": "really make this column very, very"
+ },
+ {
+  "start": 262.88,
+  "end": 266.07,
+  "text": "narrow, and I can still read the column"
+ },
+ {
+  "start": 266.08,
+  "end": 268.55,
+  "text": "title just fine. But that takes up a lot"
+ },
+ {
+  "start": 268.56,
+  "end": 270.83,
+  "text": "of vertical space, doesn't it? So there"
+ },
+ {
+  "start": 270.84,
+  "end": 273.35,
+  "text": "are some options to angle it. So there"
+ },
+ {
+  "start": 273.36,
+  "end": 275.79,
+  "text": "it is, angled counterclockwise. And if I"
+ },
+ {
+  "start": 275.8,
+  "end": 277.91,
+  "text": "want to, I can do that to the entire"
+ },
+ {
+  "start": 277.92,
+  "end": 281.19,
+  "text": "row, angle counterclockwise, and that"
+ },
+ {
+  "start": 281.2,
+  "end": 283.71,
+  "text": "does enable me to shrink these columns a"
+ },
+ {
+  "start": 283.72,
+  "end": 285.91,
+  "text": "little bit more. So hopefully those"
+ },
+ {
+  "start": 285.92,
+  "end": 288.51,
+  "text": "three alignment options will help you to"
+ },
+ {
+  "start": 288.52,
+  "end": 290.31,
+  "text": "arrange your data so that it's easier"
+ },
+ {
+  "start": 290.32,
+  "end": 293.11,
+  "text": "for people to read and to learn from."
+ },
+ {
+  "start": 293.12,
+  "end": 294.59,
+  "text": "Thanks for watching. I hope that you"
+ },
+ {
+  "start": 294.6,
+  "end": 296.51,
+  "text": "found this tutorial to be helpful. If"
+ },
+ {
+  "start": 296.52,
+  "end": 298.43,
+  "text": "you did, please click the like button"
+ },
+ {
+  "start": 298.44,
+  "end": 300.39,
+  "text": "below and consider connecting with me on"
+ },
+ {
+  "start": 300.4,
+  "end": 302.55,
+  "text": "my social media websites like Facebook,"
+ },
+ {
+  "start": 302.56,
+  "end": 304.71,
+  "text": "Pinterest, and Twitter. And definitely"
+ },
+ {
+  "start": 304.72,
+  "end": 306.51,
+  "text": "do subscribe to my YouTube channel for"
+ },
+ {
+  "start": 306.52,
+  "end": 308.31,
+  "text": "more videos about technology for"
+ },
+ {
+  "start": 308.32,
+  "end": 310.75,
+  "text": "teachers and students. And when you do"
+ },
+ {
+  "start": 310.76,
+  "end": 313.23,
+  "text": "subscribe, please click the bell next to"
+ },
+ {
+  "start": 313.24,
+  "end": 315.23,
+  "text": "the subscribe button. That way you'll be"
+ },
+ {
+  "start": 315.24,
+  "end": 317.51,
+  "text": "notified whenever I post another video,"
+ },
+ {
+  "start": 317.52,
+  "end": 319.59,
+  "text": "and watch for a video from me at least"
+ },
+ {
+  "start": 319.6,
+  "end": 321.11,
+  "text": "every Monday."
+ },
+ {
+  "start": 321.12,
+  "end": 322.39,
+  "text": "If you'd like to support my YouTube"
+ },
+ {
+  "start": 322.4,
+  "end": 323.91,
+  "text": "channel, please consider becoming a"
+ },
+ {
+  "start": 323.92,
+  "end": 325.91,
+  "text": "supporter of mine through my Patreon"
+ },
+ {
+  "start": 325.92,
+  "end": 328.07,
+  "text": "account, and you'll find links to that"
+ },
+ {
+  "start": 328.08,
+  "end": 331.84,
+  "text": "in the description below."
+ }
+]

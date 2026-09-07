@@ -1,0 +1,170 @@
+[
+  {
+    "has_concept": true,
+    "widget": "spreadsheet",
+    "title": "Excel Alignment Options",
+    "explanation": "The student is learning how to align text in Excel using options like wrap, merge, and center.",
+    "params": {
+      "cells": [
+        [
+          "Alignment Options"
+        ],
+        [
+          "Wrap Text",
+          "Merge Cells",
+          "Center"
+        ],
+        [
+          "Left",
+          "Right",
+          "Center"
+        ]
+      ],
+      "features": [
+        "wrap",
+        "merge_center",
+        "center"
+      ],
+      "highlight": {
+        "row": 2,
+        "col": 0
+      }
+    },
+    "time": 0.0,
+    "frame": "f_000000.jpg"
+  },
+  {
+    "has_concept": true,
+    "widget": "spreadsheet",
+    "title": "Sale Price Column in Spreadsheet",
+    "explanation": "The sale price column contains numerical values representing transaction amounts.",
+    "params": {
+      "cells": [
+        [
+          "# ",
+          "$ 16,185.00",
+          "1/1/2014"
+        ],
+        [
+          "#",
+          "$ 13,210.00",
+          "1/1/2014"
+        ],
+        [
+          "#",
+          "$ 21,780.00",
+          "6/1/2014"
+        ],
+        [
+          "#",
+          "$ 8,880.00",
+          "6/1/2014"
+        ],
+        [
+          "#",
+          "$ 24,700.00",
+          "6/1/2014"
+        ]
+      ],
+      "features": [
+        "currency"
+      ],
+      "highlight": {
+        "row": 1,
+        "col": 2
+      }
+    },
+    "time": 40.0,
+    "frame": "f_000040.jpg"
+  },
+  {
+    "has_concept": true,
+    "widget": "spreadsheet",
+    "title": "Excel Column Formatting Options",
+    "explanation": "The teacher demonstrates how to adjust column width using 'Shrink to Fit' and 'Wrap Text' for better data presentation.",
+    "params": {
+      "cells": [
+        [
+          "Month Number",
+          "Month Name"
+        ],
+        [
+          "1",
+          "January"
+        ],
+        [
+          "6",
+          "June"
+        ],
+        [
+          "12",
+          "December"
+        ],
+        [
+          "3",
+          "March"
+        ]
+      ],
+      "features": [
+        "shrink_to_fit",
+        "wrap_text"
+      ],
+      "highlight": {
+        "row": 1,
+        "col": 1
+      }
+    },
+    "time": 142.28571428571428,
+    "frame": "f_000140.jpg"
+  },
+  {
+    "has_concept": true,
+    "widget": "spreadsheet",
+    "title": "Excel Spreadsheet with Angled Cell Formatting",
+    "explanation": "The student requested a change to the 'Discounts' cell label to 'Date' to reflect a data alignment adjustment in the spreadsheet.",
+    "params": {
+      "cells": [
+        [
+          "Sale Price",
+          "Gross Sales",
+          "Date",
+          "Sales"
+        ],
+        [
+          "$20.00",
+          "$32,370.00",
+          "1/1/2014",
+          "$32,370.00"
+        ],
+        [
+          "$20.00",
+          "$26,420.00",
+          "1/1/2014",
+          "$26,420.00"
+        ],
+        [
+          "$15.00",
+          "$32,670.00",
+          "6/1/2014",
+          "$32,670.00"
+        ],
+        [
+          "$15.00",
+          "$37,050.00",
+          "6/1/2014",
+          "$37,050.00"
+        ]
+      ],
+      "features": [
+        "orientation",
+        "angle_counterclockwise"
+      ],
+      "highlight": {
+        "row": 1,
+        "col": 2
+      }
+    },
+    "time": 266.08,
+    "frame": "f_000270.jpg"
+  }
+]
